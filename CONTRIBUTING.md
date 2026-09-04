@@ -239,6 +239,9 @@ with fixture data; its CSS is what transfers, and it has been extracted into `re
 Screens are Edge templates with Alpine.js for interactivity (plan §13).
 
 - Nothing hardcodes a colour. Every value comes from a token in `resources/css/tokens.css`.
+- Application content is capped at `--content-max-width` and centred beside the sidebar. The topbar
+  stays full-bleed but its inner row shares the same cap, and the horizontal padding lives *inside*
+  both capped boxes — put it on the bar instead and the page title stops lining up with the page.
 - Every interaction works as a plain form POST with JavaScript disabled; Alpine only removes
   round trips.
 - Tabs are real URLs, so they can be linked, bookmarked, and permission-gated server-side.

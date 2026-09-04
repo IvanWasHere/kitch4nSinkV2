@@ -120,4 +120,16 @@
   /* Layout ------------------------------------------------------------- */
   --sidebar-width: 240px;
   --topbar-height: 60px;
+
+  /**
+   * The widest the application's content is allowed to get, centred in
+   * whatever space is left beside the sidebar. Past this a four-column stat
+   * grid and a full-width table stop being readable — the eye has too far to
+   * travel from a row's label to its value.
+   *
+   * Not to be confused with the 1024px breakpoint in responsive.css: that one
+   * decides when the grids collapse, this one decides how wide content may
+   * get. They are independent numbers.
+   */
+  --content-max-width: 1240px;
 }

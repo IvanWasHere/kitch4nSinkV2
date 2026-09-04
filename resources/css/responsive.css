@@ -99,7 +99,7 @@
     grid-template-columns: 1fr;
   }
 
-  .dash-topbar,
+  .dash-topbar-inner,
   .marketing-header {
     padding: 0 18px;
   }

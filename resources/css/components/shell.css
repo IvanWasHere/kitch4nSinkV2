@@ -193,12 +193,34 @@
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 28px;
   position: sticky;
   top: 0;
   z-index: 40;
+}
+
+/**
+ * The bar itself stays full-bleed — it is sticky chrome, and a rule that
+ * stopped short of the window edge would look broken. Its *contents* are
+ * capped to the same measure as `.dash-content`, so the page title lines up
+ * with the page it is titling instead of drifting to the far left on a wide
+ * screen.
+ */
+.dash-topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+
+  /**
+   * The horizontal padding lives here rather than on the bar, so it sits
+   * *inside* the capped box exactly as `.dash-content`'s does. With it on the
+   * bar the two measures would be offset by the padding and the title would
+   * never line up with the content below it.
+   */
+  padding: 0 28px;
 }
 
 .dash-topbar-title {
@@ -251,6 +273,15 @@
   flex: 1;
   padding: 28px;
   animation: pageFadeIn 0.3s ease;
+
+  /**
+   * Capped and centred in the space beside the sidebar. `width: 100%` keeps
+   * it filling narrower screens exactly as before — the cap only bites once
+   * there is more room than the content can use.
+   */
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
 }
 
 .page-header {
