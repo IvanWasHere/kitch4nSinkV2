@@ -33,13 +33,17 @@
     "#database/*": "./database/*.js",
     "#tests/*": "./tests/*.js",
     "#start/*": "./start/*.js",
-    "#config/*": "./config/*.js"
+    "#config/*": "./config/*.js",
+    "#auth/*": "./app/auth/*.js",
+    "#mail/*": "./app/mail/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.5.0",
     "@adonisjs/eslint-config": "^3.1.0",
     "@adonisjs/prettier-config": "^1.5.0",
     "@adonisjs/tsconfig": "^2.0.0",
+    "@faker-js/faker": "^10.6.0",
+    "@japa/api-client": "^3.2.1",
     "@japa/assert": "^4.2.0",
     "@japa/browser-client": "^2.3.0",
     "@japa/plugin-adonisjs": "^5.2.0",
@@ -48,6 +52,7 @@
     "@types/alpinejs": "^3.13.11",
     "@types/luxon": "^3.7.5",
     "@types/node": "~26.2.0",
+    "@types/qrcode": "^1.5.6",
     "alpinejs": "^3.16.2",
     "eslint": "^10.9.0",
     "hot-hook": "^1.0.0",
@@ -58,10 +63,12 @@
     "youch": "^4.1.1"
   },
   "dependencies": {
+    "@adonisjs/ally": "^6.3.0",
     "@adonisjs/auth": "^10.1.0",
     "@adonisjs/bouncer": "^4.0.1",
     "@adonisjs/core": "^7.5.0",
     "@adonisjs/lucid": "^22.4.2",
+    "@adonisjs/mail": "^10.4.0",
     "@adonisjs/session": "^8.1.0",
     "@adonisjs/shield": "^9.0.0",
     "@adonisjs/static": "^2.0.1",
@@ -71,7 +78,9 @@
     "edge.js": "^6.5.1",
     "luxon": "^3.7.2",
     "nanoid": "^5.1.16",
+    "otplib": "^13.5.0",
     "pg": "^8.23.0",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2"
   },
   "hotHook": {

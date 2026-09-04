@@ -1,0 +1,18 @@
+@component('layouts/auth', {
+  title: 'Confirm your email',
+  heading: 'Check your email',
+  subtitle: `We sent a confirmation link to ${auth.user.email}.`,
+})
+  <div class="info-box">
+    Confirming your address lets us reach you about your workspace — password resets, invitations
+    and billing all depend on it.
+  </div>
+
+  @form({ route: 'auth.verify_email.resend', method: 'POST' })
+    @!button({ text: 'Send another link', type: 'submit', block: true })
+  @end
+
+  @form({ route: 'auth.session.destroy', method: 'POST' })
+    @!button({ text: 'Sign out', type: 'submit', variant: 'outline', block: true })
+  @end
+@end

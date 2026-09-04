@@ -1,0 +1,132 @@
+@component('layouts/app', { title: 'Settings' })
+  @include('partials/settings_nav')
+
+  {{--
+    Recovery codes are flashed from the previous request and rendered once.
+    They are never stored in plaintext, so this is genuinely the only chance
+    to copy them.
+  --}}
+  @if(recoveryCodes)
+    <div class="settings-card">
+      <h2 class="section-title">Save your recovery codes</h2>
+      <p class="section-desc">
+        Each code works once and lets you in if you lose your device. This is the only time they
+        are shown.
+      </p>
+      <ul class="file-list">
+        @each(code in recoveryCodes)
+          <li class="file-row">
+            <span class="mono">{{ code }}</span>
+          </li>
+        @end
+      </ul>
+    </div>
+  @end
+
+  <div class="settings-card">
+    <h2 class="section-title">Two-factor authentication</h2>
+    <p class="section-desc">
+      An authenticator app code in addition to your password.
+    </p>
+
+    @if(hasTwoFactor)
+      <div class="settings-row">
+        <span class="settings-row-label">Status</span>
+        <span class="settings-row-value">
+          @!badge({ text: 'On', tone: 'success' })
+        </span>
+      </div>
+
+      <div class="btn-row">
+        @form({ route: 'settings.security.two_factor.recovery_codes', method: 'POST' })
+          @!button({ text: 'Regenerate recovery codes', type: 'submit', variant: 'outline', size: 'sm' })
+        @end
+        @form({ route: 'settings.security.two_factor.disable', method: 'POST' })
+          @!button({ text: 'Turn off', type: 'submit', variant: 'danger', size: 'sm' })
+        @end
+      </div>
+    @elseif(enrolment)
+      <p class="section-desc">
+        Scan this with your authenticator app, then enter the code it shows. Two-factor is not on
+        until you do.
+      </p>
+      <div style="margin-bottom: 16px">{{{ enrolment.qrCodeSvg }}}</div>
+
+      @!copyField({ label: 'Or enter this key by hand', value: enrolment.secret })
+
+      @form({ route: 'settings.security.two_factor.confirm', method: 'POST' })
+        @field.root({ name: 'code' })
+          @!field.label({ text: 'Code from your app' })
+          @!input.control({ placeholder: '123456', inputmode: 'numeric', autocomplete: 'one-time-code' })
+          @!field.error()
+        @end
+        @!button({ text: 'Turn on two-factor', type: 'submit', size: 'sm' })
+      @end
+    @else
+      <div class="settings-row">
+        <span class="settings-row-label">Status</span>
+        <span class="settings-row-value">
+          @!badge({ text: 'Off', tone: 'neutral' })
+        </span>
+      </div>
+      @form({ route: 'settings.security.two_factor.start', method: 'POST' })
+        @!button({ text: 'Set up two-factor', type: 'submit', size: 'sm' })
+      @end
+    @end
+  </div>
+
+  <div class="settings-card">
+    <h2 class="section-title">{{ hasPassword ? 'Change password' : 'Set a password' }}</h2>
+    <p class="section-desc">
+      @if(hasPassword)
+        You will be emailed whenever your password changes.
+      @else
+        You signed up with a social account. Setting a password lets you sign in with your email
+        too.
+      @end
+    </p>
+
+    @form({ route: 'settings.security.password', method: 'POST' })
+      @if(hasPassword)
+        @field.root({ name: 'currentPassword' })
+          @!field.label({ text: 'Current password' })
+          @!input.control({ type: 'password', autocomplete: 'current-password' })
+          @!field.error()
+        @end
+      @else
+        <input type="hidden" name="currentPassword" value="unused" />
+      @end
+
+      @field.root({ name: 'password' })
+        @!field.label({ text: 'New password' })
+        <div x-data="passwordStrength">
+          <div class="input-wrap">
+            @!input.control({
+              type: 'password',
+              placeholder: 'At least 12 characters',
+              autocomplete: 'new-password',
+              'x-model': 'value',
+              'x-bind:type': 'type',
+            })
+            <button type="button" class="pw-toggle" @click="toggle" x-text="toggleLabel">Show</button>
+          </div>
+          <div class="strength-bar">
+            <div class="strength-fill" :data-score="score" data-score="0"></div>
+          </div>
+          <div class="strength-text" x-text="label"></div>
+        </div>
+        @!field.error()
+      @end
+
+      @field.root({ name: 'passwordConfirmation' })
+        @!field.label({ text: 'Confirm new password' })
+        @!input.control({ type: 'password', autocomplete: 'new-password' })
+        @!field.error()
+      @end
+
+      <div class="btn-row">
+        @!button({ text: 'Update password', type: 'submit', size: 'sm' })
+      </div>
+    @end
+  </div>
+@end

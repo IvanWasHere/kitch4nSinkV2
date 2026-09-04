@@ -64,6 +64,33 @@ SQLite is not enforced, so a migration that cannot run on Postgres fails the bui
    needs, e.g. `compose(TodoListSchema, withPublicId('todoList'))`.
 4. If the table carries a `public_id`, register its prefix in `app/models/public_id.ts`.
 
+## Local email
+
+Transactional email goes to [Mailpit](https://mailpit.axllent.org) in development — nothing leaves
+your machine:
+
+```bash
+brew install mailpit && mailpit          # or: docker run -p 1025:1025 -p 8025:8025 axllent/mailpit
+```
+
+Then open http://localhost:8025. With Mailpit not running, sends fail and are logged rather than
+raised, so signup still works; the "send another link" action is the recovery path.
+
+## Staff accounts
+
+Staff cannot self-register. Create the first one from a shell:
+
+```bash
+node ace staff:create --email=you@example.com --role=admin
+```
+
+It prompts for a password and walks through two-factor enrolment, which is mandatory for staff.
+Pass `--password=…` for non-interactive setup (a container's release phase), in which case
+enrolment is completed without asking for a code and the recovery codes are printed.
+
+`node ace dev:totp <email>` prints a currently-valid code, so the two-factor screens can be walked
+through without an authenticator app. It refuses to run outside development.
+
 ## Frontend
 
 `example-ui/index.html` is the **visual reference**, not code to port. It is a Mithril prototype

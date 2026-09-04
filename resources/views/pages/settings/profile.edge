@@ -1,0 +1,35 @@
+@component('layouts/app', { title: 'Settings' })
+  @include('partials/settings_nav')
+
+  <div class="settings-card">
+    <h2 class="section-title">Profile information</h2>
+    <p class="section-desc">How you appear to everyone else in {{ organization.name }}.</p>
+
+    @form({ route: 'settings.profile.update', method: 'POST' })
+      @field.root({ name: 'fullName' })
+        @!field.label({ text: 'Full name' })
+        @!input.control({ value: auth.user.fullName, placeholder: 'Jane Cooper' })
+        @!field.error()
+      @end
+
+      <div class="settings-row">
+        <span class="settings-row-label">Email address</span>
+        <span class="settings-row-value">{{ auth.user.email }}</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-row-label">Role</span>
+        <span class="settings-row-value">
+          @!badge({ text: auth.user.isOwner ? 'Owner' : 'Member', tone: auth.user.isOwner ? 'info' : 'neutral' })
+        </span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-row-label">Workspace</span>
+        <span class="settings-row-value">{{ organization.name }}</span>
+      </div>
+
+      <div class="btn-row">
+        @!button({ text: 'Save profile', type: 'submit', size: 'sm' })
+      </div>
+    @end
+  </div>
+@end

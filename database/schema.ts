@@ -6,20 +6,205 @@
 
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
+import { jsonColumn, bigIntColumn, encryptedColumn, encryptedJsonColumn } from '#database/columns'
 
-export class UserSchema extends BaseModel {
-  static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'updatedAt'] as const
-  $columns = UserSchema.$columns
+export class AuthTokenSchema extends BaseModel {
+  static $columns = [
+    'consumedAt',
+    'createdAt',
+    'expiresAt',
+    'id',
+    'tokenHash',
+    'type',
+    'userId',
+  ] as const
+  $columns = AuthTokenSchema.$columns
+  @column.dateTime()
+  declare consumedAt: DateTime | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare tokenHash: string
+  @column()
+  declare type: 'verify_email' | 'reset_password'
+  @column()
+  declare userId: number
+}
+
+export class OrganizationSchema extends BaseModel {
+  static $columns = [
+    'createdAt',
+    'deletedAt',
+    'id',
+    'limitOverrides',
+    'name',
+    'ownerId',
+    'planKey',
+    'publicId',
+    'slug',
+    'status',
+    'storageUsedBytes',
+    'trialEndsAt',
+    'updatedAt',
+  ] as const
+  $columns = OrganizationSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @jsonColumn()
+  declare limitOverrides: Record<string, number | null> | null
+  @column()
+  declare name: string
+  @column()
+  declare ownerId: number | null
+  @column()
+  declare planKey: string
+  @column()
+  declare publicId: string
+  @column()
+  declare slug: string
+  @column()
+  declare status: 'active' | 'past_due' | 'canceled' | 'suspended'
+  @bigIntColumn()
+  declare storageUsedBytes: number
+  @column.dateTime()
+  declare trialEndsAt: DateTime | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class SocialAccountSchema extends BaseModel {
+  static $columns = [
+    'accessToken',
+    'createdAt',
+    'id',
+    'provider',
+    'providerEmail',
+    'providerUserId',
+    'updatedAt',
+    'userId',
+  ] as const
+  $columns = SocialAccountSchema.$columns
+  @encryptedColumn()
+  declare accessToken: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare provider: 'google' | 'github'
+  @column()
+  declare providerEmail: string | null
+  @column()
+  declare providerUserId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+}
+
+export class StaffUserSchema extends BaseModel {
+  static $columns = [
+    'createdAt',
+    'disabledAt',
+    'email',
+    'fullName',
+    'id',
+    'lastLoginAt',
+    'password',
+    'publicId',
+    'role',
+    'twoFactorConfirmedAt',
+    'twoFactorRecoveryCodes',
+    'twoFactorSecret',
+    'updatedAt',
+  ] as const
+  $columns = StaffUserSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare disabledAt: DateTime | null
   @column()
   declare email: string
   @column()
   declare fullName: string | null
   @column({ isPrimary: true })
   declare id: number
+  @column.dateTime()
+  declare lastLoginAt: DateTime | null
   @column({ serializeAs: null })
   declare password: string
+  @column()
+  declare publicId: string
+  @column()
+  declare role: 'admin' | 'support'
+  @column.dateTime()
+  declare twoFactorConfirmedAt: DateTime | null
+  @encryptedJsonColumn()
+  declare twoFactorRecoveryCodes: string[] | null
+  @encryptedColumn()
+  declare twoFactorSecret: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class UserSchema extends BaseModel {
+  static $columns = [
+    'avatarKey',
+    'createdAt',
+    'deletedAt',
+    'email',
+    'emailVerifiedAt',
+    'fullName',
+    'id',
+    'lastLoginAt',
+    'organizationId',
+    'password',
+    'publicId',
+    'role',
+    'twoFactorConfirmedAt',
+    'twoFactorRecoveryCodes',
+    'twoFactorSecret',
+    'updatedAt',
+  ] as const
+  $columns = UserSchema.$columns
+  @column()
+  declare avatarKey: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column()
+  declare email: string
+  @column.dateTime()
+  declare emailVerifiedAt: DateTime | null
+  @column()
+  declare fullName: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare lastLoginAt: DateTime | null
+  @column()
+  declare organizationId: number
+  @column({ serializeAs: null })
+  declare password: string | null
+  @column()
+  declare publicId: string
+  @column()
+  declare role: 'owner' | 'member'
+  @column.dateTime()
+  declare twoFactorConfirmedAt: DateTime | null
+  @encryptedJsonColumn()
+  declare twoFactorRecoveryCodes: string[] | null
+  @encryptedColumn()
+  declare twoFactorSecret: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

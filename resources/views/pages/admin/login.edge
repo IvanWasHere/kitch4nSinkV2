@@ -1,0 +1,28 @@
+@component('layouts/auth', {
+  title: 'Staff sign in',
+  heading: 'Staff sign in',
+  subtitle: 'Company accounts only. Two-factor is required.',
+})
+  @form({ route: 'admin.session.store', method: 'POST' })
+    @field.root({ name: 'email' })
+      @!field.label({ text: 'Email address' })
+      @!input.control({ type: 'email', autocomplete: 'email' })
+      @!field.error()
+    @end
+
+    @field.root({ name: 'password' })
+      @!field.label({ text: 'Password' })
+      <div class="input-wrap" x-data="passwordField">
+        @!input.control({
+          type: 'password',
+          autocomplete: 'current-password',
+          'x-bind:type': 'type',
+        })
+        <button type="button" class="pw-toggle" @click="toggle" x-text="toggleLabel">Show</button>
+      </div>
+      @!field.error()
+    @end
+
+    @!button({ text: 'Continue', type: 'submit', block: true })
+  @end
+@end

@@ -3,33 +3,31 @@ import { sessionGuard, sessionUserProvider } from '@adonisjs/auth/session'
 import type { InferAuthenticators, InferAuthEvents, Authenticators } from '@adonisjs/auth/types'
 
 /**
- * Authentication configuration.
- * Defines guards and user providers for session-based authentication.
+ * Two guards over two tables (D5).
+ *
+ * `web` authenticates tenant users; `staff` authenticates company staff from
+ * their own table, behind their own login at /admin/login. Keeping them apart
+ * at the guard level means there is no code path where a staff session could
+ * be mistaken for a tenant session, or the reverse.
+ *
+ * They use different session keys, so signing in as staff does not sign you
+ * out of a tenant account — which is what makes impersonation workable.
  */
 const authConfig = defineConfig({
-  /**
-   * The default guard to use for authentication.
-   * This guard will be used when no specific guard is mentioned.
-   */
   default: 'web',
 
   guards: {
-    /**
-     * Web guard uses session-based authentication for web requests.
-     */
     web: sessionGuard({
-      /**
-       * Whether to use "remember me" tokens for persistent authentication.
-       * When enabled, users can stay logged in across browser sessions.
-       */
       useRememberMeTokens: false,
-
-      /**
-       * User provider configuration.
-       * Defines how to fetch and verify user credentials.
-       */
       provider: sessionUserProvider({
         model: () => import('#models/user'),
+      }),
+    }),
+
+    staff: sessionGuard({
+      useRememberMeTokens: false,
+      provider: sessionUserProvider({
+        model: () => import('#models/staff_user'),
       }),
     }),
   },

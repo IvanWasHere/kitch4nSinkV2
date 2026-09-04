@@ -1,0 +1,12 @@
+@component('layouts/app', { title: 'Overview' })
+  @panel.root()
+    @!emptyState({
+      icon: 'barChart',
+      title: `Welcome to ${organization.name}`,
+      description: 'Your workspace is set up. Lists, files and billing arrive in the milestones after this one — for now, your account, sign-in and security settings are live.',
+    })
+    <div class="btn-row" style="justify-content: center">
+      @!link({ route: 'settings.profile', text: 'Open settings', class: 'btn btn-outline btn-sm' })
+    </div>
+  @end
+@end

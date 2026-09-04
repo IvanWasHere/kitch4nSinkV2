@@ -31,6 +31,14 @@ const dbConfig = defineConfig({
         naturalSort: true,
         paths: ['database/migrations'],
       },
+      /**
+       * How `database/schema.ts` is generated from the live database. The
+       * rules file is what teaches the generator about encrypted columns,
+       * JSON round-tripping and closed value sets.
+       */
+      schemaGeneration: {
+        rulesPaths: ['#database/schema_rules'],
+      },
       debug: app.inDev,
     },
 
@@ -55,6 +63,14 @@ const dbConfig = defineConfig({
       migrations: {
         naturalSort: true,
         paths: ['database/migrations'],
+      },
+      /**
+       * How `database/schema.ts` is generated from the live database. The
+       * rules file is what teaches the generator about encrypted columns,
+       * JSON round-tripping and closed value sets.
+       */
+      schemaGeneration: {
+        rulesPaths: ['#database/schema_rules'],
       },
       debug: app.inDev,
     },

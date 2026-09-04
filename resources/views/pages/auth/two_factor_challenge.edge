@@ -1,0 +1,26 @@
+@component('layouts/auth', {
+  title: 'Two-factor authentication',
+  heading: 'Enter your code',
+  subtitle: 'Open your authenticator app and enter the six-digit code',
+})
+  @form({
+    route: guard === 'staff' ? 'admin.two_factor.store' : 'auth.two_factor.store',
+    method: 'POST',
+  })
+    @field.root({ name: 'code' })
+      @!field.label({ text: 'Authentication code' })
+      @!input.control({
+        placeholder: '123456',
+        autocomplete: 'one-time-code',
+        inputmode: 'numeric',
+        autofocus: true,
+      })
+      <span class="field-hint">
+        Lost your device? Enter one of your recovery codes instead — each one works once.
+      </span>
+      @!field.error()
+    @end
+
+    @!button({ text: 'Verify', type: 'submit', block: true })
+  @end
+@end

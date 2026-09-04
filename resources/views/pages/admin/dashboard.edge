@@ -1,0 +1,15 @@
+@component('layouts/admin', { title: 'Dashboard' })
+  @slot('actions')
+    @form({ route: 'admin.session.destroy', method: 'POST' })
+      @!button({ text: 'Sign out', type: 'submit', variant: 'outline', size: 'sm' })
+    @end
+  @end
+
+  @panel.root()
+    @!emptyState({
+      icon: 'shield',
+      title: `Signed in as ${staff.email}`,
+      description: 'The back-office screens — organisations, subscriptions, the webhook ledger, the job queue and the audit log — are built in M7. The staff guard, the separate table and mandatory two-factor are live now.',
+    })
+  @end
+@end

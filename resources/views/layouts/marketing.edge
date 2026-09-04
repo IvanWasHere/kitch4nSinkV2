@@ -16,10 +16,10 @@
       <a href="{{ urlFor('home') }}#features">Features</a>
       <a href="{{ urlFor('home') }}#pricing">Pricing</a>
       @if(auth.user)
-        @!link({ route: 'home', text: 'Dashboard', class: 'btn btn-primary btn-sm' })
+        @!link({ route: 'dashboard.index', text: 'Dashboard', class: 'btn btn-primary btn-sm' })
       @else
-        @!link({ route: 'session.create', text: 'Sign in' })
-        @!link({ route: 'new_account.create', text: 'Get started', class: 'btn btn-primary btn-sm' })
+        @!link({ route: 'auth.session.create', text: 'Sign in' })
+        @!link({ route: 'auth.register.create', text: 'Get started', class: 'btn btn-primary btn-sm' })
       @end
     </nav>
   </header>

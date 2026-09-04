@@ -3,7 +3,7 @@
   heading: 'Sign in to your account',
   subtitle: 'Enter your credentials to access your workspace',
 })
-  @form({ route: 'session.store', method: 'POST' })
+  @form({ route: 'auth.session.store', method: 'POST' })
     @field.root({ name: 'email' })
       @!field.label({ text: 'Email address' })
       @!input.control({ type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })
@@ -24,10 +24,25 @@
       @!field.error()
     @end
 
+    <div class="check-row">
+      <input type="checkbox" id="rememberMe" name="rememberMe" value="1" />
+      <label for="rememberMe">Keep me signed in on this device</label>
+    </div>
+
     @!button({ text: 'Sign in', type: 'submit', block: true })
   @end
 
   <p class="auth-footer">
-    @!link({ route: 'new_account.create', text: 'Create a new account', class: 'btn-ghost' })
+    <a href="{{ urlFor('auth.password.create') }}" class="btn-ghost">Forgot your password?</a>
   </p>
+
+  @!auth.socialButtons({ providers: socialProviders, action: 'Sign in' })
+
+  <div class="divider">new here?</div>
+
+  @!link({
+    route: 'auth.register.create',
+    text: 'Create a new account',
+    class: 'btn btn-outline btn-block',
+  })
 @end

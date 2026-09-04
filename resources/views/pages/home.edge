@@ -6,8 +6,12 @@
       organisation API — running on SQLite locally and Postgres in production.
     </p>
     <div class="hero-actions">
-      @!link({ route: 'new_account.create', text: 'Create an account', class: 'btn btn-primary' })
-      @!link({ route: 'session.create', text: 'Sign in', class: 'btn btn-outline' })
+      @if(auth.user)
+        @!link({ route: 'dashboard.index', text: 'Go to your workspace', class: 'btn btn-primary' })
+      @else
+        @!link({ route: 'auth.register.create', text: 'Create an account', class: 'btn btn-primary' })
+        @!link({ route: 'auth.session.create', text: 'Sign in', class: 'btn btn-outline' })
+      @end
     </div>
   </section>
 

@@ -36,7 +36,9 @@
           @!navItem({ route: 'admin.users.index', icon: 'users', label: 'Users' })
         @end
 
-        <div class="nav-section-title">Operations</div>
+        @if(hasRoute('admin.subscriptions.index') || hasRoute('admin.webhooks.index') || hasRoute('admin.jobs.index') || hasRoute('admin.audit_logs.index'))
+          <div class="nav-section-title">Operations</div>
+        @end
         @if(hasRoute('admin.subscriptions.index'))
           @!navItem({ route: 'admin.subscriptions.index', icon: 'creditCard', label: 'Subscriptions' })
         @end
@@ -50,7 +52,9 @@
           @!navItem({ route: 'admin.audit_logs.index', icon: 'list', label: 'Audit log' })
         @end
 
-        <div class="nav-section-title">Access</div>
+        @if(hasRoute('admin.staff.index'))
+          <div class="nav-section-title">Access</div>
+        @end
         @if(hasRoute('admin.staff.index'))
           @!navItem({ route: 'admin.staff.index', icon: 'shield', label: 'Staff' })
         @end

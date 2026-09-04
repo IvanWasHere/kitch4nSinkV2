@@ -1,0 +1,26 @@
+{{--
+  Google / GitHub sign-in buttons.
+
+  Rendered only for providers this deployment has credentials for, so a fresh
+  clone with no OAuth setup shows a plain email form rather than buttons that
+  dead-end at the provider (see `enabledSocialProviders` in config/ally.ts).
+
+  Props:
+    providers — the enabled providers
+    action    — 'Sign in' | 'Sign up', used in the button label
+--}}
+@let(providers = $props.get('providers') ?? [])
+
+@if(providers.length)
+  <div class="divider">or</div>
+
+  @each(provider in providers)
+    <a
+      href="{{ urlFor('auth.social.redirect', { provider: provider.name }) }}"
+      class="btn btn-outline btn-block"
+      rel="nofollow"
+    >
+      {{ $props.get('action') ?? 'Continue' }} with {{ provider.label }}
+    </a>
+  @end
+@end

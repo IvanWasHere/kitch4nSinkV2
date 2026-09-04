@@ -1,0 +1,35 @@
+{{--
+  Email layout.
+
+  Deliberately not the application's stylesheet: mail clients have no custom
+  property support, so colours are literal here and every rule is inline or in
+  a single <style> block. This is the one place in the codebase allowed to
+  write a hex value, and the values are copied from resources/css/tokens.css.
+--}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ $props.get('title') ?? appName }}</title>
+  </head>
+  <body style="margin: 0; padding: 0; background: #f9fafb;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; padding: 32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background: #ffffff; border: 1px solid #dbeafe; border-radius: 12px; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #1f2937;">
+            <tr>
+              <td>
+                <p style="margin: 0 0 24px; font-size: 17px; font-weight: 700; color: #111827;">{{ appName }}</p>
+                {{{ await $slots.main() }}}
+                <p style="margin: 28px 0 0; font-size: 12px; color: #9ca3af; line-height: 1.6;">
+                  {{ $props.get('footer') ?? `If you did not expect this email you can safely ignore it.` }}
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -4,6 +4,21 @@
  */
 
 export const controllers = {
-  NewAccount: () => import('#controllers/new_account_controller'),
-  Session: () => import('#controllers/session_controller'),
+  admin: {
+    Dashboard: () => import('#controllers/admin/dashboard_controller'),
+    Session: () => import('#controllers/admin/session_controller'),
+  },
+  auth: {
+    EmailVerification: () => import('#controllers/auth/email_verification_controller'),
+    PasswordReset: () => import('#controllers/auth/password_reset_controller'),
+    Registration: () => import('#controllers/auth/registration_controller'),
+    Session: () => import('#controllers/auth/session_controller'),
+    SocialAuth: () => import('#controllers/auth/social_auth_controller'),
+    TwoFactorChallenge: () => import('#controllers/auth/two_factor_challenge_controller'),
+  },
+  Dashboard: () => import('#controllers/dashboard_controller'),
+  settings: {
+    Profile: () => import('#controllers/settings/profile_controller'),
+    Security: () => import('#controllers/settings/security_controller'),
+  },
 }

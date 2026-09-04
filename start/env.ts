@@ -68,6 +68,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   MAIL_FROM_NAME: Env.schema.string.optional(),
   RESEND_API_KEY: Env.schema.secret.optional(),
   RESEND_BASE_URL: Env.schema.string.optional({ format: 'url' }),
+  SMTP_HOST: Env.schema.string.optional({ format: 'host' }),
+  SMTP_PORT: Env.schema.number.optional(),
 
   /*
   |--------------------------------------------------------------------------

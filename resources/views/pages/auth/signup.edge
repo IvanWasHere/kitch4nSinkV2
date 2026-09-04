@@ -2,12 +2,19 @@
   title: 'Create an account',
   heading: 'Create your workspace',
   subtitle: 'Your account and your organisation are created together',
-  back: { route: 'session.create', text: 'Back to sign in' },
+  back: { route: 'auth.session.create', text: 'Back to sign in' },
 })
-  @form({ route: 'new_account.store', method: 'POST' })
+  @form({ route: 'auth.register.store', method: 'POST' })
     @field.root({ name: 'fullName' })
       @!field.label({ text: 'Full name' })
       @!input.control({ placeholder: 'Jane Cooper', autocomplete: 'name' })
+      @!field.error()
+    @end
+
+    @field.root({ name: 'organizationName' })
+      @!field.label({ text: 'Workspace name' })
+      @!input.control({ placeholder: 'Acme', autocomplete: 'organization' })
+      <span class="field-hint">Optional — we will name it after you if you leave it blank.</span>
       @!field.error()
     @end
 
@@ -23,7 +30,7 @@
         <div class="input-wrap">
           @!input.control({
             type: 'password',
-            placeholder: 'Create a password',
+            placeholder: 'At least 12 characters',
             autocomplete: 'new-password',
             'x-model': 'value',
             'x-bind:type': 'type',
@@ -51,10 +58,12 @@
     @!button({ text: 'Create account', type: 'submit', block: true })
   @end
 
+  @!auth.socialButtons({ providers: socialProviders, action: 'Sign up' })
+
   <div class="divider">or</div>
 
   @!link({
-    route: 'session.create',
+    route: 'auth.session.create',
     text: 'Already have an account? Sign in',
     class: 'btn btn-outline btn-block',
   })

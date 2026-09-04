@@ -3,15 +3,17 @@
 | Routes file
 |--------------------------------------------------------------------------
 |
-| Routes are registered per area. As milestones land, each area moves into
-| its own file under start/routes/ (plan §4).
+| Routes are registered per area, one file each (plan §4). Import order is
+| the order they are matched in.
 |
 */
 
 import app from '@adonisjs/core/services/app'
 import router from '@adonisjs/core/services/router'
-import { middleware } from '#start/kernel'
-import { controllers } from '#generated/controllers'
+
+import '#start/routes/auth'
+import '#start/routes/web'
+import '#start/routes/admin'
 
 router.on('/').render('pages/home').as('home')
 
@@ -22,19 +24,3 @@ router.on('/').render('pages/home').as('home')
 if (app.inDev) {
   router.on('/styleguide').render('pages/dev/styleguide').as('styleguide')
 }
-
-router
-  .group(() => {
-    router.get('signup', [controllers.NewAccount, 'create'])
-    router.post('signup', [controllers.NewAccount, 'store'])
-
-    router.get('login', [controllers.Session, 'create'])
-    router.post('login', [controllers.Session, 'store'])
-  })
-  .use(middleware.guest())
-
-router
-  .group(() => {
-    router.post('logout', [controllers.Session, 'destroy'])
-  })
-  .use(middleware.auth())

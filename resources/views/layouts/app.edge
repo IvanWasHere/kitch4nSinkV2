@@ -64,7 +64,7 @@
             {{{ await $slots.actions() }}}
           @end
 
-          @form({ route: 'session.destroy', method: 'POST' })
+          @form({ route: 'auth.session.destroy', method: 'POST' })
             <button type="submit" class="topbar-icon-btn" aria-label="Sign out">
               @!icon({ name: 'logOut', width: 16, height: 16 })
             </button>
