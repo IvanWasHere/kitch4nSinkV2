@@ -54,9 +54,27 @@ export default class StaffCreate extends BaseCommand {
       return
     }
 
-    const existing = await StaffUser.findBy('email', email.trim().toLowerCase())
+    const normalised = email.trim().toLowerCase()
+
+    const existing = await StaffUser.findBy('email', normalised)
     if (existing) {
       this.logger.error(`A staff account already exists for ${email}`)
+      this.exitCode = 1
+      return
+    }
+
+    /**
+     * One address, one account. Staff and customers are separate tables
+     * behind separate guards (D5), so the database cannot enforce this — but
+     * an address that is both is two identities with two passwords and two
+     * login pages, and no way for its owner to tell which one is failing.
+     *
+     * Checked here rather than at public signup: refusing an address there
+     * would let anyone enumerate staff addresses from the registration form.
+     */
+    const { default: User } = await import('#models/user')
+    if (await User.findBy('email', normalised)) {
+      this.logger.error(`${email} is already a customer account. Use a different address.`)
       this.exitCode = 1
       return
     }

@@ -31,10 +31,21 @@ export default class DevTotp extends BaseCommand {
     const { generate } = await import('otplib')
 
     const email = this.email.trim().toLowerCase()
+
+    /**
+     * An address identifies exactly one account, but staff and customers are
+     * separate tables (D5), so both are checked.
+     */
     const subject = (await User.findBy('email', email)) ?? (await StaffUser.findBy('email', email))
 
-    if (!subject?.twoFactorSecret) {
-      this.logger.error(`No two-factor secret for ${email}`)
+    if (!subject) {
+      this.logger.error(`No account for ${email}`)
+      this.exitCode = 1
+      return
+    }
+
+    if (!subject.twoFactorSecret) {
+      this.logger.error(`${email} has no two-factor secret`)
       this.exitCode = 1
       return
     }

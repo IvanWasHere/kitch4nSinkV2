@@ -113,4 +113,17 @@ export default await Env.create(new URL('../', import.meta.url), {
   */
   QUEUE_WORKER_CONCURRENCY: Env.schema.number.optional(),
   QUEUE_POLL_INTERVAL_MS: Env.schema.number.optional(),
+
+  /*
+  |--------------------------------------------------------------------------
+  | Development conveniences
+  |--------------------------------------------------------------------------
+  |
+  | A fixed six-digit code accepted in place of a real authenticator code, so
+  | the seeded accounts can be signed into without an app. Honoured *only*
+  | when NODE_ENV is `development`, and only while this is set — see
+  | TwoFactorService. Leave it unset anywhere that is not a laptop.
+  |
+  */
+  DEV_TWO_FACTOR_CODE: Env.schema.string.optional(),
 })

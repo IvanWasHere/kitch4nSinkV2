@@ -2,6 +2,9 @@ import { randomBytes, createHash, timingSafeEqual } from 'node:crypto'
 import { DateTime } from 'luxon'
 import QRCode from 'qrcode'
 import { generateSecret, generateURI, verify } from 'otplib'
+import app from '@adonisjs/core/services/app'
+import logger from '@adonisjs/core/services/logger'
+import env from '#start/env'
 
 /**
  * TOTP two-factor, shared by tenant users and staff.
@@ -142,8 +145,41 @@ export class TwoFactorService {
       return false
     }
 
+    if (this.acceptsFixedDevelopmentCode(normalised)) {
+      logger.warn('accepted the fixed development two-factor code — DEV_TWO_FACTOR_CODE is set')
+      return true
+    }
+
     const result = await verify({ secret, token: normalised, epochTolerance: EPOCH_TOLERANCE })
     return result.valid
+  }
+
+  /**
+   * A fixed code standing in for an authenticator app while developing, so
+   * the seeded accounts can be signed into without one.
+   *
+   * This is an authentication bypass, so it has two independent gates and
+   * both must hold:
+   *
+   *   1. `NODE_ENV` is exactly `development`. Production is excluded, and so
+   *      is the test suite — which is why the two-factor tests still exercise
+   *      real TOTP rather than quietly passing on this.
+   *   2. `DEV_TWO_FACTOR_CODE` is set. It lives in `.env`, which is not
+   *      deployed, so a production environment has nothing to read.
+   *
+   * Either gate alone would do; both are here because the cost of getting it
+   * wrong is every account on the system. Each use is logged at warn level, so
+   * an environment where this is unexpectedly live says so out loud rather
+   * than silently accepting `123456` forever.
+   */
+  private acceptsFixedDevelopmentCode(token: string): boolean {
+    if (!app.inDev) {
+      return false
+    }
+
+    const fixedCode = env.get('DEV_TWO_FACTOR_CODE')
+
+    return Boolean(fixedCode) && token === fixedCode
   }
 
   private generateRecoveryCodes(): string[] {

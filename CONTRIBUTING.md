@@ -103,13 +103,63 @@ It prompts for a password and walks through two-factor enrolment, which is manda
 Pass `--password=…` for non-interactive setup (a container's release phase), in which case
 enrolment is completed without asking for a code and the recovery codes are printed.
 
-`node ace dev:totp <email>` prints a currently-valid code, so the two-factor screens can be walked
-through without an authenticator app. It refuses to run outside development.
+### Two-factor while developing
+
+`.env` ships with `DEV_TWO_FACTOR_CODE=123456`, and **`123456` is accepted anywhere a six-digit
+authenticator code is asked for** — the sign-in challenge and enrolment alike. That is an
+authentication bypass, so it has two independent gates and both must hold:
+
+1. `NODE_ENV` is exactly `development`. Production is excluded, and so is the test suite — the
+   two-factor tests still exercise real TOTP, and one of them asserts `123456` is refused there
+   even with the variable set.
+2. `DEV_TWO_FACTOR_CODE` is set. It lives in `.env`, which is not deployed.
+
+Every use logs a warning, so an environment where this is unexpectedly live says so out loud
+instead of silently accepting `123456` forever. Unset the variable and two-factor behaves normally.
+
+`node ace dev:totp <email>` prints a genuine code for an account, for when you want to exercise the
+real path. It refuses to run outside development.
+
+## Test accounts
+
+```bash
+node ace migration:fresh --seed
+```
+
+Four addresses, each used exactly once. Two are employees of the SaaS, two are customers in one
+workspace.
+
+| Account | Password | Signs in at | Role |
+|---|---|---|---|
+| `admin@example.com` | `Admin12345` | `/admin/login` | Staff — admin |
+| `support@example.com` | `Support12345` | `/admin/login` | Staff — support |
+| `user-manager@example.com` | `Manager12345` | `/login` | Owner of "Example Workspace" |
+| `user@example.com` | `User12345` | `/login` | Member of the same workspace |
+
+**Employees and customers are different tables behind different logins** (D5). A staff address is
+rejected at `/login` exactly as a stranger would be, and vice versa — the two guards do not know
+about each other, which is the point. An address is never both: `staff:create` refuses one that
+already belongs to a customer.
+
+Staff two-factor is mandatory and is not relaxed for the seeded accounts, so `/admin/login` asks
+for a code — enter **`123456`** in development (see "Two-factor while developing" above), or run
+`node ace dev:totp admin@example.com` for a genuine one.
+
+The manager is the workspace **owner**: billing, inviting and removing people are exactly what §6
+grants an owner, and there is one owner per organisation (D1). Signed in as the member, the invite
+and remove buttons are absent and the workspace settings form is read-only. Billing screens land in
+M4; until then the nav item does not exist for anyone.
+
+These are a **seeder**, not a migration. Migrations run everywhere, including a production release
+phase, so accounts with published passwords created from one would land on the live database — and
+deleting the migration later would not remove rows it had already created. Seeders declare
+`static environment` and are skipped entirely outside development and test. Re-running is safe:
+existing accounts are left alone.
 
 ## Demo data
 
 ```bash
-node ace migration:fresh && node ace dev:seed
+node ace dev:seed
 ```
 
 Creates one workspace with an owner, a member and a pending invitation, and prints the invitation

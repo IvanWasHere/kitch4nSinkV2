@@ -18,6 +18,56 @@ function subject() {
   }
 }
 
+/**
+ * The fixed development code is an authentication bypass, gated on
+ * NODE_ENV being `development` *and* on DEV_TWO_FACTOR_CODE being set.
+ *
+ * The suite runs under NODE_ENV=test, so the first gate is shut here no
+ * matter what the second says. Setting the variable and watching the code
+ * still be refused is what proves the gate is the environment and not merely
+ * the absence of the variable — the failure mode worth catching is someone
+ * widening `app.inDev` to "not production" and silently enabling `123456`
+ * everywhere that is not a live deployment.
+ */
+test.group('TwoFactorService — fixed development code', (group) => {
+  group.each.setup(() => {
+    const original = process.env.DEV_TWO_FACTOR_CODE
+    process.env.DEV_TWO_FACTOR_CODE = '123456'
+
+    return () => {
+      if (original === undefined) {
+        delete process.env.DEV_TWO_FACTOR_CODE
+      } else {
+        process.env.DEV_TWO_FACTOR_CODE = original
+      }
+    }
+  })
+
+  test('is refused outside development, even when configured', async ({ assert }) => {
+    const user = subject()
+    const { secret } = await twoFactor.beginEnrolment(user)
+    await twoFactor.confirmEnrolment(user, await totpFor(secret))
+
+    assert.isFalse(await twoFactor.verify(user, '123456'))
+  })
+
+  test('does not make enrolment confirmable with it either', async ({ assert }) => {
+    const user = subject()
+    await twoFactor.beginEnrolment(user)
+
+    assert.isNull(await twoFactor.confirmEnrolment(user, '123456'))
+    assert.isNull(user.twoFactorConfirmedAt)
+  })
+
+  test('a real code still works while it is configured', async ({ assert }) => {
+    const user = subject()
+    const { secret } = await twoFactor.beginEnrolment(user)
+    await twoFactor.confirmEnrolment(user, await totpFor(secret))
+
+    assert.isTrue(await twoFactor.verify(user, await totpFor(secret)))
+  })
+})
+
 test.group('TwoFactorService', () => {
   test('enrolment stores a secret but leaves it unconfirmed', async ({ assert }) => {
     const user = subject()
