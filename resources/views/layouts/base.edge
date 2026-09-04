@@ -1,0 +1,26 @@
+{{--
+  The HTML skeleton every layout shares: head, asset tags, flash toasts.
+
+  Kept separate so the four layouts (marketing, auth, app, admin) differ only
+  in their chrome — a change to the document head is made once.
+
+  Props:
+    title       — <title> text, suffixed with the application name
+    bodyClass   — optional class on <body>
+--}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ $props.get('title') ? `${$props.get('title')} · ${appName}` : appName }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('head')
+    @stack('dumper')
+  </head>
+  <body {{ $props.only(['class']).merge({ class: [$props.get('bodyClass')] }).toAttrs() }}>
+    @include('partials/flash_alerts')
+    {{{ await $slots.main() }}}
+    @stack('scripts')
+  </body>
+</html>

@@ -1,0 +1,39 @@
+{{--
+  The centred card used by every unauthenticated flow: sign in, register,
+  password reset, email verification, 2FA challenge, invitation acceptance,
+  and the error pages (plan §13.5).
+
+  Props:
+    title    — page <title>
+    heading  — the card's own title
+    subtitle — the line under it
+    back     — optional { route, text } for the "back to sign in" link
+--}}
+@component('layouts/base', { title: $props.get('title') ?? $props.get('heading') })
+  <main class="auth-wrapper">
+    <div class="auth-card">
+      @if($props.has('back'))
+        <a href="{{ urlFor($props.get('back').route) }}" class="back-link">
+          @!icon({ name: 'arrowLeft', width: 14, height: 14 })
+          {{ $props.get('back').text ?? 'Back' }}
+        </a>
+      @end
+
+      <div class="logo">
+        <span class="logo-icon">
+          @!icon({ name: 'layers' })
+        </span>
+        <span class="logo-text">{{ appName }}</span>
+      </div>
+
+      @if($props.has('heading'))
+        <h1 class="auth-title">{{ $props.get('heading') }}</h1>
+      @end
+      @if($props.has('subtitle'))
+        <p class="auth-subtitle">{{ $props.get('subtitle') }}</p>
+      @end
+
+      {{{ await $slots.main() }}}
+    </div>
+  </main>
+@end

@@ -1,5 +1,6 @@
 import { indexEntities } from '@adonisjs/core'
 import { defineConfig } from '@adonisjs/core/app'
+import { indexPolicies } from '@adonisjs/bouncer'
 
 export default defineConfig({
   /*
@@ -27,6 +28,7 @@ export default defineConfig({
     () => import('@adonisjs/core/commands'),
     () => import('@adonisjs/lucid/commands'),
     () => import('@adonisjs/session/commands'),
+    () => import('@adonisjs/bouncer/commands'),
   ],
 
   /*
@@ -53,6 +55,7 @@ export default defineConfig({
     () => import('@adonisjs/static/static_provider'),
     () => import('@adonisjs/lucid/database_provider'),
     () => import('@adonisjs/auth/auth_provider'),
+    () => import('@adonisjs/bouncer/bouncer_provider'),
   ],
 
   /*
@@ -67,6 +70,7 @@ export default defineConfig({
     () => import('#start/routes'),
     () => import('#start/kernel'),
     () => import('#start/validator'),
+    () => import('#start/view'),
   ],
 
   /*
@@ -131,7 +135,7 @@ export default defineConfig({
   |
   */
   hooks: {
-    init: [indexEntities()],
+    init: [indexEntities(), indexPolicies()],
     buildStarting: [() => import('@adonisjs/vite/build_hook')],
   },
 })

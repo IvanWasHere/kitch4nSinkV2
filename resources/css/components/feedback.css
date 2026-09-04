@@ -1,0 +1,260 @@
+/*
+| Toasts, the notification dropdown, empty states and the account banner.
+| Toasts and the dropdown are ported from example-ui/index.html
+| (plan §13.4 "Feedback"); empty states and banners are new work in the same
+| language (plan §13.4, "missing from the mockup").
+|
+| A toast here renders a server flash message — there is no client-side
+| showToast() (plan §13.3).
+*/
+
+.toast-stack {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-toast);
+  animation: toastIn 0.3s ease;
+}
+
+.toast-dismissing {
+  animation: toastOut 0.3s ease forwards;
+}
+
+.toast-success {
+  background: var(--green-50);
+  color: var(--green-700);
+  border: 1px solid var(--green-100);
+}
+
+.toast-error {
+  background: var(--red-50);
+  color: var(--red-700);
+  border: 1px solid var(--red-100);
+}
+
+.toast-info {
+  background: var(--blue-50);
+  color: var(--blue-600);
+  border: 1px solid var(--border);
+}
+
+.notif-menu {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  width: 340px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-menu);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  animation: menuIn 0.2s ease;
+  padding: 12px 0;
+}
+
+.notif-menu-header {
+  padding: 12px 16px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--gray-100);
+  margin-bottom: 4px;
+}
+
+.notif-menu-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.notif-item {
+  padding: 12px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: start;
+  cursor: pointer;
+  transition: background var(--transition);
+  text-decoration: none;
+}
+
+.notif-item:hover {
+  background: var(--gray-50);
+}
+
+.notif-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.notif-icon-wrap.success {
+  background: var(--green-50);
+  color: var(--green-600);
+}
+
+.notif-icon-wrap.alert {
+  background: var(--orange-50);
+  color: var(--orange-500);
+}
+
+.notif-icon-wrap.error {
+  background: var(--red-50);
+  color: var(--red-500);
+}
+
+.notif-icon-wrap.info {
+  background: var(--blue-50);
+  color: var(--blue-500);
+}
+
+.notif-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.notif-desc {
+  font-size: 12px;
+  color: var(--gray-500);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.notif-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.notif-menu-btn {
+  width: 100%;
+  background: var(--blue-500);
+  color: var(--white);
+  border: none;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.notif-menu-btn:hover {
+  background: var(--blue-600);
+}
+
+/*
+| Empty state — new. Every list screen needs one, and an empty screen with a
+| single primary action is where a new tenant starts.
+*/
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-xl);
+  background: var(--blue-50);
+  color: var(--blue-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.empty-state-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-bottom: 6px;
+}
+
+.empty-state-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 380px;
+  margin: 0 auto 18px;
+}
+
+/*
+| Account banner — new. Carries the `past_due` / `canceled` state (plan §7.5
+| dunning) and the impersonation notice (plan §12), both of which must be
+| visible on every screen rather than on one page.
+*/
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 28px;
+  font-size: 13px;
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.banner-warning {
+  background: var(--orange-50);
+  color: var(--orange-600);
+  border-bottom: 1px solid var(--orange-500);
+}
+
+.banner-danger {
+  background: var(--red-50);
+  color: var(--red-700);
+  border-bottom: 1px solid var(--red-400);
+}
+
+/**
+ * Impersonation is deliberately loud: a staff member must never forget they
+ * are acting as someone else (plan §6).
+ */
+.banner-impersonation {
+  background: var(--purple-500);
+  color: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+.banner-impersonation .btn-ghost {
+  color: var(--white);
+  text-decoration: underline;
+}

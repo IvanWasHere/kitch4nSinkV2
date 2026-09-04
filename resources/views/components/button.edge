@@ -1,7 +1,25 @@
+{{--
+  Props:
+    text    — label (or use the slot)
+    variant — primary | outline | ghost | danger  (default: primary)
+    size    — sm | xs                              (default: full height)
+    block   — stretch to the container width
+--}}
 @let(buttonTextFromSlot = await $slots.main())
 @let(buttonText = buttonTextFromSlot.trim() ? buttonTextFromSlot : ($props.get('text') ?? ''))
-@let(classes = [])
+@let(variant = $props.get('variant') ?? 'primary')
+@let(classes = [
+  'btn',
+  `btn-${variant}`,
+  $props.get('size') ? `btn-${$props.get('size')}` : '',
+  $props.get('block') ? 'btn-block' : '',
+])
 
-<button {{ $props.except(['text']).merge({ class: classes }).toAttrs() }}>
+<button {{
+  $props
+    .except(['text', 'variant', 'size', 'block'])
+    .merge({ class: classes, type: 'button' })
+    .toAttrs()
+}}>
   {{{ buttonText }}}
 </button>

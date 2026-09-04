@@ -1,0 +1,14 @@
+{{--
+  A status pill.
+
+  Props:
+    tone — success | warning | danger | info | neutral | accent
+    text — label (or use the slot)
+--}}
+@let(badgeTextFromSlot = await $slots.main())
+@let(badgeText = badgeTextFromSlot.trim() ? badgeTextFromSlot : ($props.get('text') ?? ''))
+@let(tone = $props.get('tone') ?? 'neutral')
+
+<span {{ $props.except(['text', 'tone']).merge({ class: ['badge', `badge-${tone}`] }).toAttrs() }}>
+  {{{ badgeText }}}
+</span>

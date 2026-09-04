@@ -1,0 +1,372 @@
+{{--
+  The component library on one page (development only).
+
+  It exists so the port of example-ui/index.html can be checked against the
+  original, and so every later milestone assembles screens from parts that
+  have already been reviewed in isolation. Add a component here when you add
+  it to resources/views/components.
+--}}
+@component('layouts/app', { title: 'Styleguide' })
+  @slot('actions')
+    @!button({ text: 'Action', variant: 'outline', size: 'sm' })
+  @end
+
+  <p class="section-desc" style="margin-bottom: 28px">
+    Every component in <code class="mono">resources/views/components</code>, rendered against the
+    tokens in <code class="mono">resources/css/tokens.css</code>. Development only.
+  </p>
+
+  <h2 class="section-title">Stat cards</h2>
+  <p class="section-desc">The dashboard's four headline numbers.</p>
+  <div class="stats-grid">
+    @!statCard({ label: 'Lists', value: '3', icon: 'list', tone: 'blue' })
+    @!statCard({ label: 'Open todos', value: '128', icon: 'package', tone: 'purple' })
+    @!statCard({
+      label: 'Completed this week',
+      value: '42',
+      icon: 'check',
+      tone: 'green',
+      change: { direction: 'up', text: '+18%' },
+    })
+    @!statCard({ label: 'Overdue', value: '5', icon: 'clock', tone: 'orange' })
+  </div>
+
+  <h2 class="section-title">Buttons</h2>
+  <p class="section-desc">Four variants, three sizes, plus the disabled state used at a plan cap.</p>
+  <div class="settings-card">
+    <div class="btn-row">
+      @!button({ text: 'Primary' })
+      @!button({ text: 'Outline', variant: 'outline' })
+      @!button({ text: 'Danger', variant: 'danger' })
+      @!button({ text: 'Ghost', variant: 'ghost' })
+    </div>
+    <div class="btn-row">
+      @!button({ text: 'Small', size: 'sm' })
+      @!button({ text: 'Extra small', size: 'xs' })
+      <span class="tooltip-host">
+        @!button({ text: 'Add list', disabled: true })
+      </span>
+    </div>
+  </div>
+
+  <h2 class="section-title">Badges</h2>
+  <p class="section-desc">Named by tone, not by domain — see resources/css/components/badges.css.</p>
+  <div class="settings-card">
+    <div class="btn-row">
+      @!badge({ text: 'Active', tone: 'success' })
+      @!badge({ text: 'Pending', tone: 'warning' })
+      @!badge({ text: 'Past due', tone: 'danger' })
+      @!badge({ text: 'Owner', tone: 'info' })
+      @!badge({ text: 'Member', tone: 'neutral' })
+      @!badge({ text: 'Impersonating', tone: 'accent' })
+    </div>
+  </div>
+
+  <h2 class="section-title">Form fields</h2>
+  <p class="section-desc">Labels, inputs, the password toggle and the strength meter.</p>
+  <div class="settings-card">
+    <div class="field-row">
+      @field.root({ name: 'demo_name' })
+        @!field.label({ text: 'Full name' })
+        @!input.control({ placeholder: 'Jane Cooper' })
+      @end
+      @field.root({ name: 'demo_email' })
+        @!field.label({ text: 'Email address' })
+        @!input.control({ type: 'email', placeholder: 'you@example.com' })
+      @end
+    </div>
+
+    @field.root({ name: 'demo_password' })
+      @!field.label({ text: 'Password' })
+      <div x-data="passwordStrength">
+        <div class="input-wrap">
+          @!input.control({ type: 'password', 'x-model': 'value', 'x-bind:type': 'type' })
+          <button type="button" class="pw-toggle" @click="toggle" x-text="toggleLabel">Show</button>
+        </div>
+        <div class="strength-bar">
+          <div class="strength-fill" :data-score="score" data-score="0"></div>
+        </div>
+        <div class="strength-text" x-text="label"></div>
+      </div>
+    @end
+
+    @field.root({ name: 'demo_notes' })
+      @!field.label({ text: 'Notes' })
+      @!textarea.control({ placeholder: 'Anything worth remembering' })
+      <span class="field-hint">Optional. Visible to everyone in the organisation.</span>
+    @end
+
+    @field.root({ name: 'demo_plan' })
+      @!field.label({ text: 'Timezone' })
+      @!select.control({
+        options: [
+          { value: 'UTC', name: 'UTC' },
+          { value: 'Europe/Berlin', name: 'Berlin' },
+          { value: 'America/New_York', name: 'New York' },
+        ],
+      })
+    @end
+
+    <div class="check-row">
+      <input type="checkbox" id="demo_check" />
+      <label for="demo_check">Email me when a todo assigned to me is due</label>
+    </div>
+  </div>
+
+  <h2 class="section-title">Usage meters</h2>
+  <p class="section-desc">
+    Amber at 80%, red at 100%, driven by the same numbers as server-side enforcement.
+  </p>
+  <div class="settings-card">
+    <div class="settings-grid">
+      @!usageMeter({ label: 'Lists', current: 1, limit: 3 })
+      @!usageMeter({ label: 'Seats', current: 8, limit: 10 })
+      @!usageMeter({ label: 'Todos in this list', current: 50, limit: 50 })
+      @!usageMeter({ label: 'Lists', current: 128, limit: null })
+    </div>
+  </div>
+
+  <h2 class="section-title">Panel and table</h2>
+  <p class="section-desc">The shape every list screen uses.</p>
+  @panel.root({ title: 'Recent todos', flush: true })
+    @slot('actions')
+      @!button({ text: 'New todo', size: 'sm' })
+    @end
+
+    <div class="table-scroll">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Todo</th>
+            <th>List</th>
+            <th>Assignee</th>
+            <th>Priority</th>
+            <th>Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#" class="order-id">tdo_9m2kd7fpqrst</a></td>
+            <td>Launch checklist</td>
+            <td>Jane Cooper</td>
+            <td>
+              @!badge({ text: 'High', tone: 'danger' })
+            </td>
+            <td>Tomorrow</td>
+          </tr>
+          <tr>
+            <td><a href="#" class="order-id">tdo_4hs8xz2wbnkm</a></td>
+            <td>Onboarding</td>
+            <td>Unassigned</td>
+            <td>
+              @!badge({ text: 'Normal', tone: 'neutral' })
+            </td>
+            <td>Friday</td>
+          </tr>
+          <tr class="skeleton-row">
+            <td colspan="5"><div class="skeleton-bar"></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    @!pagination({ summary: 'Showing 2 of 128', nextUrl: '#', prevUrl: null })
+  @end
+
+  <h2 class="section-title">Cards</h2>
+  <p class="section-desc">
+    The mockup's product grid, re-cut as list cards with a count pill (plan §13.6.2).
+  </p>
+  <div class="card-grid">
+    <a href="#" class="entity-card">
+      <span class="card-stripe card-stripe-blue"></span>
+      <div class="entity-card-body">
+        <p class="entity-card-name">Launch checklist</p>
+        <div class="entity-card-meta">
+          <span class="section-desc" style="margin: 0">Created by Jane</span>
+          <span class="count-pill count-ok">12 / 50</span>
+        </div>
+      </div>
+    </a>
+    <a href="#" class="entity-card">
+      <span class="card-stripe card-stripe-orange"></span>
+      <div class="entity-card-body">
+        <p class="entity-card-name">Onboarding</p>
+        <div class="entity-card-meta">
+          <span class="section-desc" style="margin: 0">Created by Sam</span>
+          <span class="count-pill count-near">43 / 50</span>
+        </div>
+      </div>
+    </a>
+    <a href="#" class="entity-card">
+      <span class="card-stripe card-stripe-red"></span>
+      <div class="entity-card-body">
+        <p class="entity-card-name">Support backlog</p>
+        <div class="entity-card-meta">
+          <span class="section-desc" style="margin: 0">Created by Alex</span>
+          <span class="count-pill count-full">50 / 50</span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <h2 class="section-title" style="margin-top: 28px">Empty state</h2>
+  @panel.root()
+    @!emptyState({
+      icon: 'list',
+      title: 'No lists yet',
+      description: 'Lists belong to the organisation, so everyone on your team will see them.',
+    })
+  @end
+
+  <h2 class="section-title">Plan cards</h2>
+  <p class="section-desc">Also used inline as the upsell when a create is blocked by a limit.</p>
+  <div class="plan-grid">
+    <div class="plan-card">
+      <p class="plan-name">Free</p>
+      <p class="plan-desc">For trying things out</p>
+      <div class="plan-price"><span class="plan-amount">$0</span></div>
+      <ul class="plan-features">
+        <li><span class="plan-check">✓</span> 3 lists</li>
+        <li><span class="plan-check">✓</span> 2 seats</li>
+        <li><span class="plan-empty">✕</span> API access</li>
+      </ul>
+      @!button({ text: 'Current plan', variant: 'outline', block: true, disabled: true })
+    </div>
+    <div class="plan-card current">
+      <span class="plan-badge">Current</span>
+      <p class="plan-name">Pro</p>
+      <p class="plan-desc">For a working team</p>
+      <div class="plan-price">
+        <span class="plan-amount">$29</span><span class="plan-period">/month</span>
+      </div>
+      <ul class="plan-features">
+        <li><span class="plan-check">✓</span> 25 lists</li>
+        <li><span class="plan-check">✓</span> 10 seats</li>
+        <li><span class="plan-check">✓</span> API access</li>
+      </ul>
+      @!button({ text: 'Manage plan', block: true })
+    </div>
+    <div class="plan-card">
+      <p class="plan-name">Business</p>
+      <p class="plan-desc">For a whole company</p>
+      <div class="plan-price">
+        <span class="plan-amount">$99</span><span class="plan-period">/month</span>
+      </div>
+      <ul class="plan-features">
+        <li><span class="plan-check">✓</span> Unlimited lists</li>
+        <li><span class="plan-check">✓</span> 50 seats</li>
+        <li><span class="plan-check">✓</span> SSO</li>
+      </ul>
+      @!button({ text: 'Upgrade', variant: 'outline', block: true })
+    </div>
+  </div>
+
+  <h2 class="section-title">Info boxes and banners</h2>
+  <div class="settings-card">
+    <div class="info-box">
+      If an account exists with that email, a reset link is on its way.
+    </div>
+    <div class="info-box info-box-warning">
+      You are using 3 of 3 lists. Upgrade to add more.
+    </div>
+    <div class="info-box info-box-danger">
+      Your last payment failed. Update your card to avoid losing access.
+    </div>
+    <div class="info-box info-box-success">
+      Your subscription is active.
+    </div>
+  </div>
+  <div class="banner banner-warning" style="border-radius: var(--radius); margin-bottom: 12px">
+    <span>Payment failed — update your card to keep your plan.</span>
+    @!button({ text: 'Update card', variant: 'outline', size: 'xs' })
+  </div>
+  <div class="banner banner-impersonation" style="border-radius: var(--radius); position: static">
+    <span>You are impersonating jane@example.com. Session ends in 58 minutes.</span>
+    <button type="button" class="btn-ghost">Stop impersonating</button>
+  </div>
+
+  <h2 class="section-title" style="margin-top: 28px">Copy to clipboard</h2>
+  <p class="section-desc">Used for a secret shown exactly once.</p>
+  <div class="settings-card">
+    @!copyField({ label: 'Your new API key', value: 'sk_test_3f9a1c8e42b7d05619cfa87d3e2b6104' })
+  </div>
+
+  <h2 class="section-title">File upload</h2>
+  <div class="settings-card">
+    @!fileDrop({ name: 'demo_file', hint: 'PNG or JPG, up to 5 MB', multiple: true })
+  </div>
+
+  <h2 class="section-title">Avatar upload</h2>
+  <div class="settings-card">
+    <div class="avatar-upload" x-data="imagePreview('')">
+      <span class="avatar-preview">
+        <template x-if="src"><img :src="src" alt="" /></template>
+        <span x-show="!src">JC</span>
+      </span>
+      <div>
+        <label class="btn btn-outline btn-sm" style="cursor: pointer">
+          Choose image
+          <input type="file" class="sr-only" accept="image/*" @change="onSelect" />
+        </label>
+        <p class="field-hint">Square images look best. Max 2 MB.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Modal</h2>
+  <div class="settings-card">
+    <div class="btn-row">
+      @!button({
+        text: 'Open modal',
+        variant: 'outline',
+        onclick: "document.getElementById('demo-modal').showModal()",
+      })
+    </div>
+  </div>
+
+  @modal({ id: 'demo-modal', title: 'Create a list', description: 'Lists belong to the organisation.' })
+    @field.root({ name: 'demo_list_name' })
+      @!field.label({ text: 'Name' })
+      @!input.control({ placeholder: 'Launch checklist' })
+    @end
+    @slot('footer')
+      @!button({
+        text: 'Cancel',
+        variant: 'outline',
+        onclick: "document.getElementById('demo-modal').close()",
+      })
+      @!button({ text: 'Create list' })
+    @end
+  @end
+
+  <h2 class="section-title">Danger zone</h2>
+  <div class="settings-card danger-zone">
+    <h3 class="section-title">Delete organisation</h3>
+    <p class="section-desc">
+      This deletes every list, todo and file. Type the organisation name to confirm.
+    </p>
+    <div x-data="confirmByTyping('Acme')">
+      @field.root({ name: 'demo_confirm' })
+        @!input.control({ placeholder: 'Acme', 'x-model': 'typed' })
+      @end
+      @!button({ text: 'Delete organisation', variant: 'danger', 'x-bind:disabled': '!matches' })
+    </div>
+  </div>
+
+  <h2 class="section-title">Icons</h2>
+  <div class="settings-card">
+    <div class="btn-row" style="gap: 18px">
+      @each(name in [
+        'layers', 'barChart', 'list', 'folder', 'users', 'creditCard', 'key', 'settings',
+        'bell', 'logOut', 'menu', 'plus', 'search', 'trash', 'edit', 'x', 'archive',
+        'clock', 'upload', 'shield', 'check', 'alert', 'info', 'arrowLeft', 'trendingUp',
+        'dollarSign', 'package', 'lifebuoy', 'shoppingBag',
+      ])
+        <span title="{{ name }}" style="color: var(--gray-600)">
+          @!icon({ name: name, width: 20, height: 20 })
+        </span>
+      @end
+    </div>
+  </div>
+@end

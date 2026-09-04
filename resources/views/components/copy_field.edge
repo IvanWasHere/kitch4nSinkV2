@@ -1,0 +1,24 @@
+{{--
+  A secret shown once — an API key, an invitation link.
+
+  The value is always rendered as selectable text next to the button, so a
+  browser that refuses clipboard access still lets it be copied by hand.
+
+  Props:
+    value, label
+--}}
+<div x-data="copyToClipboard({{ js.stringify($props.get('value')) }})">
+  @if($props.has('label'))
+    <span class="field-label">{{ $props.get('label') }}</span>
+  @end
+  <div class="copy-field">
+    <code class="copy-value" x-ref="value">{{ $props.get('value') }}</code>
+    <button type="button" class="btn btn-outline btn-sm" @click="copy">
+      <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+    </button>
+  </div>
+  <p class="copy-status" x-show="copied" x-cloak>Copied to clipboard.</p>
+  <p class="field-error" x-show="error" x-cloak>
+    Could not copy automatically — select the value and copy it.
+  </p>
+</div>

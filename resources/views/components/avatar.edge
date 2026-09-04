@@ -1,5 +1,5 @@
 @let(nameInitials = $props.get('initials'))
-@let(classes = [])
+@let(classes = ['sidebar-avatar'])
 @if($props.get('src'))
   <img {{ $props.except(['initials', 'name']).merge({ class: classes }).toAttrs() }} />
 @elseif(nameInitials)

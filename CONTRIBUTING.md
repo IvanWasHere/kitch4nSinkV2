@@ -1,0 +1,89 @@
+# Contributing
+
+The implementation plan lives in [`plan.md`](./plan.md). It is the source of truth for scope,
+decisions, and build order — read the relevant section before starting a milestone.
+
+## Running the app
+
+```bash
+npm install
+node ace generate:key        # only if .env has no APP_KEY
+node ace migration:run
+npm run dev                  # http://localhost:3333
+```
+
+SQLite is the default and needs no setup. To run against Postgres locally, set
+`DB_CONNECTION=postgres` plus either `DATABASE_URL` or the discrete `DB_*` variables.
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+```
+
+## Database portability rules (plan §5.1)
+
+The app runs on SQLite locally and Postgres when deployed, on **identical application code**.
+There are no `if (isSqlite)` branches outside the one sanctioned exception below. Portability is
+enforced at the migration layer, and these rules are checked in review.
+
+1. **Primary keys** — `table.increments()` / `table.bigIncrements()`. Never hand-write Postgres
+   `serial` / `identity` DDL.
+2. **JSON columns** — `table.json()`. Lucid stores TEXT on SQLite and `json` on Postgres, so always
+   round-trip through a model `prepare` / `consume` pair to get identical behaviour on both.
+3. **Timestamps** — `table.timestamp(name, { useTz: true })` everywhere. Store UTC. Never rely on a
+   database `now()` default; the application supplies the value.
+4. **No column alters.** SQLite's `ALTER TABLE` is severely limited. To change a column: add a new
+   column, backfill it in a migration, then drop the old one — three migrations, not one alter.
+5. **No dialect-specific types or operators**: no `citext`, `enum`, `array`, `jsonb` operators,
+   partial indexes, or `ILIKE`. Case-insensitive email is achieved by lowercasing at the model
+   layer plus a plain unique index.
+6. **No raw SQL in application code.** The single sanctioned exception is the queue reservation
+   query (plan §9), which is dialect-switched in exactly one place inside `QueueService`.
+7. **Booleans** via `table.boolean()`, always read back through Lucid — SQLite hands back 0/1 and
+   Lucid normalises it.
+8. **Money** as integer minor units (`amount_cents`). Never float, never decimal.
+
+CI runs the full suite against **both** engines on every push. A rule that is only exercised on
+SQLite is not enforced, so a migration that cannot run on Postgres fails the build.
+
+## Tenancy rules
+
+- Every tenant-owned table carries `organization_id` and an index on it.
+- Every query against a tenant-owned table filters on `organization_id`. There is no endpoint that
+  accepts an organisation id as a parameter — the session or the API key *is* the scope.
+- Authorisation is a Bouncer policy, and **every policy takes the actor explicitly** rather than
+  reading `auth.user`, so API-key actors and impersonating staff go through the same checks.
+
+## Adding a table
+
+1. Write the migration following the rules above. Migration order matters — see plan §5.3.
+2. Run `node ace migration:run`. This regenerates `database/schema.ts`; **do not edit that file**.
+   To change how a column is typed or decorated, edit `database/schema_rules.ts` instead.
+3. Create the model in `app/models/`, composing the generated schema class with the mixins it
+   needs, e.g. `compose(TodoListSchema, withPublicId('todoList'))`.
+4. If the table carries a `public_id`, register its prefix in `app/models/public_id.ts`.
+
+## Frontend
+
+`example-ui/index.html` is the **visual reference**, not code to port. It is a Mithril prototype
+with fixture data; its CSS is what transfers, and it has been extracted into `resources/css/`.
+Screens are Edge templates with Alpine.js for interactivity (plan §13).
+
+- Nothing hardcodes a colour. Every value comes from a token in `resources/css/tokens.css`.
+- Every interaction works as a plain form POST with JavaScript disabled; Alpine only removes
+  round trips.
+- Tabs are real URLs, so they can be linked, bookmarked, and permission-gated server-side.
+- `/styleguide` (development only) renders the whole component library on one page. Add new
+  components there so they can be reviewed in isolation.
+
+### Two Edge rules that fail silently
+
+Both of these produce a page that renders *without an error* but with the tag printed as literal
+text, so they are worth knowing before you lose ten minutes to one:
+
+1. **A component tag must be the first thing on its line.** `<span>@!icon({ name: 'x' })</span>`
+   is emitted as text; put the tag on its own line.
+2. **Tag names are the camelCase of the file name.** `components/stat_card.edge` is called as
+   `@!statCard(...)`, not `@!stat_card(...)`. Nested files keep the dot form —
+   `components/field/root.edge` is `@field.root(...)`.

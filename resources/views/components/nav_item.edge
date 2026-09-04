@@ -1,0 +1,33 @@
+{{--
+  A sidebar navigation item.
+
+  In the mockup this is a <button> calling navigate(); here it is a link to a
+  real URL (plan §13.3), which is what makes `aria-current` and browser
+  history work.
+
+  Props:
+    route  — route name (or `href` for an external/literal path)
+    icon   — icon name
+    label  — visible text
+    usage  — optional { current, limit } rendered as "3/3" (plan §13.6.1)
+--}}
+@let(href = $props.has('href') ? $props.get('href') : urlFor($props.get('route')))
+@let(isCurrent = request.url() === href || request.url().startsWith(`${href}/`))
+@let(navUsage = $props.get('usage'))
+@let(usageRatio = navUsage && navUsage.limit ? navUsage.current / navUsage.limit : 0)
+
+<a {{
+  html.attrs({
+    href: href,
+    class: ['nav-item', isCurrent ? 'active' : ''],
+    'aria-current': isCurrent ? 'page' : false,
+  })
+}}>
+  @!icon({ name: $props.get('icon'), class: 'nav-icon' })
+  <span class="nav-label">{{ $props.get('label') }}</span>
+  @if(navUsage)
+    <span class="nav-usage {{ usageRatio >= 1 ? 'full' : usageRatio >= 0.8 ? 'warn' : '' }}">
+      {{ navUsage.current }}/{{ navUsage.limit ?? '∞' }}
+    </span>
+  @end
+</a>

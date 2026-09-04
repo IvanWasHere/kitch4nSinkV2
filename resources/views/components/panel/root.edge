@@ -1,0 +1,24 @@
+{{--
+  A bordered card that holds a table or a list.
+
+  Props:
+    title   — optional header title
+    flush   — true when the body should have no padding (tables)
+  Slots:
+    main    — body content
+    actions — optional header actions
+--}}
+<section {{ $props.except(['title', 'flush', 'actions']).merge({ class: ['panel'] }).toAttrs() }}>
+  @if($props.has('title') || $slots.actions)
+    <header class="panel-header">
+      <h2 class="panel-title">{{ $props.get('title') ?? '' }}</h2>
+      @if($slots.actions)
+        <div class="btn-row" style="margin-top: 0">{{{ await $slots.actions() }}}</div>
+      @end
+    </header>
+  @end
+
+  <div class="panel-body{{ $props.get('flush') ? ' panel-body-flush' : '' }}">
+    {{{ await $slots.main() }}}
+  </div>
+</section>

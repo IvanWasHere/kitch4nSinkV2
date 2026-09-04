@@ -1,0 +1,137 @@
+/*
+| Breakpoints. These are the mockup's four, preserved exactly (plan §13.2):
+|
+|   1024px  grids collapse to 2-up
+|    900px  support layout goes single-column, list/detail toggle
+|    768px  sidebar becomes an off-canvas drawer with overlay
+|    480px  single column, full-width dropdowns
+|
+| Anything added later has to fit these — introducing a fifth breakpoint means
+| the new screen disagrees with every existing one.
+*/
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .products-grid,
+  .card-grid,
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .support-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-list {
+    display: none;
+  }
+
+  .ticket-list.show-mobile {
+    display: flex;
+    height: 400px;
+  }
+
+  .conversation-panel {
+    display: none;
+    height: auto;
+  }
+
+  .conversation-panel.show-mobile {
+    display: flex;
+    height: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dash-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .dash-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay.open {
+    display: block;
+  }
+
+  .dash-main {
+    margin-left: 0;
+  }
+
+  .mobile-toggle {
+    display: flex;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .products-grid,
+  .card-grid,
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-content {
+    padding: 18px;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-topbar,
+  .marketing-header {
+    padding: 0 18px;
+  }
+
+  .banner {
+    padding: 10px 18px;
+  }
+
+  .hero-title {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card {
+    padding: 28px 22px;
+  }
+
+  .notif-menu,
+  .dropdown-menu {
+    width: calc(100vw - 60px);
+    left: 16px;
+    right: auto;
+  }
+
+  .toast-stack {
+    left: 16px;
+    right: 16px;
+    top: 16px;
+  }
+}

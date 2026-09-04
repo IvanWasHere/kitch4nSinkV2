@@ -1,0 +1,123 @@
+/*
+|--------------------------------------------------------------------------
+| Design tokens
+|--------------------------------------------------------------------------
+|
+| Extracted from example-ui/index.html, which is the visual reference for the
+| whole tenant-facing UI (plan §13.2). This file is the single source of truth
+| for colour, shape, motion and elevation — nothing else in the application may
+| hardcode a hex value.
+|
+| Two kinds of additions were made to the mockup's `:root`:
+|
+|   1. Steps the mockup's stylesheet *used* but never declared
+|      (--green-600, --purple-100, --purple-200). They rendered as invalid
+|      values in the prototype; here they resolve.
+|   2. Steps that existed in the mockup only as literal hexes repeated inline
+|      (--red-50/-100/-700, --green-100/-700), plus the shadows and the focus
+|      ring, so the "no hardcoded colour" rule is actually achievable.
+|
+| Dark mode is deliberately absent: the mockup has no dark palette and the plan
+| defers designing one to M8. Because every colour below is a custom property,
+| adding it is a second block, not a refactor.
+|
+*/
+
+:root {
+  /* Brand ------------------------------------------------------------- */
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+
+  /* Neutral ----------------------------------------------------------- */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --white: #ffffff;
+
+  /* Semantic — danger -------------------------------------------------- */
+  --red-50: #fef2f2;
+  --red-100: #fecaca;
+  --red-400: #f87171;
+  --red-500: #ef4444;
+  --red-700: #991b1b;
+
+  /* Semantic — success ------------------------------------------------- */
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #166534;
+
+  /* Semantic — warning ------------------------------------------------- */
+  --orange-50: #fff7ed;
+  --orange-400: #fb923c;
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+  --yellow-400: #facc15;
+
+  /* Semantic — accent -------------------------------------------------- */
+  --purple-50: #faf5ff;
+  --purple-100: #f3e8ff;
+  --purple-200: #e9d5ff;
+  --purple-500: #a855f7;
+  --purple-600: #9333ea;
+
+  /* Surfaces ----------------------------------------------------------- */
+  --page: var(--gray-50);
+  --surface: var(--white);
+  --surface-muted: var(--gray-50);
+  --text: var(--gray-800);
+  --text-strong: var(--gray-900);
+  --text-muted: var(--gray-400);
+
+  /*
+   | Borders are blue, not gray. This is what gives the whole UI its cool
+   | cast — swapping it for a neutral makes every screen look like a
+   | different product.
+   */
+  --border: var(--blue-100);
+  --border-strong: var(--blue-200);
+  --border-danger: var(--red-100);
+  --overlay: rgba(0, 0, 0, 0.3);
+
+  /* Shape -------------------------------------------------------------- */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+
+  /* Motion ------------------------------------------------------------- */
+  --transition: 180ms ease;
+
+  /* Elevation ---------------------------------------------------------- */
+  --shadow-card: 0 1px 3px rgba(59, 130, 246, 0.04), 0 4px 16px rgba(59, 130, 246, 0.03);
+  --shadow-hover: 0 2px 8px rgba(59, 130, 246, 0.06);
+  --shadow-menu: 0 10px 25px rgba(0, 0, 0, 0.08);
+  --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.02);
+  --ring-focus: 0 0 0 3px rgba(59, 130, 246, 0.08);
+  --ring-selected: 0 0 0 2px rgba(59, 130, 246, 0.15);
+
+  /* Type --------------------------------------------------------------- */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* Layout ------------------------------------------------------------- */
+  --sidebar-width: 240px;
+  --topbar-height: 60px;
+}

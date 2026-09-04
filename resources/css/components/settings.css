@@ -1,0 +1,74 @@
+/*
+| Settings cards and the danger zone.
+| Ported from example-ui/index.html (plan §13.4 "Settings").
+|
+| The mockup puts all three settings cards on one page. This application
+| splits them across /settings/profile, /settings/organization and
+| /settings/security so permissions map onto routes rather than onto sections
+| of a page (plan §13.6.4) — the card styles are unchanged either way.
+*/
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.settings-full {
+  grid-column: 1 / -1;
+}
+
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 18px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-bottom: 4px;
+}
+
+.section-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+.danger-zone {
+  border-color: var(--border-danger);
+}
+
+.danger-zone .section-title {
+  color: var(--red-500);
+}
+
+/**
+ * A definition row for read-only settings ("Plan: Pro", "Member since …").
+ */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 13px;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row-label {
+  color: var(--gray-500);
+}
+
+.settings-row-value {
+  color: var(--text-strong);
+  font-weight: 600;
+}

@@ -1,0 +1,38 @@
+{{--
+  A <dialog> modal. The browser owns focus trapping, Esc-to-close and making
+  the page behind it inert, so this component owns only the chrome.
+
+  Opened from anywhere via `document.getElementById(id).showModal()`, or by
+  passing `open: true` for a modal that must be shown on page load (the
+  "here is your API key, once" case).
+
+  Props:
+    id, title, description, open
+  Slots:
+    main   — body
+    footer — actions
+--}}
+<dialog
+  id="{{ $props.get('id') }}"
+  class="modal"
+  x-data="modal({{ $props.get('open') ? 'true' : 'false' }})"
+  aria-labelledby="{{ $props.get('id') }}-title"
+>
+  <header class="modal-header">
+    <div>
+      <h2 class="modal-title" id="{{ $props.get('id') }}-title">{{ $props.get('title') }}</h2>
+      @if($props.has('description'))
+        <p class="modal-desc">{{ $props.get('description') }}</p>
+      @end
+    </div>
+    <button type="button" class="modal-close" @click="close" aria-label="Close">
+      @!icon({ name: 'x', width: 16, height: 16 })
+    </button>
+  </header>
+
+  <div class="modal-body">{{{ await $slots.main() }}}</div>
+
+  @if($slots.footer)
+    <footer class="modal-footer">{{{ await $slots.footer() }}}</footer>
+  @end
+</dialog>

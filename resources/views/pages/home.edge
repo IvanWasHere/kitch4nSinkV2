@@ -1,23 +1,39 @@
-@layout()
-  <div class="hero">
-    <h1>It works — welcome to the simplicity of a Hypermedia app</h1>
-    <p>
-      A lightweight foundation for building modern web interfaces — straightforward, flexible, and true to the web's core simplicity.
+@component('layouts/marketing', { title: 'Multi-tenant SaaS starter' })
+  <section class="hero">
+    <h1 class="hero-title">Ship a billable SaaS, not scaffolding.</h1>
+    <p class="hero-subtitle">
+      Multi-tenant organisations, plan-gated limits, subscriptions, background jobs and an
+      organisation API — running on SQLite locally and Postgres in production.
     </p>
-  </div>
+    <div class="hero-actions">
+      @!link({ route: 'new_account.create', text: 'Create an account', class: 'btn btn-primary' })
+      @!link({ route: 'session.create', text: 'Sign in', class: 'btn btn-outline' })
+    </div>
+  </section>
 
-  <div class="cards">
-    <a href="https://insiders.adonisjs.com/docs/v7-alpha/introduction" target="_blank">
-      <h3>Official Docs &nbsp;›</h3>
-      <p>Comprehensive reference for building with AdonisJS</p>
-    </a>
-    <a href="https://adocasts.com/" target="_blank">
-      <h3>Adocasts &nbsp;›</h3>
-      <p>Guided video tutorials for everyday development</p>
-    </a>
-    <a href="https://discord.gg/vDcEjq6" target="_blank">
-      <h3>Discord &nbsp;›</h3>
-      <p>Connect with developers building with AdonisJS every day</p>
-    </a>
-  </div>
+  <section class="marketing-section" id="features">
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h2 class="feature-title">Organisations, not just users</h2>
+        <p class="feature-desc">
+          Every row is scoped to an organisation and every query filters on it, so one tenant can
+          never read another's data.
+        </p>
+      </div>
+      <div class="feature-card">
+        <h2 class="feature-title">Limits that hold under load</h2>
+        <p class="feature-desc">
+          Seats, lists and per-list todos are enforced inside the same transaction as the insert,
+          so two parallel requests cannot both slip past the cap.
+        </p>
+      </div>
+      <div class="feature-card">
+        <h2 class="feature-title">Providers behind interfaces</h2>
+        <p class="feature-desc">
+          Payments, mail and storage each sit behind an interface we own. Swapping one is a config
+          change and a new class, never a refactor.
+        </p>
+      </div>
+    </div>
+  </section>
 @end

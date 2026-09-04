@@ -1,0 +1,34 @@
+{{--
+  Public site: landing, pricing, legal, and the error pages that are reachable
+  while signed out. Its only state is "is someone signed in", which decides
+  whether the header offers Sign in or Dashboard.
+--}}
+@component('layouts/base', { title: $props.get('title') })
+  <header class="marketing-header">
+    <a href="{{ urlFor('home') }}" class="logo" style="margin-bottom: 0">
+      <span class="logo-icon">
+        @!icon({ name: 'layers' })
+      </span>
+      <span class="logo-text">{{ appName }}</span>
+    </a>
+
+    <nav class="marketing-nav">
+      <a href="{{ urlFor('home') }}#features">Features</a>
+      <a href="{{ urlFor('home') }}#pricing">Pricing</a>
+      @if(auth.user)
+        @!link({ route: 'home', text: 'Dashboard', class: 'btn btn-primary btn-sm' })
+      @else
+        @!link({ route: 'session.create', text: 'Sign in' })
+        @!link({ route: 'new_account.create', text: 'Get started', class: 'btn btn-primary btn-sm' })
+      @end
+    </nav>
+  </header>
+
+  <main class="marketing-main">
+    {{{ await $slots.main() }}}
+  </main>
+
+  <footer class="marketing-footer">
+    &copy; {{ new Date().getFullYear() }} {{ appName }}
+  </footer>
+@end

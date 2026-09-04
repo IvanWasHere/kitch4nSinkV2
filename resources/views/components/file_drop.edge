@@ -1,0 +1,50 @@
+{{--
+  Drag-and-drop upload wrapping a real file input, so the plain form POST
+  still works with JavaScript disabled (plan §13.3).
+
+  Props:
+    name     — input name
+    accept   — accept attribute
+    multiple — boolean
+    hint     — the line under the title
+--}}
+<div
+  x-data="fileUpload"
+  class="file-drop"
+  :class="dragging && 'dragging'"
+  @dragover.prevent="onDragOver"
+  @dragleave.prevent="onDragLeave"
+  @drop.prevent="onDrop"
+  @click="$refs.input.click()"
+>
+  <div class="empty-state-icon">
+    @!icon({ name: 'upload' })
+  </div>
+  <p class="file-drop-title">Drop files here or click to choose</p>
+  <p class="file-drop-hint">{{ $props.get('hint') ?? '' }}</p>
+
+  <input {{
+    html.attrs({
+      type: 'file',
+      class: ['sr-only'],
+      'x-ref': 'input',
+      name: $props.get('name') ?? 'file',
+      accept: $props.get('accept') ?? false,
+      multiple: $props.get('multiple') ? true : false,
+      '@change': 'onSelect',
+    })
+  }} />
+
+  <div class="file-progress" x-show="uploading" x-cloak>
+    <div class="file-progress-fill" :style="`width: ${progress}%`"></div>
+  </div>
+
+  <ul class="file-list" x-show="files.length" x-cloak>
+    <template x-for="file in files" :key="file.name">
+      <li class="file-row">
+        <span class="file-row-name" x-text="file.name"></span>
+        <span class="file-row-meta" x-text="formatSize(file.size)"></span>
+      </li>
+    </template>
+  </ul>
+</div>

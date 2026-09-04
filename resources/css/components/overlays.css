@@ -1,0 +1,162 @@
+/*
+| Modal dialog and dropdown menu — new components, designed in the mockup's
+| language (plan §13.4, "missing from the mockup").
+|
+| The modal is built on <dialog> so the browser supplies focus trapping, Esc
+| to close and inertness of the page behind it — all things the mockup's
+| dropdown gets wrong and that the M8 accessibility pass would otherwise have
+| to retrofit.
+*/
+
+.modal {
+  /* The global reset zeroes margins, which is also what centres a <dialog>. */
+  margin: auto;
+  width: min(520px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-menu);
+}
+
+.modal::backdrop {
+  background: var(--overlay);
+}
+
+.modal[open] {
+  animation: menuIn 0.2s ease;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 0;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+}
+
+.modal-close:hover {
+  color: var(--gray-600);
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 24px 20px;
+}
+
+.modal-footer .btn {
+  width: auto;
+}
+
+/*
+| Generic dropdown. The notification menu in the mockup is a special case of
+| this; anything else that drops from the topbar uses these.
+*/
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-menu);
+  padding: 6px;
+  z-index: 100;
+  animation: menuIn 0.2s ease;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--gray-700);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--blue-50);
+  color: var(--text-strong);
+}
+
+.dropdown-item-danger {
+  color: var(--red-500);
+}
+
+.dropdown-item-danger:hover {
+  background: var(--red-50);
+  color: var(--red-700);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+
+/*
+| Tooltip — used on the disabled *Add list* button at a plan cap, where the
+| reason for the disabled state has to be readable (plan §7.4).
+*/
+.tooltip-host {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-900);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  z-index: 70;
+  box-shadow: var(--shadow-toast);
+}

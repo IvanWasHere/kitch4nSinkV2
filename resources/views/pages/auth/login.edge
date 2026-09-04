@@ -1,32 +1,33 @@
-@layout()
-  <div class="form-container">
-    <div>
-      <h1>Login</h1>
-      <p>Enter your email and password below to log in</p>
-    </div>
+@component('layouts/auth', {
+  title: 'Sign in',
+  heading: 'Sign in to your account',
+  subtitle: 'Enter your credentials to access your workspace',
+})
+  @form({ route: 'session.store', method: 'POST' })
+    @field.root({ name: 'email' })
+      @!field.label({ text: 'Email address' })
+      @!input.control({ type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })
+      @!field.error()
+    @end
 
-    <div>
-      @form({ route: 'session.store', method: 'POST' })
-        <div>
-          @field.root({ name: 'email' })
-            @!field.label({ text: 'Email' })
-            @!input.control({ type: 'email' })
-            @!field.error()
-          @end
-        </div>
+    @field.root({ name: 'password' })
+      @!field.label({ text: 'Password' })
+      <div class="input-wrap" x-data="passwordField">
+        @!input.control({
+          type: 'password',
+          placeholder: 'Enter your password',
+          autocomplete: 'current-password',
+          'x-bind:type': 'type',
+        })
+        <button type="button" class="pw-toggle" @click="toggle" x-text="toggleLabel">Show</button>
+      </div>
+      @!field.error()
+    @end
 
-        <div>
-          @field.root({ name: 'password' })
-            @!field.label({ text: 'Password' })
-            @!input.control({ type: 'password' })
-            @!field.error()
-          @end
-        </div>
+    @!button({ text: 'Sign in', type: 'submit', block: true })
+  @end
 
-        <div>
-          @!button({ text: 'Login', type: 'submit' })
-        </div>
-      @end
-    </div>
-  </div>
+  <p class="auth-footer">
+    @!link({ route: 'new_account.create', text: 'Create a new account', class: 'btn-ghost' })
+  </p>
 @end

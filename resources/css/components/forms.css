@@ -1,0 +1,199 @@
+/*
+| Fields, inputs, checkboxes, the password toggle and the strength meter.
+| Ported from example-ui/index.html (plan §13.4 "Forms").
+|
+| `.field-error` is new: the mockup has no error state because it has no
+| server. It reuses the danger tokens so it reads as part of the same UI.
+*/
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 6px;
+}
+
+.field-label[data-invalid='true'] {
+  color: var(--red-500);
+}
+
+.field-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  outline: none;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+  font-family: inherit;
+}
+
+.field-input:focus {
+  border-color: var(--blue-400);
+  box-shadow: var(--ring-focus);
+}
+
+.field-input::placeholder {
+  color: var(--gray-300);
+}
+
+.field-input[data-invalid='true'] {
+  border-color: var(--red-400);
+}
+
+.field-input[data-invalid='true']:focus {
+  border-color: var(--red-500);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
+.field-input:disabled {
+  background: var(--gray-50);
+  color: var(--gray-400);
+  cursor: not-allowed;
+}
+
+textarea.field-input {
+  height: auto;
+  min-height: 80px;
+  padding: 10px 14px;
+  resize: vertical;
+}
+
+select.field-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 8l3-3.5' fill='none' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 34px;
+}
+
+.field-error {
+  display: block;
+  font-size: 12px;
+  color: var(--red-500);
+  margin-top: 6px;
+}
+
+.field-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.input-wrap {
+  position: relative;
+}
+
+.input-wrap .field-input {
+  padding-right: 56px;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 4px;
+}
+
+.pw-toggle:hover {
+  color: var(--gray-600);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+.check-row input[type='checkbox'],
+.check-row input[type='radio'] {
+  accent-color: var(--blue-500);
+  width: 16px;
+  height: 16px;
+}
+
+.strength-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--blue-100);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition:
+    width 0.3s ease,
+    background 0.3s ease;
+}
+
+.strength-text {
+  font-size: 11px;
+  margin-top: 3px;
+  color: var(--text-muted);
+}
+
+/*
+| Password strength, on the mockup's five-point scale. The prototype set the
+| colour inline from a hex; here each step is a class so the palette stays in
+| tokens.css.
+*/
+
+.strength-fill[data-score='0'] {
+  width: 0;
+  background: transparent;
+}
+
+.strength-fill[data-score='1'] {
+  width: 20%;
+  background: var(--red-400);
+}
+
+.strength-fill[data-score='2'] {
+  width: 40%;
+  background: var(--orange-400);
+}
+
+.strength-fill[data-score='3'] {
+  width: 60%;
+  background: var(--yellow-400);
+}
+
+.strength-fill[data-score='4'] {
+  width: 80%;
+  background: var(--green-400);
+}
+
+.strength-fill[data-score='5'] {
+  width: 100%;
+  background: var(--green-500);
+}

@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_KEY: ci_only_key_do_not_use_in_production
+  NODE_ENV: test
+
+jobs:
+  static:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+
+  test:
+    name: Test (${{ matrix.database }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, postgres]
+
+    # The portability rules in CONTRIBUTING.md are only enforced if the suite
+    # actually runs on both engines, so this matrix is not optional.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Run migrations
+        run: node ace migration:run --force
+        env:
+          DB_CONNECTION: ${{ matrix.database }}
+          DB_SQLITE_PATH: ./tmp/db.sqlite3
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app_test
+
+      - name: Run tests
+        run: npm test
+        env:
+          DB_CONNECTION: ${{ matrix.database }}
+          DB_SQLITE_PATH: ./tmp/db.sqlite3
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app_test

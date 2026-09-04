@@ -1,15 +1,26 @@
-@let(variant = $props.get('variant') || 'default')
+{{--
+  A flash-message toast. The message is rendered by the server; Alpine only
+  dismisses it (plan §13.3 — there is no client-side showToast()).
+
+  Props:
+    variant     — success | error | info
+    autoDismiss — milliseconds, or false to keep it until clicked
+--}}
+@let(variant = $props.get('variant') || 'info')
+@let(timeout = $props.get('autoDismiss') === false ? 0 : ($props.get('autoDismiss') ?? 5000))
 @inject({ variant, autoDismiss: $props.get('autoDismiss') })
-@let(classes = ['alert', `alert-${variant}`])
+@let(classes = ['toast', `toast-${variant}`])
 
 <div {{
   $props
     .except(['variant', 'autoDismiss'])
     .merge({
-      role: 'alert',
+      role: variant === 'error' ? 'alert' : 'status',
       class: classes,
-      'x-data': 'alert',
-      'x-show': 'isVisible',
+      'x-data': `toast(${timeout})`,
+      'x-show': 'visible',
+      ':class': "dismissing && 'toast-dismissing'",
+      '@click': 'dismiss',
       'x-cloak': true,
     })
     .toAttrs()

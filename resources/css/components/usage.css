@@ -1,0 +1,219 @@
+/*
+| Usage meters, pagination, copy-to-clipboard and file upload — new
+| components in the mockup's language (plan §13.4).
+|
+| The usage meter is the visible half of the soft-lock decision (D9): a
+| customer must see the ceiling approaching rather than discover it when a
+| create fails. Amber at 80%, red at 100%, driven by the same PlanService
+| numbers as the server-side enforcement.
+*/
+
+.usage-meter {
+  display: block;
+}
+
+.usage-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.usage-meter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+}
+
+.usage-meter-value {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-meter-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--blue-100);
+  overflow: hidden;
+}
+
+.usage-meter-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--blue-500);
+  transition: width var(--transition);
+}
+
+.usage-meter-fill.warn {
+  background: var(--orange-500);
+}
+
+.usage-meter-fill.full {
+  background: var(--red-500);
+}
+
+/**
+ * An unlimited plan limit (`null` in config/plans.ts) has no meaningful bar,
+ * so the track is replaced by a flat rule.
+ */
+.usage-meter-unlimited .usage-meter-fill {
+  width: 100%;
+  background: var(--gray-200);
+}
+
+/* Pagination ---------------------------------------------------------- */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--gray-500);
+  flex-wrap: wrap;
+}
+
+.pagination-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Copy to clipboard ---------------------------------------------------- */
+
+.copy-field {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.copy-value {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-strong);
+  background: var(--gray-50);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.copy-status {
+  font-size: 12px;
+  color: var(--green-600);
+  margin-top: 6px;
+}
+
+/* File upload ---------------------------------------------------------- */
+
+.file-drop {
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 28px 20px;
+  text-align: center;
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.file-drop:hover,
+.file-drop.dragging {
+  border-color: var(--blue-400);
+  background: var(--blue-50);
+}
+
+.file-drop-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 4px;
+}
+
+.file-drop-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.file-progress {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--blue-100);
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.file-progress-fill {
+  height: 100%;
+  background: var(--blue-500);
+  transition: width var(--transition);
+}
+
+.file-list {
+  list-style: none;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--surface);
+}
+
+.file-row-name {
+  font-weight: 600;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-row-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Avatar upload -------------------------------------------------------- */
+
+.avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatar-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--blue-50);
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--blue-500);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

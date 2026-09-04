@@ -26,4 +26,6 @@
     hasErrors: fieldKey in flashMessages.get('inputErrorsBag', {}),
   })
 @end
-{{{ await $slots.main() }}}
+<div {{ $props.except(['name', 'id']).merge({ class: ['field'] }).toAttrs() }}>
+  {{{ await $slots.main() }}}
+</div>

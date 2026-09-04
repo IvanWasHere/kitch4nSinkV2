@@ -1,0 +1,21 @@
+{{--
+  What a screen shows before it has any data. Always offers the one action
+  that fills it.
+
+  Props:
+    icon, title, description
+  Slots:
+    main — the call to action
+--}}
+<div class="empty-state">
+  @if($props.has('icon'))
+    <div class="empty-state-icon">
+      @!icon({ name: $props.get('icon') })
+    </div>
+  @end
+  <p class="empty-state-title">{{ $props.get('title') }}</p>
+  @if($props.has('description'))
+    <p class="empty-state-desc">{{ $props.get('description') }}</p>
+  @end
+  {{{ await $slots.main() }}}
+</div>

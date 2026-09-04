@@ -1,0 +1,144 @@
+/*
+| The card grid. In the mockup this is the Products screen; in this
+| application it is the Lists screen (plan §13.6.2) — same shape, different
+| subject. `.product-stock` becomes the todo-count pill that turns amber near
+| the `todosPerList` cap and red at it.
+|
+| The e-commerce class names are kept because the markup is ported verbatim
+| from the reference; the aliases below let new templates use the names that
+| describe what they actually show.
+*/
+
+.products-grid,
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.product-card,
+.entity-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: box-shadow var(--transition);
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}
+
+.product-card:hover,
+.entity-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.product-img {
+  width: 100%;
+  height: 160px;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-300);
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.product-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-body,
+.entity-card-body {
+  padding: 14px 16px;
+}
+
+.product-name,
+.entity-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.product-meta,
+.entity-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/**
+ * The count pill. `in | low | out` in the mockup; here it tracks how close a
+ * list is to its `todosPerList` cap (plan §13.6.2).
+ */
+.product-stock,
+.count-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-in,
+.count-ok {
+  background: var(--green-50);
+  color: var(--green-600);
+}
+
+.stock-low,
+.count-near {
+  background: var(--orange-50);
+  color: var(--orange-600);
+}
+
+.stock-out,
+.count-full {
+  background: var(--red-50);
+  color: var(--red-500);
+}
+
+/**
+ * A colour stripe identifies a list at a glance. `todo_lists.color` stores a
+ * token name, never a hex (plan §5.2), and these are the names it may hold.
+ */
+.card-stripe {
+  height: 4px;
+  width: 100%;
+}
+
+.card-stripe-blue {
+  background: var(--blue-500);
+}
+
+.card-stripe-green {
+  background: var(--green-500);
+}
+
+.card-stripe-orange {
+  background: var(--orange-500);
+}
+
+.card-stripe-purple {
+  background: var(--purple-500);
+}
+
+.card-stripe-red {
+  background: var(--red-500);
+}
+
+.card-stripe-gray {
+  background: var(--gray-400);
+}

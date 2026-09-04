@@ -1,48 +1,61 @@
-@layout()
-  <div class="form-container">
-    <div>
-      <h1>Signup</h1>
-      <p>Enter your details below to create your account</p>
-    </div>
+@component('layouts/auth', {
+  title: 'Create an account',
+  heading: 'Create your workspace',
+  subtitle: 'Your account and your organisation are created together',
+  back: { route: 'session.create', text: 'Back to sign in' },
+})
+  @form({ route: 'new_account.store', method: 'POST' })
+    @field.root({ name: 'fullName' })
+      @!field.label({ text: 'Full name' })
+      @!input.control({ placeholder: 'Jane Cooper', autocomplete: 'name' })
+      @!field.error()
+    @end
 
-    <div>
-      @form({ route: 'new_account.store', method: 'POST' })
-        <div>
-          @field.root({ name: 'fullName' })
-            @!field.label({ text: 'Full name' })
-            @!input.control()
-            @!field.error()
-          @end
-        </div>
+    @field.root({ name: 'email' })
+      @!field.label({ text: 'Email address' })
+      @!input.control({ type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })
+      @!field.error()
+    @end
 
-        <div>
-          @field.root({ name: 'email' })
-            @!field.label({ text: 'Email' })
-            @!input.control({ type: 'email', autocomplete: 'email' })
-            @!field.error()
-          @end
+    @field.root({ name: 'password' })
+      @!field.label({ text: 'Password' })
+      <div x-data="passwordStrength">
+        <div class="input-wrap">
+          @!input.control({
+            type: 'password',
+            placeholder: 'Create a password',
+            autocomplete: 'new-password',
+            'x-model': 'value',
+            'x-bind:type': 'type',
+          })
+          <button type="button" class="pw-toggle" @click="toggle" x-text="toggleLabel">Show</button>
         </div>
+        <div class="strength-bar">
+          <div class="strength-fill" :data-score="score" data-score="0"></div>
+        </div>
+        <div class="strength-text" x-text="label"></div>
+      </div>
+      @!field.error()
+    @end
 
-        <div>
-          @field.root({ name: 'password' })
-            @!field.label({ text: 'Password' })
-            @!input.control({ type: 'password', autocomplete: 'new-password' })
-            @!field.error()
-          @end
-        </div>
+    @field.root({ name: 'passwordConfirmation' })
+      @!field.label({ text: 'Confirm password' })
+      @!input.control({
+        type: 'password',
+        placeholder: 'Confirm your password',
+        autocomplete: 'new-password',
+      })
+      @!field.error()
+    @end
 
-        <div>
-          @field.root({ name: 'passwordConfirmation' })
-            @!field.label({ text: 'Confirm password' })
-            @!input.control({ type: 'password', autocomplete: 'new-password' })
-            @!field.error()
-          @end
-        </div>
+    @!button({ text: 'Create account', type: 'submit', block: true })
+  @end
 
-        <div>
-          @!button({ text: 'Sign up', type: 'submit' })
-        </div>
-      @end
-    </div>
-  </div>
+  <div class="divider">or</div>
+
+  @!link({
+    route: 'session.create',
+    text: 'Already have an account? Sign in',
+    class: 'btn btn-outline btn-block',
+  })
 @end

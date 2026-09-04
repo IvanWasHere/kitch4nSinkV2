@@ -1,0 +1,119 @@
+/*
+| Buttons — primary / outline / ghost / danger, in three heights.
+| Ported from example-ui/index.html (plan §13.4 "Buttons").
+|
+| The mockup's `.btn-primary` and `.btn-outline` are full-width because they
+| only ever appear in the auth card. Here width is opt-in via `.btn-block`,
+| and the auth card sets it for its own buttons — otherwise every toolbar
+| button in the app would stretch.
+|
+| `:disabled` is new: the at-cap upsell (plan §7.4) disables *Add list* rather
+| than letting the click fail, so a disabled style is load-bearing.
+*/
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  outline: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:focus-visible {
+  box-shadow: var(--ring-focus);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--blue-500);
+  color: var(--white);
+  border-color: var(--blue-500);
+}
+
+.btn-primary:hover {
+  background: var(--blue-600);
+  border-color: var(--blue-600);
+}
+
+.btn-outline {
+  background: var(--surface);
+  color: var(--blue-500);
+  border-color: var(--border-strong);
+}
+
+.btn-outline:hover {
+  background: var(--blue-50);
+  border-color: var(--blue-300);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--blue-500);
+  border: none;
+  padding: 0;
+  height: auto;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-ghost:hover {
+  color: var(--blue-600);
+  text-decoration: underline;
+}
+
+.btn-danger {
+  background: var(--surface);
+  color: var(--red-500);
+  border-color: var(--red-400);
+}
+
+.btn-danger:hover {
+  background: var(--red-50);
+  border-color: var(--red-500);
+}
+
+.btn-sm {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.btn-xs {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-stack > .btn + .btn {
+  margin-top: 10px;
+}

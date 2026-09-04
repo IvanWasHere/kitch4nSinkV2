@@ -1,0 +1,37 @@
+{{--
+  Plan usage against a limit (plan §7.4).
+
+  The numbers come from PlanService — the same source as server-side
+  enforcement, never a second calculation that can drift. Amber at 80%, red
+  at 100%; a `null` limit means unlimited and draws a flat track.
+
+  Props:
+    label   — e.g. "Lists"
+    current — number used
+    limit   — number allowed, or null for unlimited
+--}}
+@let(used = $props.get('current') ?? 0)
+@let(allowed = $props.get('limit') ?? null)
+@let(ratio = allowed ? Math.min(used / allowed, 1) : 0)
+@let(meterState = allowed === null ? '' : ratio >= 1 ? 'full' : ratio >= 0.8 ? 'warn' : '')
+
+<div class="usage-meter{{ allowed === null ? ' usage-meter-unlimited' : '' }}">
+  <div class="usage-meter-head">
+    <span class="usage-meter-label">{{ $props.get('label') }}</span>
+    <span class="usage-meter-value">
+      {{ allowed === null ? `${used} · unlimited` : `${used} of ${allowed}` }}
+    </span>
+  </div>
+  <div {{
+    html.attrs({
+      class: ['usage-meter-track'],
+      role: 'progressbar',
+      'aria-valuenow': used,
+      'aria-valuemin': 0,
+      'aria-valuemax': allowed === null ? false : allowed,
+      'aria-label': `${$props.get('label')} usage`,
+    })
+  }}>
+    <div class="usage-meter-fill {{ meterState }}" style="width: {{ Math.round(ratio * 100) }}%"></div>
+  </div>
+</div>

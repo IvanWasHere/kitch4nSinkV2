@@ -1,0 +1,66 @@
+/*
+| Badges. The mockup ships eight variants named after e-commerce states
+| (fulfilled, shipped, cancelled…). Our domain is to-do lists, subscriptions
+| and roles (plan §13.6.2), so the variants are re-cut by *tone* — success,
+| warning, danger, info, neutral, accent — and the mockup's names are kept as
+| aliases so a component ported verbatim still renders correctly.
+|
+| Using tones rather than domain nouns is what stops a "shipped" class from
+| turning up on a subscription row.
+*/
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-success,
+.badge-fulfilled,
+.badge-solved {
+  background: var(--green-50);
+  color: var(--green-600);
+}
+
+.badge-warning,
+.badge-pending {
+  background: var(--orange-50);
+  color: var(--orange-600);
+}
+
+.badge-danger,
+.badge-cancelled,
+.badge-refunded {
+  background: var(--red-50);
+  color: var(--red-500);
+}
+
+.badge-info,
+.badge-shipped,
+.badge-open {
+  background: var(--blue-50);
+  color: var(--blue-600);
+}
+
+.badge-neutral,
+.badge-closed {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
+
+.badge-accent {
+  background: var(--purple-50);
+  color: var(--purple-600);
+}
+
+/**
+ * A badge that carries a count reads better with tabular figures.
+ */
+.badge-count {
+  font-variant-numeric: tabular-nums;
+}

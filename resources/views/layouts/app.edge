@@ -1,0 +1,80 @@
+{{--
+  The signed-in tenant shell: sidebar, topbar, content.
+
+  Props:
+    title     — page <title> and the topbar heading
+    usage     — plan usage passed through to the sidebar (plan §13.6.1)
+    isOwner   — whether the current user owns the organisation
+
+  Slots:
+    main      — the page
+    actions   — optional buttons rendered on the right of the topbar
+    banner    — optional account-state banner (past_due, impersonation)
+--}}
+@component('layouts/base', { title: $props.get('title') })
+  <div class="dash-layout" x-data="sidebar">
+    <aside class="dash-sidebar" :class="open && 'open'">
+      <div class="dash-sidebar-logo">
+        <a href="{{ hasRoute('dashboard.index') ? urlFor('dashboard.index') : urlFor('home') }}" class="logo">
+          <span class="logo-icon">
+            @!icon({ name: 'layers' })
+          </span>
+          <span class="logo-text">{{ appName }}</span>
+        </a>
+      </div>
+
+      <nav class="dash-sidebar-nav" aria-label="Main">
+        @include('partials/app_nav')
+      </nav>
+
+      <div class="dash-sidebar-footer">
+        @if(auth.user)
+          <a
+            href="{{ hasRoute('settings.profile') ? urlFor('settings.profile') : '#' }}"
+            class="sidebar-user"
+          >
+            <span class="sidebar-avatar">{{ auth.user.initials }}</span>
+            <span class="sidebar-user-info">
+              <span class="sidebar-user-name">{{ auth.user.fullName ?? auth.user.email }}</span>
+              <span class="sidebar-user-email">{{ auth.user.email }}</span>
+            </span>
+          </a>
+        @end
+      </div>
+    </aside>
+
+    {{-- Closes the drawer on tap below 768px --}}
+    <div class="sidebar-overlay" :class="open && 'open'" @click="close" x-cloak></div>
+
+    <div class="dash-main">
+      @if($slots.banner)
+        {{{ await $slots.banner() }}}
+      @end
+
+      <header class="dash-topbar">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <button type="button" class="mobile-toggle" @click="toggle" aria-label="Open navigation">
+            @!icon({ name: 'menu', width: 18, height: 18 })
+          </button>
+          <h1 class="dash-topbar-title">{{ $props.get('title') ?? '' }}</h1>
+        </div>
+
+        <div class="dash-topbar-actions">
+          @if($slots.actions)
+            {{{ await $slots.actions() }}}
+          @end
+
+          @form({ route: 'session.destroy', method: 'POST' })
+            <button type="submit" class="topbar-icon-btn" aria-label="Sign out">
+              @!icon({ name: 'logOut', width: 16, height: 16 })
+            </button>
+          @end
+        </div>
+      </header>
+
+      <main class="dash-content">
+        {{{ await $slots.main() }}}
+      </main>
+    </div>
+  </div>
+@end

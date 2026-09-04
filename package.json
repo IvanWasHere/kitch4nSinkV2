@@ -59,6 +59,7 @@
   },
   "dependencies": {
     "@adonisjs/auth": "^10.1.0",
+    "@adonisjs/bouncer": "^4.0.1",
     "@adonisjs/core": "^7.5.0",
     "@adonisjs/lucid": "^22.4.2",
     "@adonisjs/session": "^8.1.0",
@@ -69,6 +70,8 @@
     "better-sqlite3": "^13.0.3",
     "edge.js": "^6.5.1",
     "luxon": "^3.7.2",
+    "nanoid": "^5.1.16",
+    "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2"
   },
   "hotHook": {

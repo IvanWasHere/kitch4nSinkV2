@@ -1,0 +1,27 @@
+{{--
+  A headline number on the dashboard.
+
+  Props:
+    label  — uppercase caption
+    value  — the number
+    icon   — icon name
+    tone   — blue | green | orange | purple | red (icon tint)
+    change — optional { direction: 'up'|'down', text: '+12%' }
+--}}
+@let(tone = $props.get('tone') ?? 'blue')
+@let(change = $props.get('change'))
+
+<div class="stat-card">
+  <div class="stat-header">
+    <span class="stat-label">{{ $props.get('label') }}</span>
+    @if($props.has('icon'))
+      <span class="stat-icon stat-icon-{{ tone }}">
+        @!icon({ name: $props.get('icon') })
+      </span>
+    @end
+  </div>
+  <div class="stat-value">{{ $props.get('value') }}</div>
+  @if(change)
+    <span class="stat-change {{ change.direction }}">{{ change.text }}</span>
+  @end
+</div>

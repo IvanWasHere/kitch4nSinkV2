@@ -1,0 +1,61 @@
+{{--
+  The tenant sidebar (plan §13.6.1).
+
+  Diverges from the mockup deliberately: three sections instead of one flat
+  list, Billing and API Keys gated on the owner role, and a usage counter
+  rendered inline on each quota-bearing item so the ceiling is visible before
+  it is hit.
+
+  Every item is guarded by `hasRoute`, so a destination appears the milestone
+  its routes land — the shell never links somewhere that does not exist.
+
+  Expects (all optional until the milestone that supplies them):
+    usage — { lists: { current, limit }, seats: { … } } from PlanService
+    isOwner — boolean
+--}}
+@let(navUsage = state.usage ?? {})
+@let(navIsOwner = state.isOwner ?? false)
+
+@if(hasRoute('dashboard.index') || hasRoute('lists.index') || hasRoute('files.index'))
+  <div class="nav-section-title">Main</div>
+@end
+
+@if(hasRoute('dashboard.index'))
+  @!navItem({ route: 'dashboard.index', icon: 'barChart', label: 'Overview' })
+@end
+@if(hasRoute('lists.index'))
+  @!navItem({
+    route: 'lists.index',
+    icon: 'list',
+    label: 'Lists',
+    usage: navUsage.lists,
+  })
+@end
+@if(hasRoute('files.index'))
+  @!navItem({ route: 'files.index', icon: 'folder', label: 'Files' })
+@end
+
+@if(hasRoute('members.index'))
+  <div class="nav-section-title">Team</div>
+  @!navItem({
+    route: 'members.index',
+    icon: 'users',
+    label: 'Members',
+    usage: navUsage.seats,
+  })
+@end
+
+@if(hasRoute('billing.index') || hasRoute('api_keys.index') || hasRoute('settings.profile'))
+  <div class="nav-section-title">Account</div>
+@end
+
+{{-- Billing and API keys are owner-only (plan §6) --}}
+@if(navIsOwner && hasRoute('billing.index'))
+  @!navItem({ route: 'billing.index', icon: 'creditCard', label: 'Billing' })
+@end
+@if(navIsOwner && hasRoute('api_keys.index'))
+  @!navItem({ route: 'api_keys.index', icon: 'key', label: 'API Keys' })
+@end
+@if(hasRoute('settings.profile'))
+  @!navItem({ route: 'settings.profile', icon: 'settings', label: 'Settings' })
+@end

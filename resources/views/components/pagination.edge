@@ -1,0 +1,24 @@
+{{--
+  Cursor pagination (plan §11 — offset pagination breaks under concurrent
+  writes, so there are no page numbers to render).
+
+  Props:
+    summary  — e.g. "Showing 25 of 340"
+    nextUrl  — link to the next page, or null on the last page
+    prevUrl  — link to the previous page, or null on the first
+--}}
+<div class="pagination">
+  <span>{{ $props.get('summary') ?? '' }}</span>
+  <div class="pagination-actions">
+    @if($props.get('prevUrl'))
+      <a class="btn btn-outline btn-sm" href="{{ $props.get('prevUrl') }}">Previous</a>
+    @else
+      <span class="btn btn-outline btn-sm" aria-disabled="true">Previous</span>
+    @end
+    @if($props.get('nextUrl'))
+      <a class="btn btn-outline btn-sm" href="{{ $props.get('nextUrl') }}">Next</a>
+    @else
+      <span class="btn btn-outline btn-sm" aria-disabled="true">Next</span>
+    @end
+  </div>
+</div>

@@ -33,7 +33,13 @@ export const plugins: Config['plugins'] = [
  * The teardown functions are executed after all the tests
  */
 export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
-  setup: [],
+  /**
+   * Migrate once for the whole run. On SQLite the test database lives in
+   * memory, so this is also the only thing that creates it; on Postgres it
+   * rebuilds the schema so the same suite proves the migrations run on both
+   * engines (CONTRIBUTING.md).
+   */
+  setup: [() => testUtils.db().migrate()],
   teardown: [],
 }
 
@@ -43,6 +49,12 @@ export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
  */
 export const configureSuite: Config['configureSuite'] = (suite) => {
   if (['browser', 'functional', 'e2e'].includes(suite.name)) {
-    return suite.setup(() => testUtils.httpServer().start())
+    suite.setup(() => testUtils.httpServer().start())
+
+    /**
+     * Every test starts from an empty database. Truncating keeps the schema,
+     * so it is considerably faster than re-migrating between tests.
+     */
+    suite.onGroup((group) => group.each.setup(() => testUtils.db().truncate()))
   }
 }
