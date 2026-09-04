@@ -47,6 +47,29 @@ enforced at the migration layer, and these rules are checked in review.
 CI runs the full suite against **both** engines on every push. A rule that is only exercised on
 SQLite is not enforced, so a migration that cannot run on Postgres fails the build.
 
+## The domain: lists and todos
+
+Lists belong to the **organisation**, not to whoever created one (D8). Every member sees every
+list; `createdByUserId` is provenance for the UI and must never appear in an access check.
+
+- **Completion is a timestamp**, not a boolean — which is where "completed this week" comes from.
+  Un-ticking clears the timestamp and the "completed by" together.
+- **Archive vs delete.** Archiving hides a list, is reversible, and is open to any member; the list
+  keeps its seat against the `lists` quota so archiving cannot dodge the cap. Deleting is
+  owner-only, takes every todo with it, and is soft.
+- **`todo_lists.todos_count` is denormalised** and only ever moved inside the same transaction as
+  the insert or delete it accounts for — never as a follow-up write. Completed todos still count;
+  soft-deleted ones do not. `ReconcileCountersJob` recomputes nightly and **alerts** on drift: the
+  counter cannot drift without a bug, and a job that quietly repairs one hides it forever.
+- **Positions are sparse** (100 apart), so a drag is one write. When two neighbours become adjacent
+  integers there is no room left, and `NormalizePositionsJob` spreads them out again.
+- **`todos.organization_id` is denormalised** from its list, so every todo query can filter on it
+  without a join. The composite foreign key `(todo_list_id, organization_id)` is what stops the copy
+  from disagreeing with the list — without it the denormalisation would be a way to hide a row from
+  its own tenant filter.
+- **Due dates are stored UTC** and rendered in `organizations.timezone`. A date typed into the form
+  means end of that day *where the workspace is*, not midnight UTC.
+
 ## Tenancy rules
 
 - Every tenant-owned table carries `organization_id` and an index on it.
@@ -102,6 +125,16 @@ the work but before marking the job done will run it again when the reservation 
 Handlers live in `app/queue/jobs/` and must be listed in `app/queue/registry.ts`. A job whose name
 is not in the registry fails immediately rather than being retried five times, because no amount of
 waiting will make the code exist.
+
+Two queues, on purpose: `mail` carries sends, `default` carries scans that *produce* mail. Putting a
+nightly sweep over every user on the same queue as the sends lets it sit in front of somebody's
+password reset.
+
+**A worker that renders email must commit the router first** (`queue:work` does). Routes are
+committed by the HTTP server, which never starts in a command, so `urlFor` in a mail template
+otherwise fails — quietly, because `MailerService` logs a render failure rather than crashing. A
+job that sends in bulk should therefore check what `send()` returned and fail if anything did not
+queue; `OverdueDigestJob` is the worked example.
 
 ## Local email
 

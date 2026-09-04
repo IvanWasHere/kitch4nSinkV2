@@ -33,9 +33,18 @@ export default class OrganizationSettingsController {
   async update({ request, response, session, organization, bouncer }: HttpContext) {
     await bouncer.with('OrganizationPolicy').authorize('update', organization)
 
-    const { name } = await request.validateUsing(organizationSettingsValidator)
+    const { name, timezone } = await request.validateUsing(organizationSettingsValidator)
 
     organization.name = name
+
+    /**
+     * Due dates are stored UTC and rendered here (plan §5.6), so this is what
+     * decides whether a todo due "today" is late.
+     */
+    if (timezone) {
+      organization.timezone = timezone
+    }
+
     await organization.save()
 
     session.flash('success', 'Workspace settings saved.')

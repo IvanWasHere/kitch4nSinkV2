@@ -88,7 +88,7 @@ export class JobSchema extends BaseModel {
 }
 
 export class OrganizationSchema extends BaseModel {
-  static $columns = ['createdAt', 'deletedAt', 'id', 'limitOverrides', 'name', 'ownerId', 'planKey', 'publicId', 'slug', 'status', 'storageUsedBytes', 'trialEndsAt', 'updatedAt'] as const
+  static $columns = ['createdAt', 'deletedAt', 'id', 'limitOverrides', 'name', 'ownerId', 'planKey', 'publicId', 'slug', 'status', 'storageUsedBytes', 'timezone', 'trialEndsAt', 'updatedAt'] as const
   $columns = OrganizationSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -112,6 +112,8 @@ export class OrganizationSchema extends BaseModel {
   declare status: 'active' | 'past_due' | 'canceled' | 'suspended'
   @bigIntColumn()
   declare storageUsedBytes: number
+  @column()
+  declare timezone: string
   @column.dateTime()
   declare trialEndsAt: DateTime | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
@@ -166,6 +168,74 @@ export class StaffUserSchema extends BaseModel {
   declare twoFactorRecoveryCodes: string[] | null
   @encryptedColumn()
   declare twoFactorSecret: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class TodoListSchema extends BaseModel {
+  static $columns = ['archivedAt', 'color', 'createdAt', 'createdByUserId', 'deletedAt', 'description', 'id', 'name', 'organizationId', 'position', 'publicId', 'todosCount', 'updatedAt'] as const
+  $columns = TodoListSchema.$columns
+  @column.dateTime()
+  declare archivedAt: DateTime | null
+  @column()
+  declare color: 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'gray'
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare createdByUserId: number | null
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare name: string
+  @column()
+  declare organizationId: number
+  @column()
+  declare position: number
+  @column()
+  declare publicId: string
+  @column()
+  declare todosCount: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class TodoSchema extends BaseModel {
+  static $columns = ['assignedToUserId', 'completedAt', 'completedByUserId', 'createdAt', 'createdByUserId', 'deletedAt', 'dueAt', 'id', 'notes', 'organizationId', 'position', 'priority', 'publicId', 'title', 'todoListId', 'updatedAt'] as const
+  $columns = TodoSchema.$columns
+  @column()
+  declare assignedToUserId: number | null
+  @column.dateTime()
+  declare completedAt: DateTime | null
+  @column()
+  declare completedByUserId: number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare createdByUserId: number | null
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column.dateTime()
+  declare dueAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare notes: string | null
+  @column()
+  declare organizationId: number
+  @column()
+  declare position: number
+  @column()
+  declare priority: 'low' | 'normal' | 'high'
+  @column()
+  declare publicId: string
+  @column()
+  declare title: string
+  @column()
+  declare todoListId: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

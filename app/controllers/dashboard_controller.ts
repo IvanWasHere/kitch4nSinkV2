@@ -1,15 +1,19 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
+import dashboard from '#todos/dashboard_service'
+
 /**
- * The signed-in landing page.
- *
- * A placeholder until M3.5 fills it with the real overview (lists, open
- * todos, completed this week, overdue). It exists now because sign-in has to
- * land somewhere, and because the sidebar's first item should not be missing
- * for three milestones.
+ * The Overview screen (plan §13.5): four stat cards, recent todos, and what
+ * has been finished lately.
  */
 export default class DashboardController {
-  async index({ view }: HttpContext) {
-    return view.render('pages/dashboard/index')
+  async index({ view, organization }: HttpContext) {
+    const [stats, recent, activity] = await Promise.all([
+      dashboard.statsFor(organization),
+      dashboard.recentTodos(organization),
+      dashboard.recentActivity(organization),
+    ])
+
+    return view.render('pages/dashboard/index', { stats, recent, activity })
   }
 }

@@ -29,4 +29,8 @@ export const controllers = {
     Profile: () => import('#controllers/settings/profile_controller'),
     Security: () => import('#controllers/settings/security_controller'),
   },
+  todos: {
+    List: () => import('#controllers/todos/list_controller'),
+    Todo: () => import('#controllers/todos/todo_controller'),
+  },
 }

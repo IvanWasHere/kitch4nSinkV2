@@ -19,6 +19,31 @@
           @!field.error()
         @end
 
+        @field.root({ name: 'timezone' })
+          @!field.label({ text: 'Timezone' })
+          @!select.control({
+            options: [
+              'UTC',
+              'Europe/London',
+              'Europe/Berlin',
+              'Europe/Zagreb',
+              'America/New_York',
+              'America/Chicago',
+              'America/Denver',
+              'America/Los_Angeles',
+              'Asia/Tokyo',
+              'Australia/Sydney',
+              'Pacific/Auckland',
+            ].map((zone) => ({
+              value: zone,
+              name: zone,
+              isSelected: zone === organization.timezone,
+            })),
+          })
+          <span class="field-hint">Due dates are shown in this timezone.</span>
+          @!field.error()
+        @end
+
         <div class="btn-row">
           @!button({ text: 'Save workspace', type: 'submit', size: 'sm' })
         </div>
@@ -39,6 +64,10 @@
       <span class="settings-row-value">
         {{ usage.used }} of {{ usage.limit === null ? 'unlimited' : usage.limit }}
       </span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Timezone</span>
+      <span class="settings-row-value">{{ organization.timezone }}</span>
     </div>
     <div class="settings-row">
       <span class="settings-row-label">Workspace id</span>

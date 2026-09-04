@@ -2,6 +2,9 @@ import type { JobHandler } from '#queue/contracts'
 
 import sendMailJob from '#queue/jobs/send_mail_job'
 import expireInvitationsJob from '#queue/jobs/expire_invitations_job'
+import overdueDigestJob from '#queue/jobs/overdue_digest_job'
+import reconcileCountersJob from '#queue/jobs/reconcile_counters_job'
+import normalizePositionsJob from '#queue/jobs/normalize_positions_job'
 
 /**
  * Every handler the worker knows how to run, keyed by the name stored in
@@ -18,6 +21,9 @@ import expireInvitationsJob from '#queue/jobs/expire_invitations_job'
 export const jobHandlers: Record<string, JobHandler<any>> = {
   [sendMailJob.name]: sendMailJob,
   [expireInvitationsJob.name]: expireInvitationsJob,
+  [overdueDigestJob.name]: overdueDigestJob,
+  [reconcileCountersJob.name]: reconcileCountersJob,
+  [normalizePositionsJob.name]: normalizePositionsJob,
 }
 
 export function handlerFor(name: string): JobHandler<any> | null {

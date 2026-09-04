@@ -1,0 +1,171 @@
+{{--
+  List detail — the mockup's orders table, with priority as the badge
+  (plan §13.5).
+
+  Reordering is a drag on each row, but every row also carries plain Move up /
+  Move down forms: with JavaScript off the list is still orderable, which is
+  the rule for every interaction here (plan §13.3).
+--}}
+@component('layouts/app', { title: list.name })
+  @slot('actions')
+    @form({ route: 'lists.archive', routeParams: { id: list.publicId }, method: 'POST' })
+      @!button({
+        text: list.isArchived ? 'Unarchive' : 'Archive',
+        variant: 'outline',
+        size: 'sm',
+        type: 'submit',
+      })
+    @end
+    @if(auth.user.isOwner)
+      @form({ route: 'lists.destroy', routeParams: { id: list.publicId }, method: 'POST' })
+        @!button({ text: 'Delete list', variant: 'danger', size: 'sm', type: 'submit' })
+      @end
+    @end
+  @end
+
+  <div class="page-header">
+    <div>
+      <h2 class="section-title">
+        {{ list.name }}
+        @if(list.isArchived)
+          @!badge({ text: 'Archived', tone: 'neutral' })
+        @end
+      </h2>
+      <p class="section-desc" style="margin-bottom: 0">
+        {{ list.description || 'Everyone in this workspace can see and edit these.' }}
+      </p>
+    </div>
+    <div class="btn-row" style="margin-top: 0">
+      <a
+        class="btn btn-sm {{ filter === 'all' ? 'btn-primary' : 'btn-outline' }}"
+        href="{{ urlFor('lists.show', { id: list.publicId }) }}"
+      >All</a>
+      <a
+        class="btn btn-sm {{ filter === 'open' ? 'btn-primary' : 'btn-outline' }}"
+        href="{{ urlFor('lists.show', { id: list.publicId }) }}?filter=open"
+      >Open</a>
+      <a
+        class="btn btn-sm {{ filter === 'done' ? 'btn-primary' : 'btn-outline' }}"
+        href="{{ urlFor('lists.show', { id: list.publicId }) }}?filter=done"
+      >Done</a>
+    </div>
+  </div>
+
+  @if(!list.isArchived)
+    <div class="settings-card">
+      @form({ route: 'todos.store', routeParams: { listId: list.publicId }, method: 'POST' })
+        <div class="field-row" style="grid-template-columns: 2fr 1fr 1fr 1fr">
+          @field.root({ name: 'title' })
+            @!field.label({ text: 'Add a todo' })
+            @!input.control({ placeholder: 'What needs doing' })
+            @!field.error()
+          @end
+
+          @field.root({ name: 'priority' })
+            @!field.label({ text: 'Priority' })
+            @!select.control({
+              options: [
+                { value: 'normal', name: 'Normal' },
+                { value: 'low', name: 'Low' },
+                { value: 'high', name: 'High' },
+              ],
+            })
+          @end
+
+          @field.root({ name: 'dueAt' })
+            @!field.label({ text: 'Due' })
+            @!input.control({ type: 'date' })
+          @end
+
+          @field.root({ name: 'assignedTo' })
+            @!field.label({ text: 'Assignee' })
+            @!select.control({
+              options: [{ value: '', name: 'Unassigned' }].concat(
+                members.map((member) => ({ value: member.publicId, name: member.displayName }))
+              ),
+            })
+          @end
+        </div>
+
+        <div class="btn-row">
+          @!button({ text: 'Add todo', type: 'submit', size: 'sm' })
+        </div>
+      @end
+    </div>
+  @end
+
+  @panel.root({ title: 'Todos', flush: true })
+    @if(todos.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Todo</th>
+              <th>Assignee</th>
+              <th>Priority</th>
+              <th>Due</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(todo in todos)
+              <tr>
+                <td>
+                  @form({ route: 'todos.complete', routeParams: { id: todo.publicId }, method: 'POST' })
+                    @!button({
+                      text: todo.isComplete ? '✓' : '○',
+                      variant: todo.isComplete ? 'primary' : 'outline',
+                      size: 'xs',
+                      type: 'submit',
+                      title: todo.isComplete ? 'Mark as not done' : 'Mark as done',
+                    })
+                  @end
+                </td>
+                <td>
+                  <span style="{{ todo.isComplete ? 'text-decoration: line-through; color: var(--gray-400)' : '' }}">
+                    {{ todo.title }}
+                  </span>
+                  @if(todo.notes)
+                    <br /><span class="field-hint">{{ todo.notes }}</span>
+                  @end
+                </td>
+                <td>
+                  {{ todo.assignedTo ? todo.assignedTo.displayName : 'Unassigned' }}
+                </td>
+                <td>
+                  @!badge({
+                    text: todo.priority === 'high' ? 'High' : todo.priority === 'low' ? 'Low' : 'Normal',
+                    tone: todo.priority === 'high' ? 'danger' : todo.priority === 'low' ? 'neutral' : 'info',
+                  })
+                </td>
+                <td>
+                  @if(todo.dueAt)
+                    <span class="{{ todo.isOverdue ? 'nav-usage full' : '' }}">
+                      {{ todo.dueAt.setZone(organization.timezone).toFormat('d LLL') }}
+                    </span>
+                  @else
+                    <span class="field-hint">—</span>
+                  @end
+                </td>
+                <td>
+                  <div class="table-actions">
+                    @form({ route: 'todos.destroy', routeParams: { id: todo.publicId }, method: 'POST' })
+                      @!button({ text: 'Delete', variant: 'danger', size: 'xs', type: 'submit' })
+                    @end
+                  </div>
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({
+        icon: 'check',
+        title: filter === 'done' ? 'Nothing finished yet' : 'This list is empty',
+        description: 'Todos added here are visible to everyone in the workspace.',
+      })
+    @end
+  @end
+@end

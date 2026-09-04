@@ -53,6 +53,30 @@ export async function queuedMailsTo(email: string): Promise<QueuedMail[]> {
 }
 
 /**
+ * A list with some todos, through the real services so the counter and the
+ * positions are built the way the application builds them.
+ */
+export async function createList(
+  organization: Organization,
+  owner: User,
+  name = 'Launch checklist',
+  titles: string[] = []
+) {
+  const { default: lists } = await import('#todos/list_service')
+  const { default: todos } = await import('#todos/todo_service')
+
+  const list = await lists.create(organization, owner, { name })
+
+  for (const title of titles) {
+    await todos.create(organization, list, owner, { title })
+  }
+
+  await list.refresh()
+
+  return list
+}
+
+/**
  * Drain the queue the way `queue:work` does — same reservation, same
  * registry, same failure handling — so a test can assert on what a handler
  * actually did rather than on the row that asked for it.

@@ -1,0 +1,8 @@
+{{ todos.length }} overdue in {{ organization.name }}
+
+These are assigned to you and past their due date.
+@each(todo in todos)
+- {{ todo.title }} ({{ todo.todoList.name }}, due {{ todo.dueAt.toRelative() }})
+@end
+
+Open your lists: {{ url }}

@@ -1,0 +1,31 @@
+@component('emails/layout', {
+  title: 'Overdue todos',
+  footer: 'You are receiving this because these todos are assigned to you.',
+})
+  <p style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+    {{ todos.length }} overdue in {{ organization.name }}
+  </p>
+  <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #4b5563;">
+    These are assigned to you and past their due date.
+  </p>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+    @each(todo in todos)
+      <tr>
+        <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+          <span style="font-size: 14px; font-weight: 600; color: #111827;">{{ todo.title }}</span>
+          <br />
+          <span style="font-size: 12px; color: #9ca3af;">
+            {{ todo.todoList.name }} · due {{ todo.dueAt.toRelative() }}
+          </span>
+        </td>
+      </tr>
+    @end
+  </table>
+
+  <p style="margin: 0;">
+    <a href="{{ url }}" style="display: inline-block; background: #3b82f6; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 8px;">
+      Open your lists
+    </a>
+  </p>
+@end

@@ -1,12 +1,93 @@
 @component('layouts/app', { title: 'Overview' })
-  @panel.root()
-    @!emptyState({
-      icon: 'barChart',
-      title: `Welcome to ${organization.name}`,
-      description: 'Your workspace is set up. Lists, files and billing arrive in the milestones after this one — for now, your account, sign-in and security settings are live.',
-    })
-    <div class="btn-row" style="justify-content: center">
-      @!link({ route: 'settings.profile', text: 'Open settings', class: 'btn btn-outline btn-sm' })
-    </div>
+  @slot('actions')
+    @!link({ route: 'lists.index', text: 'Lists', class: 'btn btn-outline btn-sm' })
   @end
+
+  <div class="stats-grid">
+    @!statCard({ label: 'Lists', value: stats.lists, icon: 'list', tone: 'blue' })
+    @!statCard({ label: 'Open todos', value: stats.openTodos, icon: 'package', tone: 'purple' })
+    @!statCard({
+      label: 'Completed this week',
+      value: stats.completedThisWeek,
+      icon: 'check',
+      tone: 'green',
+    })
+    @!statCard({
+      label: 'Overdue',
+      value: stats.overdue,
+      icon: 'clock',
+      tone: stats.overdue > 0 ? 'red' : 'green',
+    })
+  </div>
+
+  <div class="panel-grid">
+    @panel.root({ title: 'Recent todos', flush: true })
+      @slot('actions')
+        @!link({ route: 'lists.index', text: 'All lists', class: 'btn-ghost' })
+      @end
+
+      @if(recent.length)
+        <div class="table-scroll">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Todo</th>
+                <th>List</th>
+                <th>Assignee</th>
+                <th>Due</th>
+              </tr>
+            </thead>
+            <tbody>
+              @each(todo in recent)
+                <tr>
+                  <td>
+                    <a
+                      class="order-id"
+                      href="{{ urlFor('lists.show', { id: todo.todoList.publicId }) }}"
+                    >{{ todo.title }}</a>
+                  </td>
+                  <td>{{ todo.todoList.name }}</td>
+                  <td>{{ todo.assignedTo ? todo.assignedTo.displayName : 'Unassigned' }}</td>
+                  <td>
+                    @if(todo.dueAt)
+                      <span class="{{ todo.isOverdue ? 'nav-usage full' : '' }}">
+                        {{ todo.dueAt.setZone(organization.timezone).toFormat('d LLL') }}
+                      </span>
+                    @else
+                      <span class="field-hint">—</span>
+                    @end
+                  </td>
+                </tr>
+              @end
+            </tbody>
+          </table>
+        </div>
+      @else
+        @!emptyState({
+          icon: 'list',
+          title: `Welcome to ${organization.name}`,
+          description: 'Create a list and everyone in the workspace can start adding to it.',
+        })
+      @end
+    @end
+
+    @panel.root({ title: 'Recently finished' })
+      @if(activity.length)
+        @each(todo in activity)
+          <div class="activity-item">
+            <span class="activity-dot activity-dot-green"></span>
+            <div>
+              <p class="activity-text">
+                <strong>{{ todo.completedBy ? todo.completedBy.displayName : 'Someone' }}</strong>
+                finished {{ todo.title }} in {{ todo.todoList.name }}
+              </p>
+              <p class="activity-time">{{ todo.completedAt.toRelative() }}</p>
+            </div>
+          </div>
+        @end
+      @else
+        <p class="field-hint">Nothing finished yet. Ticking a todo will show up here.</p>
+      @end
+    @end
+  </div>
 @end

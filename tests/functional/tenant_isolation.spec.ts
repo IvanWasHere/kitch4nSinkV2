@@ -5,7 +5,10 @@ import User from '#models/user'
 import Invitation from '#models/invitation'
 import Organization from '#models/organization'
 import invitations from '#organizations/invitation_service'
-import { addMember, createWorkspace } from '#tests/helpers'
+import Todo from '#models/todo'
+import TodoList from '#models/todo_list'
+import todoService from '#todos/todo_service'
+import { addMember, createList, createWorkspace } from '#tests/helpers'
 
 /**
  * Tenant isolation (plan §15).
@@ -233,6 +236,182 @@ test.group('Tenant isolation', (group) => {
     const joiner = await User.findByOrFail('email', 'joiner@example.com')
     assert.equal(joiner.organizationId, b.organization.id)
     assert.notEqual(joiner.organizationId, a.organization.id)
+  })
+
+  /*
+   |--------------------------------------------------------------------------
+   | Lists and todos (M3.5)
+   |--------------------------------------------------------------------------
+   */
+
+  test('the lists screen shows only your own', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    await createList(a.organization, a.user, 'Belongs to A')
+    await createList(b.organization, b.user, 'Belongs to B')
+
+    const response = await client.get('/lists').loginAs(a.user)
+
+    response.assertTextIncludes('Belongs to A')
+    assert.notInclude(response.text(), 'Belongs to B')
+  })
+
+  test('opening another workspace list is a miss, not a peek', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const theirs = await createList(b.organization, b.user, 'Belongs to B', ['Secret todo'])
+
+    const response = await client.get(`/lists/${theirs.publicId}`).loginAs(a.user).redirects(0)
+
+    response.assertHeader('location', '/lists')
+    assert.notInclude(response.text(), 'Secret todo')
+  })
+
+  test('renaming another workspace list does nothing', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const theirs = await createList(b.organization, b.user, 'Belongs to B')
+
+    await client
+      .post(`/lists/${theirs.publicId}`)
+      .loginAs(a.user)
+      .form({ name: 'Renamed by A' })
+      .withCsrfToken()
+      .redirects(0)
+
+    await theirs.refresh()
+    assert.equal(theirs.name, 'Belongs to B')
+  })
+
+  test('deleting another workspace list does nothing', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const theirs = await createList(b.organization, b.user, 'Belongs to B')
+
+    await client
+      .post(`/lists/${theirs.publicId}/delete`)
+      .loginAs(a.user)
+      .withCsrfToken()
+      .redirects(0)
+
+    await theirs.refresh()
+    assert.isFalse(theirs.isDeleted)
+  })
+
+  test('archiving another workspace list does nothing', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const theirs = await createList(b.organization, b.user, 'Belongs to B')
+
+    await client
+      .post(`/lists/${theirs.publicId}/archive`)
+      .loginAs(a.user)
+      .withCsrfToken()
+      .redirects(0)
+
+    await theirs.refresh()
+    assert.isFalse(theirs.isArchived)
+  })
+
+  test('adding a todo to another workspace list does nothing', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const theirs = await createList(b.organization, b.user, 'Belongs to B')
+
+    await client
+      .post(`/lists/${theirs.publicId}/todos`)
+      .loginAs(a.user)
+      .form({ title: 'Planted by A' })
+      .withCsrfToken()
+      .redirects(0)
+
+    assert.isNull(await Todo.findBy('title', 'Planted by A'))
+  })
+
+  test('completing another workspace todo does nothing', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    await createList(b.organization, b.user, 'Belongs to B', ['Theirs'])
+    const theirs = await Todo.findByOrFail('title', 'Theirs')
+
+    await client
+      .post(`/todos/${theirs.publicId}/complete`)
+      .loginAs(a.user)
+      .withCsrfToken()
+      .redirects(0)
+
+    await theirs.refresh()
+    assert.isFalse(theirs.isComplete)
+  })
+
+  test('deleting another workspace todo does nothing', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    await createList(b.organization, b.user, 'Belongs to B', ['Theirs'])
+    const theirs = await Todo.findByOrFail('title', 'Theirs')
+
+    await client
+      .post(`/todos/${theirs.publicId}/delete`)
+      .loginAs(a.user)
+      .withCsrfToken()
+      .redirects(0)
+
+    await theirs.refresh()
+    assert.isFalse(theirs.isDeleted)
+  })
+
+  /**
+   * Assigning across workspaces is the injection point plan §5.6 calls out:
+   * `assigned_to` arrives in a request body.
+   */
+  test('a todo cannot be assigned to someone in another workspace', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const ours = await createList(a.organization, a.user, 'Belongs to A')
+
+    await client
+      .post(`/lists/${ours.publicId}/todos`)
+      .loginAs(a.user)
+      .form({ title: 'Cross-tenant assignment', assignedTo: b.member.publicId })
+      .withCsrfToken()
+      .redirects(0)
+
+    assert.isNull(await Todo.findBy('title', 'Cross-tenant assignment'))
+  })
+
+  /**
+   * The denormalised `todos.organization_id` is what lets every todo query
+   * skip the join to its list. The composite foreign key is what stops the two
+   * from ever disagreeing — without it the denormalisation would be a way to
+   * hide a row from its own tenant filter.
+   */
+  test('a todo cannot claim an organisation its list does not belong to', async ({
+    assert,
+    client,
+  }) => {
+    const { a, b } = await twoWorkspaces()
+    const theirs = await createList(b.organization, b.user, 'Belongs to B')
+
+    await assert.rejects(() =>
+      Todo.create({
+        organizationId: a.organization.id,
+        todoListId: theirs.id,
+        title: 'Smuggled',
+        priority: 'normal',
+        position: 100,
+      })
+    )
+
+    void client
+  })
+
+  test('dashboard numbers count only your own workspace', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+    await createList(a.organization, a.user, 'Belongs to A', ['One'])
+    await createList(b.organization, b.user, 'Belongs to B', ['One', 'Two', 'Three'])
+
+    const { default: dashboard } = await import('#todos/dashboard_service')
+    const stats = await dashboard.statsFor(a.organization)
+
+    assert.equal(stats.lists, 1)
+    assert.equal(stats.openTodos, 1)
+
+    const response = await client.get('/dashboard').loginAs(a.user)
+    assert.notInclude(response.text(), 'Belongs to B')
+
+    void TodoList
+    void todoService
   })
 
   test('seat counts are per workspace', async ({ assert }) => {

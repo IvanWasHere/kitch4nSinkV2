@@ -6,7 +6,11 @@ import vine from '@vinejs/vine'
 
 export const organizationSettingsValidator = vine.create({
   name: vine.string().trim().minLength(1).maxLength(120),
-  timezone: vine.string().trim().maxLength(64).optional(),
+  /**
+   * An IANA zone name. Due dates are stored UTC and rendered in this
+   * (plan §5.6), so it decides whether something due "today" is late.
+   */
+  timezone: vine.string().trim().maxLength(64).in(Intl.supportedValuesOf('timeZone')).optional(),
 })
 
 /**

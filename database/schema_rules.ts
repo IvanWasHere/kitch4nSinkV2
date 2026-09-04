@@ -95,6 +95,21 @@ export default {
       },
     },
 
+    todo_lists: {
+      columns: {
+        /**
+         * A design-token name — the `.card-stripe-*` palette — not a hex.
+         */
+        color: union('blue', 'green', 'orange', 'purple', 'red', 'gray'),
+      },
+    },
+
+    todos: {
+      columns: {
+        priority: union('low', 'normal', 'high'),
+      },
+    },
+
     jobs: {
       columns: {
         /**

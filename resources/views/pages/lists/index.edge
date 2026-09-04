@@ -1,0 +1,113 @@
+{{--
+  The mockup's Products grid, re-cut as lists (plan §13.6.2): the same
+  `.product-card` shape, with the stock pill carrying a todo count instead.
+--}}
+@component('layouts/app', { title: 'Lists' })
+  @slot('actions')
+    @!button({
+      text: 'New list',
+      size: 'sm',
+      onclick: "document.getElementById('new-list').showModal()",
+    })
+  @end
+
+  @if(lists.length)
+    <div class="card-grid">
+      @each(list in lists)
+        <a href="{{ urlFor('lists.show', { id: list.publicId }) }}" class="entity-card">
+          <span class="card-stripe card-stripe-{{ list.color }}"></span>
+          <div class="entity-card-body">
+            <p class="entity-card-name">
+              {{ list.name }}
+              @if(list.isArchived)
+                @!badge({ text: 'Archived', tone: 'neutral' })
+              @end
+            </p>
+            <p class="field-hint" style="margin-bottom: 10px">
+              {{ list.description || 'No description' }}
+            </p>
+            <div class="entity-card-meta">
+              <span class="field-hint">
+                {{ list.createdBy ? list.createdBy.displayName : 'Someone' }}
+              </span>
+              {{--
+                Amber and red arrive with the todosPerList cap in M4; until
+                then a count has nothing to be near.
+              --}}
+              <span class="count-pill count-ok">
+                {{ list.todosCount }} {{ list.todosCount === 1 ? 'todo' : 'todos' }}
+              </span>
+            </div>
+          </div>
+        </a>
+      @end
+    </div>
+  @else
+    @panel.root()
+      @!emptyState({
+        icon: 'list',
+        title: includeArchived ? 'Nothing here' : 'No lists yet',
+        description: 'Lists belong to the workspace, so everyone on your team sees them and can add to them.',
+      })
+      <div class="btn-row" style="justify-content: center">
+        @!button({
+          text: 'Create the first list',
+          size: 'sm',
+          onclick: "document.getElementById('new-list').showModal()",
+        })
+      </div>
+    @end
+  @end
+
+  <div class="btn-row" style="margin-top: 18px">
+    @if(includeArchived)
+      <a class="btn btn-outline btn-sm" href="{{ urlFor('lists.index') }}">Hide archived</a>
+    @else
+      <a class="btn btn-outline btn-sm" href="{{ urlFor('lists.index') }}?archived=1">
+        Show archived
+      </a>
+    @end
+  </div>
+
+  @modal({
+    id: 'new-list',
+    title: 'New list',
+    description: 'Everyone in the workspace will be able to see and edit it.',
+  })
+    @form({ route: 'lists.store', method: 'POST', id: 'new-list-form' })
+      @field.root({ name: 'name' })
+        @!field.label({ text: 'Name' })
+        @!input.control({ placeholder: 'Launch checklist' })
+        @!field.error()
+      @end
+
+      @field.root({ name: 'description' })
+        @!field.label({ text: 'Description' })
+        @!input.control({ placeholder: 'What belongs in here' })
+        @!field.error()
+      @end
+
+      @field.root({ name: 'color' })
+        @!field.label({ text: 'Colour' })
+        @!select.control({
+          options: [
+            { value: 'blue', name: 'Blue' },
+            { value: 'green', name: 'Green' },
+            { value: 'orange', name: 'Orange' },
+            { value: 'purple', name: 'Purple' },
+            { value: 'red', name: 'Red' },
+            { value: 'gray', name: 'Grey' },
+          ],
+        })
+      @end
+    @end
+    @slot('footer')
+      @!button({
+        text: 'Cancel',
+        variant: 'outline',
+        onclick: "document.getElementById('new-list').close()",
+      })
+      @!button({ text: 'Create list', type: 'submit', form: 'new-list-form' })
+    @end
+  @end
+@end

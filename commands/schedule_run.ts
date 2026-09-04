@@ -28,11 +28,13 @@ export default class ScheduleRun extends BaseCommand {
   async run() {
     const { default: queue } = await import('#queue/queue_service')
     const { default: expireInvitationsJob } = await import('#queue/jobs/expire_invitations_job')
+    const { default: overdueDigestJob } = await import('#queue/jobs/overdue_digest_job')
+    const { default: reconcileCountersJob } = await import('#queue/jobs/reconcile_counters_job')
+    const { default: normalizePositionsJob } = await import('#queue/jobs/normalize_positions_job')
 
     /**
-     * Milestones add rows here: ReconcileCountersJob and NormalizePositionsJob
-     * in M3.5, SyncBillingJob in M4, PurgeDeletedFilesJob in M5,
-     * RollupApiUsageJob in M6, PruneAuditLogsJob in M7 (plan §9).
+     * Milestones add rows here: SyncBillingJob in M4, PurgeDeletedFilesJob in
+     * M5, RollupApiUsageJob in M6, PruneAuditLogsJob in M7 (plan §9).
      */
     const schedules: Record<
       string,
@@ -40,7 +42,12 @@ export default class ScheduleRun extends BaseCommand {
     > = {
       '5m': [],
       'hourly': [],
-      'daily': [{ name: 'expire invitations', handler: expireInvitationsJob }],
+      'daily': [
+        { name: 'expire invitations', handler: expireInvitationsJob },
+        { name: 'overdue digests', handler: overdueDigestJob },
+        { name: 'reconcile todo counters', handler: reconcileCountersJob },
+        { name: 'normalize list positions', handler: normalizePositionsJob },
+      ],
     }
 
     const due = schedules[this.interval]

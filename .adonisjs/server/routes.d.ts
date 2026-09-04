@@ -31,6 +31,17 @@ export type ScannedRoutes = {
     'settings.organization.transfer': { paramsTuple?: []; params?: {} }
     'settings.organization.destroy': { paramsTuple?: []; params?: {} }
     'settings.organization.leave': { paramsTuple?: []; params?: {} }
+    'lists.index': { paramsTuple?: []; params?: {} }
+    'lists.store': { paramsTuple?: []; params?: {} }
+    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'lists.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'lists.archive': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'lists.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.store': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'todos.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.move': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'members.index': { paramsTuple?: []; params?: {} }
     'members.invite': { paramsTuple?: []; params?: {} }
     'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -69,6 +80,8 @@ export type ScannedRoutes = {
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
     'settings.organization': { paramsTuple?: []; params?: {} }
+    'lists.index': { paramsTuple?: []; params?: {} }
+    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'members.index': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
@@ -93,6 +106,8 @@ export type ScannedRoutes = {
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
     'settings.organization': { paramsTuple?: []; params?: {} }
+    'lists.index': { paramsTuple?: []; params?: {} }
+    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'members.index': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
@@ -116,6 +131,15 @@ export type ScannedRoutes = {
     'settings.organization.transfer': { paramsTuple?: []; params?: {} }
     'settings.organization.destroy': { paramsTuple?: []; params?: {} }
     'settings.organization.leave': { paramsTuple?: []; params?: {} }
+    'lists.store': { paramsTuple?: []; params?: {} }
+    'lists.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'lists.archive': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'lists.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.store': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'todos.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.move': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'members.invite': { paramsTuple?: []; params?: {} }
     'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invitations.revoke': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

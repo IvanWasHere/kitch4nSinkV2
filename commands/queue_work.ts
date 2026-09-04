@@ -43,6 +43,17 @@ export default class QueueWork extends BaseCommand {
     const { default: queue } = await import('#queue/queue_service')
     const { handlerFor } = await import('#queue/registry')
     const { UnrecoverableJobError } = await import('#queue/contracts')
+    const { default: router } = await import('@adonisjs/core/services/router')
+
+    /**
+     * Routes are committed by the HTTP server, which never starts here. A
+     * worker that renders an email still needs `urlFor`, so without this every
+     * link in every queued message fails to resolve — quietly, because the
+     * mailer logs a render failure rather than crashing the job.
+     */
+    if (!router.commited) {
+      router.commit()
+    }
 
     const concurrency = this.concurrency ?? queue.concurrency
 
