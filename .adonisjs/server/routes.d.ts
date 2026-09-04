@@ -16,6 +16,9 @@ export type ScannedRoutes = {
     'auth.two_factor.store': { paramsTuple?: []; params?: {} }
     'auth.social.redirect': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'auth.social.callback': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
+    'invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.session.destroy': { paramsTuple?: []; params?: {} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
@@ -23,6 +26,16 @@ export type ScannedRoutes = {
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
     'settings.profile.update': { paramsTuple?: []; params?: {} }
+    'settings.organization': { paramsTuple?: []; params?: {} }
+    'settings.organization.update': { paramsTuple?: []; params?: {} }
+    'settings.organization.transfer': { paramsTuple?: []; params?: {} }
+    'settings.organization.destroy': { paramsTuple?: []; params?: {} }
+    'settings.organization.leave': { paramsTuple?: []; params?: {} }
+    'members.index': { paramsTuple?: []; params?: {} }
+    'members.invite': { paramsTuple?: []; params?: {} }
+    'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invitations.revoke': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invitations.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'settings.security.password': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.start': { paramsTuple?: []; params?: {} }
@@ -46,10 +59,14 @@ export type ScannedRoutes = {
     'auth.two_factor.create': { paramsTuple?: []; params?: {} }
     'auth.social.redirect': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'auth.social.callback': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
+    'invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
+    'settings.organization': { paramsTuple?: []; params?: {} }
+    'members.index': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
@@ -65,10 +82,14 @@ export type ScannedRoutes = {
     'auth.two_factor.create': { paramsTuple?: []; params?: {} }
     'auth.social.redirect': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'auth.social.callback': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
+    'invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
+    'settings.organization': { paramsTuple?: []; params?: {} }
+    'members.index': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
@@ -82,9 +103,18 @@ export type ScannedRoutes = {
     'auth.password.store': { paramsTuple?: []; params?: {} }
     'auth.password.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.two_factor.store': { paramsTuple?: []; params?: {} }
+    'invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.session.destroy': { paramsTuple?: []; params?: {} }
     'auth.verify_email.resend': { paramsTuple?: []; params?: {} }
     'settings.profile.update': { paramsTuple?: []; params?: {} }
+    'settings.organization.update': { paramsTuple?: []; params?: {} }
+    'settings.organization.transfer': { paramsTuple?: []; params?: {} }
+    'settings.organization.destroy': { paramsTuple?: []; params?: {} }
+    'settings.organization.leave': { paramsTuple?: []; params?: {} }
+    'members.invite': { paramsTuple?: []; params?: {} }
+    'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invitations.revoke': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invitations.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'settings.security.password': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.start': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.confirm': { paramsTuple?: []; params?: {} }

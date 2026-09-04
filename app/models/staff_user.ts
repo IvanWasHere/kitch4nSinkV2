@@ -31,7 +31,7 @@ export default class StaffUser extends compose(
   }
 
   get isDisabled() {
-    return this.disabledAt !== null
+    return Boolean(this.disabledAt)
   }
 
   /**
@@ -39,7 +39,7 @@ export default class StaffUser extends compose(
    * anyone without it to the setup screen before any admin route runs.
    */
   get hasTwoFactor() {
-    return this.twoFactorSecret !== null && this.twoFactorConfirmedAt !== null
+    return Boolean(this.twoFactorSecret) && Boolean(this.twoFactorConfirmedAt)
   }
 
   get initials() {

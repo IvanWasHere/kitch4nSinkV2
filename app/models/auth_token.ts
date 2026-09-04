@@ -21,7 +21,7 @@ export default class AuthToken extends AuthTokenSchema {
   }
 
   get isConsumed() {
-    return this.consumedAt !== null
+    return Boolean(this.consumedAt)
   }
 
   get isUsable() {

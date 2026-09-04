@@ -2,6 +2,7 @@ import * as abilities from '#abilities/main'
 import { policies } from '#generated/policies'
 
 import { Bouncer } from '@adonisjs/bouncer'
+import type User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
@@ -12,11 +13,17 @@ import type { NextFn } from '@adonisjs/core/types/http'
 export default class InitializeBouncerMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
     /**
-     * Create bouncer instance for the ongoing HTTP request.
-     * We will pull the user from the HTTP context.
+     * The actor is the tenant user, taken from the `web` guard specifically.
+     *
+     * `ctx.auth.user` spans every configured guard, which since M1 means
+     * `User | StaffUser` — and a policy method written against `User` does
+     * not satisfy that union, so every policy would silently drop out of the
+     * type-level action list. Staff authorisation is its own guard, its own
+     * table and (from M7) its own policies; conflating the two here is
+     * exactly the leak D5 exists to prevent.
      */
     ctx.bouncer = new Bouncer(
-      () => ctx.auth.user || null,
+      (): User | null => ctx.auth.use('web').user ?? null,
       abilities,
       policies
     ).setContainerResolver(ctx.containerResolver)
@@ -34,10 +41,6 @@ export default class InitializeBouncerMiddleware {
 
 declare module '@adonisjs/core/http' {
   export interface HttpContext {
-    bouncer: Bouncer<
-      Exclude<HttpContext['auth']['user'], undefined>,
-      typeof abilities,
-      typeof policies
-    >
+    bouncer: Bouncer<User, typeof abilities, typeof policies>
   }
 }

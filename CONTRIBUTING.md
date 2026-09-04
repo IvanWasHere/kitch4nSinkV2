@@ -52,8 +52,23 @@ SQLite is not enforced, so a migration that cannot run on Postgres fails the bui
 - Every tenant-owned table carries `organization_id` and an index on it.
 - Every query against a tenant-owned table filters on `organization_id`. There is no endpoint that
   accepts an organisation id as a parameter — the session or the API key *is* the scope.
+- Tenancy belongs in the **lookup**, not in a check after it. `where('public_id', id)
+  .where('organization_id', …)` makes a foreign id behave exactly like a missing one; fetching by
+  id and then comparing leaks the fact that the row exists.
 - Authorisation is a Bouncer policy, and **every policy takes the actor explicitly** rather than
   reading `auth.user`, so API-key actors and impersonating staff go through the same checks.
+- **Every endpoint that takes an identifier gets a case in
+  `tests/functional/tenant_isolation.spec.ts`.** That suite seeds two workspaces and asserts one can
+  never read or mutate the other. A leak there is an incident, not a bug report.
+
+## Two traps this codebase has already hit
+
+1. **A nullable column that was never assigned is `undefined`, not `null`.** On a freshly created
+   model `acceptedAt !== null` is `true`, so a brand-new invitation reports itself as accepted.
+   Nullable-timestamp getters test truthiness instead.
+2. **Do not compare a timestamp column against a bound value in SQL.** SQLite stores
+   `YYYY-MM-DD HH:MM:SS` and compares it as text; Postgres compares it as a timestamp. Where a row
+   count is small, decide it from the model's own getter instead — see `seatUsage`.
 
 ## Adding a table
 
@@ -90,6 +105,16 @@ enrolment is completed without asking for a code and the recovery codes are prin
 
 `node ace dev:totp <email>` prints a currently-valid code, so the two-factor screens can be walked
 through without an authenticator app. It refuses to run outside development.
+
+## Demo data
+
+```bash
+node ace migration:fresh && node ace dev:seed
+```
+
+Creates one workspace with an owner, a member and a pending invitation, and prints the invitation
+link — only the hash of an invitation token is stored, so that print is the one chance to see it.
+Development only. Seeders covering every plan tier arrive in M8.
 
 ## Frontend
 

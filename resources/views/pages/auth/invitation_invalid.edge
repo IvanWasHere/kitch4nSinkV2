@@ -1,0 +1,9 @@
+@component('layouts/auth', { title: 'Invitation', heading: 'This invitation cannot be used' })
+  <div class="info-box info-box-warning">{{ reason }}</div>
+
+  @!link({
+    route: 'auth.session.create',
+    text: 'Go to sign in',
+    class: 'btn btn-primary btn-block',
+  })
+@end

@@ -54,6 +54,23 @@ router
   .use(middleware.guest())
 
 /**
+ * Accepting an invitation.
+ *
+ * Outside the guest group: the recipient may already be signed in to a
+ * different workspace, and they need to be told that plainly rather than
+ * silently redirected to a dashboard that is not the one they were invited to.
+ */
+router
+  .get('/invitations/:token', [controllers.auth.InvitationAcceptance, 'show'])
+  .as('invitations.show')
+router
+  .get('/invitations/:token/accept', [controllers.auth.InvitationAcceptance, 'form'])
+  .as('invitations.form')
+router
+  .post('/invitations/:token/accept', [controllers.auth.InvitationAcceptance, 'accept'])
+  .as('invitations.accept')
+
+/**
  * Following a confirmation link must work in a browser that has never seen
  * this site, so it is outside both the guest and the auth groups.
  */

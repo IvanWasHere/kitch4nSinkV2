@@ -42,6 +42,6 @@ export default class Organization extends compose(
   }
 
   get isOnTrial() {
-    return this.trialEndsAt !== null && this.trialEndsAt > DateTime.utc()
+    return Boolean(this.trialEndsAt) && this.trialEndsAt! > DateTime.utc()
   }
 }

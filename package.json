@@ -35,7 +35,8 @@
     "#start/*": "./start/*.js",
     "#config/*": "./config/*.js",
     "#auth/*": "./app/auth/*.js",
-    "#mail/*": "./app/mail/*.js"
+    "#mail/*": "./app/mail/*.js",
+    "#organizations/*": "./app/organizations/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.5.0",

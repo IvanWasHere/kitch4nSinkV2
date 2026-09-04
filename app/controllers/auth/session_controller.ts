@@ -16,7 +16,7 @@ export default class SessionController {
 
     let user: User
     try {
-      user = await User.verifyCredentials(email, password)
+      user = await User.verifyActiveCredentials(email, password)
     } catch (error) {
       if (error instanceof authErrors.E_INVALID_CREDENTIALS) {
         session.flashAll()

@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
+import { errors as authErrors } from '@adonisjs/auth'
 import { compose } from '@adonisjs/core/helpers'
 import { beforeSave, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
@@ -32,6 +33,25 @@ export default class User extends compose(
     }
   }
 
+  /**
+   * Verify credentials *and* that the account still exists.
+   *
+   * Removing a member soft-deletes them (plan §5.6), and a soft-deleted row
+   * must not be a working set of credentials. The mixin's `verifyCredentials`
+   * does not know about soft deletion, so every sign-in path goes through
+   * this instead — and it fails with the same error, so a removed account is
+   * indistinguishable from a wrong password.
+   */
+  static async verifyActiveCredentials(email: string, password: string): Promise<User> {
+    const user = await this.verifyCredentials(email, password)
+
+    if (user.isDeleted) {
+      throw new authErrors.E_INVALID_CREDENTIALS('Invalid user credentials')
+    }
+
+    return user
+  }
+
   @belongsTo(() => Organization)
   declare organization: BelongsTo<typeof Organization>
 
@@ -43,7 +63,7 @@ export default class User extends compose(
   }
 
   get hasVerifiedEmail() {
-    return this.emailVerifiedAt !== null
+    return Boolean(this.emailVerifiedAt)
   }
 
   /**
@@ -51,7 +71,7 @@ export default class User extends compose(
    * secret that was generated but never confirmed must not lock anyone out.
    */
   get hasTwoFactor() {
-    return this.twoFactorSecret !== null && this.twoFactorConfirmedAt !== null
+    return Boolean(this.twoFactorSecret) && Boolean(this.twoFactorConfirmedAt)
   }
 
   /**
@@ -59,7 +79,7 @@ export default class User extends compose(
    * user sets one, and must not be told its (absent) password is wrong.
    */
   get hasPassword() {
-    return this.password !== null
+    return Boolean(this.password)
   }
 
   get initials() {

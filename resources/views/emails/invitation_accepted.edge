@@ -1,0 +1,15 @@
+@component('emails/layout', {
+  title: 'Someone joined your workspace',
+  footer: 'You are receiving this because you own this workspace.',
+})
+  <p style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+    {{ joiner.displayName }} joined {{ organization.name }}
+  </p>
+  <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #4b5563;">
+    They accepted their invitation using {{ joiner.email }} and now have access to everything in
+    the workspace.
+  </p>
+  <p style="margin: 0;">
+    <a href="{{ url }}" style="color: #2563eb;">Manage members</a>
+  </p>
+@end

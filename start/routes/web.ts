@@ -22,6 +22,41 @@ router
       .post('/settings/profile', [controllers.settings.Profile, 'update'])
       .as('settings.profile.update')
 
+    /**
+     * Workspace settings and the team. Reading them is open to every member;
+     * the owner-only actions are gated by policy inside the controllers, so
+     * a member sees the screen without the buttons rather than a 403.
+     */
+    router
+      .get('/settings/organization', [controllers.settings.Organization, 'edit'])
+      .as('settings.organization')
+    router
+      .post('/settings/organization', [controllers.settings.Organization, 'update'])
+      .as('settings.organization.update')
+    router
+      .post('/settings/organization/transfer', [controllers.organizations.Ownership, 'transfer'])
+      .as('settings.organization.transfer')
+    router
+      .post('/settings/organization/delete', [controllers.settings.Organization, 'destroy'])
+      .as('settings.organization.destroy')
+    router
+      .post('/settings/organization/leave', [controllers.organizations.Member, 'leave'])
+      .as('settings.organization.leave')
+
+    router.get('/members', [controllers.organizations.Member, 'index']).as('members.index')
+    router
+      .post('/members/invite', [controllers.organizations.Member, 'invite'])
+      .as('members.invite')
+    router
+      .post('/members/:id/remove', [controllers.organizations.Member, 'remove'])
+      .as('members.remove')
+    router
+      .post('/invitations/:id/revoke', [controllers.organizations.Invitation, 'revoke'])
+      .as('invitations.revoke')
+    router
+      .post('/invitations/:id/resend', [controllers.organizations.Invitation, 'resend'])
+      .as('invitations.resend')
+
     router
       .get('/settings/security', [controllers.settings.Security, 'edit'])
       .as('settings.security')

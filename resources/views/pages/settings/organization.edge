@@ -1,0 +1,136 @@
+@component('layouts/app', { title: 'Settings' })
+  @include('partials/settings_nav')
+
+  <div class="settings-card">
+    <h2 class="section-title">Workspace</h2>
+    <p class="section-desc">
+      @if(canManage)
+        The name everyone in this workspace sees, and what appears on invoices.
+      @else
+        Only the workspace owner can change these.
+      @end
+    </p>
+
+    @if(canManage)
+      @form({ route: 'settings.organization.update', method: 'POST' })
+        @field.root({ name: 'name' })
+          @!field.label({ text: 'Workspace name' })
+          @!input.control({ value: organization.name })
+          @!field.error()
+        @end
+
+        <div class="btn-row">
+          @!button({ text: 'Save workspace', type: 'submit', size: 'sm' })
+        </div>
+      @end
+    @else
+      <div class="settings-row">
+        <span class="settings-row-label">Name</span>
+        <span class="settings-row-value">{{ organization.name }}</span>
+      </div>
+    @end
+
+    <div class="settings-row">
+      <span class="settings-row-label">Plan</span>
+      <span class="settings-row-value">{{ plan.name }}</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Seats</span>
+      <span class="settings-row-value">
+        {{ usage.used }} of {{ usage.limit === null ? 'unlimited' : usage.limit }}
+      </span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Workspace id</span>
+      <span class="settings-row-value mono">{{ organization.publicId }}</span>
+    </div>
+  </div>
+
+  {{--
+    Ownership transfer is its own card because it is the only way anyone's
+    role changes: there is exactly one owner, so promoting somebody
+    necessarily demotes the person doing it.
+  --}}
+  @if(isOwner)
+    <div class="settings-card">
+      <h2 class="section-title">Transfer ownership</h2>
+      <p class="section-desc">
+        The new owner gets billing, invitations and the ability to delete this workspace. You stay
+        as a member. You cannot undo this yourself.
+      </p>
+
+      @if(members.length)
+        @form({ route: 'settings.organization.transfer', method: 'POST' })
+          @field.root({ name: 'memberPublicId' })
+            @!field.label({ text: 'New owner' })
+            @!select.control({
+              options: members.map((member) => ({
+                value: member.publicId,
+                name: `${member.displayName} (${member.email})`,
+              })),
+            })
+            @!field.error()
+          @end
+
+          <div x-data="confirmByTyping({{ js.stringify(organization.name) }})">
+            @field.root({ name: 'confirmation' })
+              @!field.label({ text: `Type "${organization.name}" to confirm` })
+              @!input.control({ placeholder: organization.name, 'x-model': 'typed' })
+              @!field.error()
+            @end
+
+            @!button({
+              text: 'Transfer ownership',
+              type: 'submit',
+              variant: 'danger',
+              size: 'sm',
+              'x-bind:disabled': '!matches',
+            })
+          </div>
+        @end
+      @else
+        <div class="info-box">
+          Invite someone to the workspace before transferring ownership to them.
+        </div>
+      @end
+    </div>
+  @end
+
+  <div class="settings-card danger-zone">
+    @if(isOwner)
+      <h2 class="section-title">Delete workspace</h2>
+      <p class="section-desc">
+        This removes access for everyone in {{ organization.name }}. Nothing is erased immediately —
+        contact support if you delete it by mistake.
+      </p>
+
+      @form({ route: 'settings.organization.destroy', method: 'POST' })
+        <div x-data="confirmByTyping({{ js.stringify(organization.name) }})">
+          @field.root({ name: 'confirmation' })
+            @!field.label({ text: `Type "${organization.name}" to confirm` })
+            @!input.control({ placeholder: organization.name, 'x-model': 'typed' })
+            @!field.error()
+          @end
+
+          @!button({
+            text: 'Delete workspace',
+            type: 'submit',
+            variant: 'danger',
+            size: 'sm',
+            'x-bind:disabled': '!matches',
+          })
+        </div>
+      @end
+    @else
+      <h2 class="section-title">Leave workspace</h2>
+      <p class="section-desc">
+        You will lose access to everything in {{ organization.name }}. Work you created stays with
+        the workspace.
+      </p>
+
+      @form({ route: 'settings.organization.leave', method: 'POST' })
+        @!button({ text: 'Leave workspace', type: 'submit', variant: 'danger', size: 'sm' })
+      @end
+    @end
+  </div>
+@end

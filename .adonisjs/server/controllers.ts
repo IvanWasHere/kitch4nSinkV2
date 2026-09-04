@@ -10,6 +10,7 @@ export const controllers = {
   },
   auth: {
     EmailVerification: () => import('#controllers/auth/email_verification_controller'),
+    InvitationAcceptance: () => import('#controllers/auth/invitation_acceptance_controller'),
     PasswordReset: () => import('#controllers/auth/password_reset_controller'),
     Registration: () => import('#controllers/auth/registration_controller'),
     Session: () => import('#controllers/auth/session_controller'),
@@ -17,7 +18,13 @@ export const controllers = {
     TwoFactorChallenge: () => import('#controllers/auth/two_factor_challenge_controller'),
   },
   Dashboard: () => import('#controllers/dashboard_controller'),
+  organizations: {
+    Invitation: () => import('#controllers/organizations/invitation_controller'),
+    Member: () => import('#controllers/organizations/member_controller'),
+    Ownership: () => import('#controllers/organizations/ownership_controller'),
+  },
   settings: {
+    Organization: () => import('#controllers/settings/organization_controller'),
     Profile: () => import('#controllers/settings/profile_controller'),
     Security: () => import('#controllers/settings/security_controller'),
   },

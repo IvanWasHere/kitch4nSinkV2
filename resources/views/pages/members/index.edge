@@ -1,0 +1,150 @@
+@component('layouts/app', { title: 'Members' })
+  @slot('actions')
+    @if(auth.user.isOwner && !usage.isFull)
+      @!button({
+        text: 'Invite member',
+        size: 'sm',
+        onclick: "document.getElementById('invite-member').showModal()",
+      })
+    @end
+  @end
+
+  <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr)">
+    <div class="stat-card">
+      @!usageMeter({ label: 'Seats', current: usage.used, limit: usage.limit })
+      <p class="field-hint">
+        {{ usage.members }} {{ usage.members === 1 ? 'member' : 'members' }}
+        @if(usage.pendingInvitations)
+          · {{ usage.pendingInvitations }} pending
+        @end
+      </p>
+    </div>
+  </div>
+
+  {{--
+    At the cap the invite button is disabled with the reason attached, rather
+    than failing after the click (plan §7.4).
+  --}}
+  @if(auth.user.isOwner && usage.isFull)
+    <div class="info-box info-box-warning">
+      Every seat on the {{ organization.planKey }} plan is taken. Remove a member, revoke a pending
+      invitation, or upgrade to invite more people.
+    </div>
+  @end
+
+  @panel.root({ title: 'Members', flush: true })
+    <div class="table-scroll">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Last seen</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @each(member in members)
+            <tr>
+              <td>
+                {{ member.displayName }}
+                @if(member.id === currentUser.id)
+                  <span class="field-hint">you</span>
+                @end
+              </td>
+              <td>{{ member.email }}</td>
+              <td>
+                @!badge({
+                  text: member.id === organization.ownerId ? 'Owner' : 'Member',
+                  tone: member.id === organization.ownerId ? 'info' : 'neutral',
+                })
+              </td>
+              <td>{{ member.lastLoginAt ? member.lastLoginAt.toRelative() : 'Never' }}</td>
+              <td>
+                <div class="table-actions">
+                  @if(auth.user.isOwner && member.id !== organization.ownerId)
+                    @form({ route: 'members.remove', routeParams: { id: member.publicId }, method: 'POST' })
+                      @!button({ text: 'Remove', variant: 'danger', size: 'xs', type: 'submit' })
+                    @end
+                  @end
+                </div>
+              </td>
+            </tr>
+          @end
+        </tbody>
+      </table>
+    </div>
+  @end
+
+  @if(auth.user.isOwner && (pendingInvitations.length || expiredInvitations.length))
+    <div style="margin-top: 18px">
+      @panel.root({ title: 'Invitations', flush: true })
+        <div class="table-scroll">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Invited by</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @each(invitation in pendingInvitations.concat(expiredInvitations))
+                <tr>
+                  <td>{{ invitation.email }}</td>
+                  <td>{{ invitation.invitedBy ? invitation.invitedBy.displayName : 'Someone' }}</td>
+                  <td>
+                    @!badge({
+                      text: invitation.status === 'expired' ? 'Expired' : 'Pending',
+                      tone: invitation.status === 'expired' ? 'danger' : 'warning',
+                    })
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      @form({ route: 'invitations.resend', routeParams: { id: invitation.publicId }, method: 'POST' })
+                        @!button({ text: 'Resend', variant: 'outline', size: 'xs', type: 'submit' })
+                      @end
+                      @form({ route: 'invitations.revoke', routeParams: { id: invitation.publicId }, method: 'POST' })
+                        @!button({ text: 'Revoke', variant: 'danger', size: 'xs', type: 'submit' })
+                      @end
+                    </div>
+                  </td>
+                </tr>
+              @end
+            </tbody>
+          </table>
+        </div>
+      @end
+    </div>
+  @end
+
+  @if(auth.user.isOwner)
+    @modal({
+      id: 'invite-member',
+      title: 'Invite a member',
+      description: 'They will get an email with a link that expires in 14 days.',
+    })
+      @form({ route: 'members.invite', method: 'POST', id: 'invite-member-form' })
+        @field.root({ name: 'email' })
+          @!field.label({ text: 'Email address' })
+          @!input.control({ type: 'email', placeholder: 'colleague@example.com' })
+          <span class="field-hint">
+            Everyone in the workspace can see and edit every list — invite people you would share
+            the work with.
+          </span>
+          @!field.error()
+        @end
+      @end
+      @slot('footer')
+        @!button({
+          text: 'Cancel',
+          variant: 'outline',
+          onclick: "document.getElementById('invite-member').close()",
+        })
+        @!button({ text: 'Send invitation', type: 'submit', form: 'invite-member-form' })
+      @end
+    @end
+  @end
+@end

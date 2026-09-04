@@ -9,15 +9,7 @@ import { DateTime } from 'luxon'
 import { jsonColumn, bigIntColumn, encryptedColumn, encryptedJsonColumn } from '#database/columns'
 
 export class AuthTokenSchema extends BaseModel {
-  static $columns = [
-    'consumedAt',
-    'createdAt',
-    'expiresAt',
-    'id',
-    'tokenHash',
-    'type',
-    'userId',
-  ] as const
+  static $columns = ['consumedAt', 'createdAt', 'expiresAt', 'id', 'tokenHash', 'type', 'userId'] as const
   $columns = AuthTokenSchema.$columns
   @column.dateTime()
   declare consumedAt: DateTime | null
@@ -35,22 +27,37 @@ export class AuthTokenSchema extends BaseModel {
   declare userId: number
 }
 
+export class InvitationSchema extends BaseModel {
+  static $columns = ['acceptedAt', 'createdAt', 'email', 'expiresAt', 'id', 'invitedByUserId', 'organizationId', 'publicId', 'revokedAt', 'role', 'tokenHash', 'updatedAt'] as const
+  $columns = InvitationSchema.$columns
+  @column.dateTime()
+  declare acceptedAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare email: string
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare invitedByUserId: number | null
+  @column()
+  declare organizationId: number
+  @column()
+  declare publicId: string
+  @column.dateTime()
+  declare revokedAt: DateTime | null
+  @column()
+  declare role: 'owner' | 'member'
+  @column()
+  declare tokenHash: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class OrganizationSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'deletedAt',
-    'id',
-    'limitOverrides',
-    'name',
-    'ownerId',
-    'planKey',
-    'publicId',
-    'slug',
-    'status',
-    'storageUsedBytes',
-    'trialEndsAt',
-    'updatedAt',
-  ] as const
+  static $columns = ['createdAt', 'deletedAt', 'id', 'limitOverrides', 'name', 'ownerId', 'planKey', 'publicId', 'slug', 'status', 'storageUsedBytes', 'trialEndsAt', 'updatedAt'] as const
   $columns = OrganizationSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -81,16 +88,7 @@ export class OrganizationSchema extends BaseModel {
 }
 
 export class SocialAccountSchema extends BaseModel {
-  static $columns = [
-    'accessToken',
-    'createdAt',
-    'id',
-    'provider',
-    'providerEmail',
-    'providerUserId',
-    'updatedAt',
-    'userId',
-  ] as const
+  static $columns = ['accessToken', 'createdAt', 'id', 'provider', 'providerEmail', 'providerUserId', 'updatedAt', 'userId'] as const
   $columns = SocialAccountSchema.$columns
   @encryptedColumn()
   declare accessToken: string | null
@@ -111,21 +109,7 @@ export class SocialAccountSchema extends BaseModel {
 }
 
 export class StaffUserSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'disabledAt',
-    'email',
-    'fullName',
-    'id',
-    'lastLoginAt',
-    'password',
-    'publicId',
-    'role',
-    'twoFactorConfirmedAt',
-    'twoFactorRecoveryCodes',
-    'twoFactorSecret',
-    'updatedAt',
-  ] as const
+  static $columns = ['createdAt', 'disabledAt', 'email', 'fullName', 'id', 'lastLoginAt', 'password', 'publicId', 'role', 'twoFactorConfirmedAt', 'twoFactorRecoveryCodes', 'twoFactorSecret', 'updatedAt'] as const
   $columns = StaffUserSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -156,24 +140,7 @@ export class StaffUserSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = [
-    'avatarKey',
-    'createdAt',
-    'deletedAt',
-    'email',
-    'emailVerifiedAt',
-    'fullName',
-    'id',
-    'lastLoginAt',
-    'organizationId',
-    'password',
-    'publicId',
-    'role',
-    'twoFactorConfirmedAt',
-    'twoFactorRecoveryCodes',
-    'twoFactorSecret',
-    'updatedAt',
-  ] as const
+  static $columns = ['avatarKey', 'createdAt', 'deletedAt', 'email', 'emailVerifiedAt', 'fullName', 'id', 'lastLoginAt', 'organizationId', 'password', 'publicId', 'role', 'twoFactorConfirmedAt', 'twoFactorRecoveryCodes', 'twoFactorSecret', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column()
   declare avatarKey: string | null

@@ -88,5 +88,11 @@ export default {
         type: union('verify_email', 'reset_password'),
       },
     },
+
+    invitations: {
+      columns: {
+        role: union('owner', 'member'),
+      },
+    },
   },
 } satisfies SchemaRules

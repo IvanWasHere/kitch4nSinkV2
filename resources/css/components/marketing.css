@@ -22,14 +22,20 @@
   gap: 20px;
 }
 
-.marketing-nav a {
+/*
+ * Plain nav links only. A bare `.marketing-nav a` outranks `.btn-primary`
+ * on specificity, so it repainted the "Get started" button's white label
+ * gray — a rule meant for text links must not reach into buttons that
+ * happen to be anchors.
+ */
+.marketing-nav a:not(.btn) {
   font-size: 13px;
   font-weight: 500;
   color: var(--gray-600);
   text-decoration: none;
 }
 
-.marketing-nav a:hover {
+.marketing-nav a:not(.btn):hover {
   color: var(--text-strong);
 }
 

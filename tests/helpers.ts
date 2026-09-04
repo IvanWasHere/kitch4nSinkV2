@@ -30,6 +30,22 @@ export async function createWorkspace(
 }
 
 /**
+ * Add a member to an existing organisation, through the invitation flow so
+ * tests exercise the real path rather than inserting a row directly.
+ */
+export async function addMember(
+  organization: Organization,
+  owner: User,
+  email: string,
+  fullName = 'Sam Member'
+): Promise<User> {
+  const { default: invitations } = await import('#organizations/invitation_service')
+  const { token } = await invitations.invite({ organization, invitedBy: owner, email })
+
+  return invitations.accept({ token, fullName, password: TEST_PASSWORD })
+}
+
+/**
  * Enrol and confirm two-factor for a subject, returning its secret and
  * recovery codes so a test can produce valid codes.
  */

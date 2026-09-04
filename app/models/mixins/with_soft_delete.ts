@@ -28,7 +28,7 @@ export function withSoftDelete<Model extends NormalizeConstructor<typeof BaseMod
     }
 
     get isDeleted(): boolean {
-      return (this as unknown as { deletedAt: DateTime | null }).deletedAt !== null
+      return Boolean((this as unknown as { deletedAt?: DateTime | null }).deletedAt)
     }
 
     /**
