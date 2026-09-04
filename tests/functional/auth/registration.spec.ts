@@ -4,8 +4,7 @@ import mail from '@adonisjs/mail/services/main'
 import User from '#models/user'
 import Organization from '#models/organization'
 import registration from '#auth/registration_service'
-import VerifyEmailNotification from '#mail/mails/verify_email_notification'
-import { TEST_PASSWORD } from '#tests/helpers'
+import { queuedMailsTo, TEST_PASSWORD } from '#tests/helpers'
 
 test.group('Registration', (group) => {
   group.each.setup(() => {
@@ -40,10 +39,12 @@ test.group('Registration', (group) => {
     assert.match(organization.publicId, /^org_/)
   })
 
-  test('sends a verification email', async ({ client }) => {
-    const { mails } = mail.fake()
-
-    await client
+  /**
+   * Nothing is sent inline since M3 — the message is rendered and queued, so
+   * a provider outage delays a verification email rather than losing it.
+   */
+  test('queues a verification email', async ({ client, assert }) => {
+    const response = await client
       .post('/signup')
       .form({
         fullName: 'Jane Cooper',
@@ -54,7 +55,13 @@ test.group('Registration', (group) => {
       .withCsrfToken()
       .redirects(0)
 
-    mails.assertSent(VerifyEmailNotification)
+    response.assertStatus(302)
+
+    const [queued] = await queuedMailsTo('jane@example.com')
+
+    assert.exists(queued, 'a verification email was queued')
+    assert.equal(queued.subject, 'Confirm your email address')
+    assert.include(queued.html, '/verify-email/', 'with a working confirmation link')
   })
 
   test('lowercases the email so sign-in is case-insensitive', async ({ assert }) => {

@@ -1,0 +1,17 @@
+@component('emails/layout', {
+  title: 'Welcome',
+  footer: 'You are receiving this because you confirmed your email address.',
+})
+  <p style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+    Welcome to {{ organization.name }}
+  </p>
+  <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #4b5563;">
+    Your address is confirmed and your workspace is ready. Everyone you invite shares the same
+    lists, so there is nothing to set up before adding your team.
+  </p>
+  <p style="margin: 0 0 24px;">
+    <a href="{{ url }}" style="display: inline-block; background: #3b82f6; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 8px;">
+      Open your workspace
+    </a>
+  </p>
+@end

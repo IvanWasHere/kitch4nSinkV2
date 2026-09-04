@@ -3,7 +3,9 @@ import type { HttpContext } from '@adonisjs/core/http'
 
 import mailer from '#mail/mailer_service'
 import authTokens from '#auth/auth_token_service'
+import Organization from '#models/organization'
 import VerifyEmailNotification from '#mail/mails/verify_email_notification'
+import WelcomeNotification from '#mail/mails/welcome_notification'
 
 export default class EmailVerificationController {
   /**
@@ -37,6 +39,16 @@ export default class EmailVerificationController {
     if (!user.hasVerifiedEmail) {
       user.emailVerifiedAt = DateTime.utc()
       await user.save()
+
+      /**
+       * Welcome is sent on confirmation rather than at signup: until the
+       * address is proved there is nothing to welcome anyone to, and two
+       * emails arriving together is noise.
+       */
+      const organization = await Organization.find(user.organizationId)
+      if (organization) {
+        await mailer.send(new WelcomeNotification(user, organization))
+      }
     }
 
     /**

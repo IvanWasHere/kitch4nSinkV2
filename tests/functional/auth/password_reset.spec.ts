@@ -3,9 +3,7 @@ import hash from '@adonisjs/core/services/hash'
 import mail from '@adonisjs/mail/services/main'
 
 import authTokens from '#auth/auth_token_service'
-import ResetPasswordNotification from '#mail/mails/reset_password_notification'
-import PasswordChangedNotification from '#mail/mails/password_changed_notification'
-import { createWorkspace, enableTwoFactor, TEST_PASSWORD } from '#tests/helpers'
+import { createWorkspace, enableTwoFactor, queuedMailsTo, TEST_PASSWORD } from '#tests/helpers'
 
 const NEW_PASSWORD = 'a-brand-new-password'
 
@@ -15,8 +13,7 @@ test.group('Password reset', (group) => {
     return () => mail.restore()
   })
 
-  test('emails a reset link for a known address', async ({ client }) => {
-    const { mails } = mail.fake()
+  test('emails a reset link for a known address', async ({ client, assert }) => {
     await createWorkspace({ email: 'jane@example.com' })
 
     await client
@@ -25,16 +22,18 @@ test.group('Password reset', (group) => {
       .withCsrfToken()
       .redirects(0)
 
-    mails.assertSent(ResetPasswordNotification)
+    const [queued] = await queuedMailsTo('jane@example.com')
+
+    assert.exists(queued)
+    assert.equal(queued.subject, 'Reset your password')
+    assert.include(queued.html, '/reset-password/')
   })
 
   /**
    * Saying "no account with that address" turns this form into an
    * account-enumeration oracle, so the response is identical either way.
    */
-  test('gives the same answer for an unknown address', async ({ client }) => {
-    const { mails } = mail.fake()
-
+  test('gives the same answer for an unknown address', async ({ client, assert }) => {
     const known = await createWorkspace({ email: 'jane@example.com' })
     const first = await client
       .post('/forgot-password')
@@ -57,7 +56,9 @@ test.group('Password reset', (group) => {
       'If an account exists for that address, a reset link is on its way.'
     )
     second.assertStatus(first.status())
-    mails.assertSentCount(ResetPasswordNotification, 1)
+
+    assert.lengthOf(await queuedMailsTo('nobody@example.com'), 0, 'and only one email went out')
+    assert.lengthOf(await queuedMailsTo('jane@example.com'), 1)
   })
 
   test('sets a new password from the link', async ({ client, assert }) => {
@@ -77,8 +78,7 @@ test.group('Password reset', (group) => {
     assert.isFalse(await hash.verify(user.password!, TEST_PASSWORD))
   })
 
-  test('tells the account holder their password changed', async ({ client }) => {
-    const { mails } = mail.fake()
+  test('tells the account holder their password changed', async ({ client, assert }) => {
     const { user } = await createWorkspace()
     const token = await authTokens.issue(user, 'reset_password')
 
@@ -88,7 +88,10 @@ test.group('Password reset', (group) => {
       .withCsrfToken()
       .redirects(0)
 
-    mails.assertSent(PasswordChangedNotification)
+    const queued = await queuedMailsTo(user.email)
+    const notice = queued.find((message) => message.subject === 'Your password was changed')
+
+    assert.exists(notice, 'a password-change notice is how someone learns their account was taken')
   })
 
   test('a reset link works exactly once', async ({ client, assert }) => {

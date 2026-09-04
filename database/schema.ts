@@ -56,6 +56,37 @@ export class InvitationSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class JobSchema extends BaseModel {
+  static $columns = ['attempts', 'availableAt', 'createdAt', 'failedAt', 'id', 'lastError', 'maxAttempts', 'name', 'payload', 'queue', 'reservedAt', 'reservedBy', 'updatedAt'] as const
+  $columns = JobSchema.$columns
+  @column()
+  declare attempts: number
+  @column.dateTime()
+  declare availableAt: DateTime
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare failedAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare lastError: string | null
+  @column()
+  declare maxAttempts: number
+  @column()
+  declare name: string
+  @jsonColumn()
+  declare payload: Record<string, any> | null
+  @column()
+  declare queue: string
+  @column.dateTime()
+  declare reservedAt: DateTime | null
+  @column()
+  declare reservedBy: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class OrganizationSchema extends BaseModel {
   static $columns = ['createdAt', 'deletedAt', 'id', 'limitOverrides', 'name', 'ownerId', 'planKey', 'publicId', 'slug', 'status', 'storageUsedBytes', 'trialEndsAt', 'updatedAt'] as const
   $columns = OrganizationSchema.$columns

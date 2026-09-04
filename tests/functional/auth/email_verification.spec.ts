@@ -3,8 +3,7 @@ import mail from '@adonisjs/mail/services/main'
 
 import AuthToken from '#models/auth_token'
 import authTokens from '#auth/auth_token_service'
-import VerifyEmailNotification from '#mail/mails/verify_email_notification'
-import { createWorkspace } from '#tests/helpers'
+import { createWorkspace, queuedMailsTo } from '#tests/helpers'
 
 test.group('Email verification', (group) => {
   group.each.setup(() => {
@@ -72,8 +71,7 @@ test.group('Email verification', (group) => {
     assert.isNotNull(user.emailVerifiedAt)
   })
 
-  test('resends a link on request', async ({ client }) => {
-    const { mails } = mail.fake()
+  test('resends a link on request', async ({ client, assert }) => {
     const { user } = await createWorkspace({ verified: false })
 
     const response = await client
@@ -83,7 +81,40 @@ test.group('Email verification', (group) => {
       .redirects(0)
 
     response.assertHeader('location', '/verify-email')
-    mails.assertSent(VerifyEmailNotification)
+
+    const queued = await queuedMailsTo(user.email)
+    assert.isNotEmpty(queued)
+    assert.equal(queued.at(-1)!.subject, 'Confirm your email address')
+  })
+
+  /**
+   * Confirming is what earns the welcome, not signing up: until the address
+   * is proved there is nothing to welcome anyone to, and two emails landing
+   * together is noise.
+   */
+  test('queues a welcome email once the address is confirmed', async ({ client, assert }) => {
+    const { user, organization } = await createWorkspace({ verified: false })
+    const token = await authTokens.issue(user, 'verify_email')
+
+    await client.get(`/verify-email/${token}`).redirects(0)
+
+    const queued = await queuedMailsTo(user.email)
+    const welcome = queued.find((message) => message.subject.startsWith('Welcome to'))
+
+    assert.exists(welcome)
+    assert.include(welcome!.subject, organization.name)
+  })
+
+  test('does not welcome the same person twice', async ({ client, assert }) => {
+    const { user } = await createWorkspace({ verified: false })
+
+    await client.get(`/verify-email/${await authTokens.issue(user, 'verify_email')}`).redirects(0)
+    await client.get(`/verify-email/${await authTokens.issue(user, 'verify_email')}`).redirects(0)
+
+    const queued = await queuedMailsTo(user.email)
+    const welcomes = queued.filter((message) => message.subject.startsWith('Welcome to'))
+
+    assert.lengthOf(welcomes, 1)
   })
 
   test('keeps unverified users out of the application', async ({ client }) => {

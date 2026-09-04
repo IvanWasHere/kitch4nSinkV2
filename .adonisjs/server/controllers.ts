@@ -6,6 +6,7 @@
 export const controllers = {
   admin: {
     Dashboard: () => import('#controllers/admin/dashboard_controller'),
+    Job: () => import('#controllers/admin/job_controller'),
     Session: () => import('#controllers/admin/session_controller'),
   },
   auth: {

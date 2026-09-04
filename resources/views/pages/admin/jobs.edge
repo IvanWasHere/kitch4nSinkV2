@@ -1,0 +1,112 @@
+@component('layouts/admin', { title: 'Job queue' })
+  @slot('actions')
+    @form({ route: 'admin.session.destroy', method: 'POST' })
+      @!button({ text: 'Sign out', type: 'submit', variant: 'outline', size: 'sm' })
+    @end
+  @end
+
+  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr)">
+    @!statCard({ label: 'Waiting', value: counts.pending, icon: 'clock', tone: 'blue' })
+    @!statCard({ label: 'Running', value: counts.reserved, icon: 'trendingUp', tone: 'purple' })
+    @!statCard({
+      label: 'Failed',
+      value: counts.failed,
+      icon: 'alert',
+      tone: counts.failed > 0 ? 'red' : 'green',
+    })
+  </div>
+
+  {{--
+    Failures first. A database-backed queue was chosen (D2) precisely so this
+    list exists — an empty one is the normal state and should look like it.
+  --}}
+  @panel.root({ title: 'Failed', flush: true })
+    @if(failed.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Queue</th>
+              <th>Attempts</th>
+              <th>Failed</th>
+              <th>Last error</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(job in failed)
+              <tr>
+                <td><span class="order-id">{{ job.name }} #{{ job.id }}</span></td>
+                <td>{{ job.queue }}</td>
+                <td>{{ job.attempts }} of {{ job.maxAttempts }}</td>
+                <td>{{ job.failedAt ? job.failedAt.toRelative() : '' }}</td>
+                <td style="max-width: 320px">
+                  <span class="field-hint">{{ job.lastError ?? '' }}</span>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    @form({ route: 'admin.jobs.retry', routeParams: { id: job.id }, method: 'POST' })
+                      @!button({ text: 'Retry', variant: 'outline', size: 'xs', type: 'submit' })
+                    @end
+                    @form({ route: 'admin.jobs.destroy', routeParams: { id: job.id }, method: 'POST' })
+                      @!button({ text: 'Discard', variant: 'danger', size: 'xs', type: 'submit' })
+                    @end
+                  </div>
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({
+        icon: 'check',
+        title: 'Nothing has failed',
+        description: 'Jobs that exhaust their attempts land here with the error that stopped them, and can be retried once the cause is fixed.',
+      })
+    @end
+  @end
+
+  <div style="margin-top: 18px">
+    @panel.root({ title: 'Queue', flush: true })
+      @if(pending.length)
+        <div class="table-scroll">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Job</th>
+                <th>Queue</th>
+                <th>Status</th>
+                <th>Runs</th>
+                <th>Worker</th>
+              </tr>
+            </thead>
+            <tbody>
+              @each(job in pending)
+                <tr>
+                  <td><span class="order-id">{{ job.name }} #{{ job.id }}</span></td>
+                  <td>{{ job.queue }}</td>
+                  <td>
+                    @!badge({
+                      text: job.status === 'running' ? 'Running' : job.status === 'due' ? 'Due' : 'Scheduled',
+                      tone: job.status === 'running' ? 'accent' : job.status === 'due' ? 'info' : 'neutral',
+                    })
+                  </td>
+                  <td>{{ job.availableAt.toRelative() }}</td>
+                  <td><span class="field-hint">{{ job.reservedBy ?? '' }}</span></td>
+                </tr>
+              @end
+            </tbody>
+          </table>
+        </div>
+      @else
+        @!emptyState({
+          icon: 'clock',
+          title: 'The queue is empty',
+          description: 'Run `node ace queue:work` to process jobs as they arrive.',
+        })
+      @end
+    @end
+  </div>
+@end

@@ -94,5 +94,15 @@ export default {
         role: union('owner', 'member'),
       },
     },
+
+    jobs: {
+      columns: {
+        /**
+         * Typed loosely on purpose: each handler declares the shape it
+         * expects, and the queue itself must be able to carry any of them.
+         */
+        payload: json('Record<string, any>'),
+      },
+    },
   },
 } satisfies SchemaRules

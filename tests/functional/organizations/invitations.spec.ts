@@ -4,9 +4,8 @@ import mail from '@adonisjs/mail/services/main'
 import User from '#models/user'
 import Invitation from '#models/invitation'
 import invitations, { InvitationError } from '#organizations/invitation_service'
-import TeamInvitationNotification from '#mail/mails/team_invitation_notification'
 import { seatUsage } from '#organizations/seats'
-import { addMember, createWorkspace, TEST_PASSWORD } from '#tests/helpers'
+import { addMember, createWorkspace, queuedMailsTo, TEST_PASSWORD } from '#tests/helpers'
 
 test.group('Invitations', (group) => {
   group.each.setup(() => {
@@ -15,7 +14,6 @@ test.group('Invitations', (group) => {
   })
 
   test('the owner can invite someone', async ({ client, assert }) => {
-    const { mails } = mail.fake()
     const { user, organization } = await createWorkspace()
 
     const response = await client
@@ -26,7 +24,10 @@ test.group('Invitations', (group) => {
       .redirects(0)
 
     response.assertHeader('location', '/members')
-    mails.assertSent(TeamInvitationNotification)
+
+    const [queued] = await queuedMailsTo('colleague@example.com')
+    assert.exists(queued, 'the invitation email is queued')
+    assert.include(queued.html, '/invitations/', 'with a link that opens it')
 
     const invitation = await Invitation.findByOrFail('email', 'colleague@example.com')
     assert.equal(invitation.organizationId, organization.id)

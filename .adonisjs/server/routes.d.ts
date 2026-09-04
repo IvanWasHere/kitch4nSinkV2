@@ -48,6 +48,9 @@ export type ScannedRoutes = {
     'admin.two_factor.store': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.session.destroy': { paramsTuple?: []; params?: {} }
+    'admin.jobs.index': { paramsTuple?: []; params?: {} }
+    'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.jobs.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
   }
@@ -71,6 +74,7 @@ export type ScannedRoutes = {
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
+    'admin.jobs.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
   }
@@ -94,6 +98,7 @@ export type ScannedRoutes = {
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
+    'admin.jobs.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
   }
@@ -123,6 +128,8 @@ export type ScannedRoutes = {
     'admin.session.store': { paramsTuple?: []; params?: {} }
     'admin.two_factor.store': { paramsTuple?: []; params?: {} }
     'admin.session.destroy': { paramsTuple?: []; params?: {} }
+    'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.jobs.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

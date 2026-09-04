@@ -30,6 +30,10 @@ router
   .group(() => {
     router.get('/', [controllers.admin.Dashboard, 'index']).as('admin.dashboard')
     router.post('/logout', [controllers.admin.Session, 'destroy']).as('admin.session.destroy')
+
+    router.get('/jobs', [controllers.admin.Job, 'index']).as('admin.jobs.index')
+    router.post('/jobs/:id/retry', [controllers.admin.Job, 'retry']).as('admin.jobs.retry')
+    router.post('/jobs/:id/discard', [controllers.admin.Job, 'destroy']).as('admin.jobs.destroy')
   })
   .prefix('/admin')
   .use(middleware.staffAuth())

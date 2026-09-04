@@ -79,17 +79,50 @@ SQLite is not enforced, so a migration that cannot run on Postgres fails the bui
    needs, e.g. `compose(TodoListSchema, withPublicId('todoList'))`.
 4. If the table carries a `public_id`, register its prefix in `app/models/public_id.ts`.
 
+## Background jobs
+
+Since M3 the application never does slow work inside a request. `queue:work` is a second process:
+
+```bash
+npm run dev                    # web
+node ace queue:work            # worker — nothing is delivered without it
+```
+
+- `node ace queue:work --once` drains what is due and exits, which is what you want while testing.
+- `node ace queue:retry --all` re-queues failures from a shell; the admin panel's Job queue screen
+  does the same with a button.
+- `node ace schedule:run --interval=daily` dispatches the recurring jobs. System cron calls this —
+  cron's only job is to *dispatch*, so a slow task cannot overlap its own next run and a failure
+  retries with the queue's backoff instead of waiting a whole day.
+
+**Every handler must be idempotent.** Delivery is at-least-once: a worker that dies after doing
+the work but before marking the job done will run it again when the reservation is reclaimed
+(5 minutes). That is not a nicety — it is the only contract the queue can actually keep.
+
+Handlers live in `app/queue/jobs/` and must be listed in `app/queue/registry.ts`. A job whose name
+is not in the registry fails immediately rather than being retried five times, because no amount of
+waiting will make the code exist.
+
 ## Local email
 
-Transactional email goes to [Mailpit](https://mailpit.axllent.org) in development — nothing leaves
-your machine:
+Nothing is sent inline — `MailerService` renders the message and queues it, so a provider outage
+delays a verification email rather than losing it. **A queued email is not delivered until a worker
+runs.**
+
+Transactional email goes to [Mailpit](https://mailpit.axllent.org) in development, so nothing
+leaves your machine:
 
 ```bash
 brew install mailpit && mailpit          # or: docker run -p 1025:1025 -p 8025:8025 axllent/mailpit
 ```
 
-Then open http://localhost:8025. With Mailpit not running, sends fail and are logged rather than
-raised, so signup still works; the "send another link" action is the recovery path.
+Then open http://localhost:8025. With Mailpit not running the job fails and retries with backoff
+rather than losing the message — you can watch that happen on the admin Job queue screen.
+
+The from-address lives in `MAIL_FROM_ADDRESS` / `MAIL_FROM_NAME` and is applied by `MailerService`.
+Beware: `node ace configure @adonisjs/mail` overwrites both with its own placeholders
+(`app@yourdomain.com`), and nothing fails when it does — the wrong sender simply goes out. Check
+`.env` after re-running any `configure`.
 
 ## Staff accounts
 
