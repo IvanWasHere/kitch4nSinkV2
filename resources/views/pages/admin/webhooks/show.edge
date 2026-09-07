@@ -1,0 +1,87 @@
+{{--
+  One webhook event: what the provider sent, whether it was signed, whether
+  we applied it, and what went wrong if we did not (plan §7.5, §12).
+--}}
+@component('layouts/admin', { title: event.eventType })
+  @slot('actions')
+    @!link({ route: 'admin.webhooks.index', text: 'Ledger', class: 'btn btn-outline btn-sm' })
+  @end
+
+  @if(event.hasFailed)
+    <div class="info-box info-box-danger">
+      <p><strong>This event has never been applied.</strong></p>
+      <p><code>{{ event.lastError }}</code></p>
+    </div>
+  @end
+
+  <div class="settings-card">
+    <div class="settings-row">
+      <span class="settings-row-label">Provider event id</span>
+      <span class="settings-row-value tx-id">{{ event.providerEventId }}</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Normalised type</span>
+      <span class="settings-row-value">{{ event.eventType }}</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Signature</span>
+      <span class="settings-row-value">
+        @if(event.signatureVerified)
+          @!badge({ text: 'Verified', tone: 'success' })
+        @else
+          @!badge({ text: 'Not verified', tone: 'danger' })
+        @end
+      </span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Received</span>
+      <span class="settings-row-value">{{ event.receivedAt.toFormat('d LLL yyyy HH:mm:ss') }}</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Applied</span>
+      <span class="settings-row-value">
+        {{ event.processedAt ? event.processedAt.toFormat('d LLL yyyy HH:mm:ss') : 'Never' }}
+      </span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Attempts</span>
+      <span class="settings-row-value">{{ event.attempts }}</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Workspace</span>
+      <span class="settings-row-value">
+        @if(organization)
+          <a href="{{ urlFor('admin.organizations.show', { id: organization.publicId }) }}">
+            {{ organization.name }}
+          </a>
+        @else
+          <span class="field-hint">
+            Not attributable — the checkout metadata carried no organisation id, which is why the
+            handler could not apply it.
+          </span>
+        @end
+      </span>
+    </div>
+
+    @if(canReplay)
+      <div class="btn-row">
+        @form({ route: 'admin.webhooks.replay', routeParams: { id: event.id }, method: 'POST' })
+          @!button({
+            text: event.isProcessed ? 'Apply again' : 'Apply now',
+            variant: 'outline',
+            size: 'sm',
+            type: 'submit',
+          })
+        @end
+      </div>
+      <p class="field-hint">
+        Runs the same code path the live delivery took — a replay that took a shortcut would prove
+        nothing. Safe to repeat.
+      </p>
+    @end
+  </div>
+
+  @panel.root({ title: 'Payload as the provider sent it' })
+    <pre class="payload-dump"><code>{{ payload }}</code></pre>
+  @end
+@end

@@ -1,0 +1,118 @@
+{{--
+  Staff management (plan §12) — admin only.
+
+  Admin-only for a circular and deliberate reason: anybody who can create a
+  staff account can grant themselves everything else in here.
+--}}
+@component('layouts/admin', { title: 'Staff' })
+  @slot('actions')
+    @!button({
+      text: 'New staff account',
+      size: 'sm',
+      onclick: "document.getElementById('new-staff').showModal()",
+    })
+  @end
+
+  @panel.root({ flush: true })
+    <div class="table-scroll">
+      <table class="tx-table">
+        <thead>
+          <tr><th>Email</th><th>Name</th><th>Role</th><th>Two-factor</th><th>Last signed in</th><th></th></tr>
+        </thead>
+        <tbody>
+          @each(member in members)
+            <tr>
+              <td>
+                {{ member.email }}
+                @if(member.id === staff.id)
+                  @!badge({ text: 'you', tone: 'info' })
+                @end
+              </td>
+              <td>{{ member.fullName }}</td>
+              <td>
+                @!badge({ text: member.role, tone: member.isAdmin ? 'accent' : 'neutral' })
+              </td>
+              <td>
+                @if(member.hasTwoFactor)
+                  @!badge({ text: 'Enrolled', tone: 'success' })
+                @else
+                  @!badge({ text: 'Not yet', tone: 'warning' })
+                @end
+              </td>
+              <td style="white-space: nowrap">
+                {{ member.lastLoginAt ? member.lastLoginAt.toFormat('d LLL yyyy') : 'Never' }}
+              </td>
+              <td>
+                @if(member.id !== staff.id)
+                  @form({ route: 'admin.staff.toggle', routeParams: { id: member.publicId }, method: 'POST' })
+                    @!button({
+                      text: member.isDisabled ? 'Enable' : 'Disable',
+                      variant: member.isDisabled ? 'outline' : 'danger',
+                      size: 'xs',
+                      type: 'submit',
+                    })
+                  @end
+                @end
+              </td>
+            </tr>
+          @end
+        </tbody>
+      </table>
+    </div>
+  @end
+
+  <p class="field-hint">
+    Accounts are disabled, never deleted: the audit log points at these rows, and removing one would
+    orphan the record of what that person did. Disabling takes effect on their very next request,
+    not at the end of their session.
+  </p>
+
+  @modal({
+    id: 'new-staff',
+    title: 'New staff account',
+    description: 'They will be asked to set up two-factor before any admin screen loads — it is mandatory for staff.',
+  })
+    @form({ route: 'admin.staff.store', method: 'POST', id: 'new-staff-form' })
+      @field.root({ name: 'email' })
+        @!field.label({ text: 'Email address' })
+        @!input.control({ type: 'email', placeholder: 'them@yourcompany.com' })
+        @!field.error()
+      @end
+
+      @field.root({ name: 'fullName' })
+        @!field.label({ text: 'Full name' })
+        @!input.control({ placeholder: 'Sam Support' })
+        @!field.error()
+      @end
+
+      @field.root({ name: 'password' })
+        @!field.label({ text: 'Initial password' })
+        @!input.control({ type: 'password' })
+        <p class="field-hint">
+          At least 12 characters — the same minimum the tenant side uses. Staff hold more power, not
+          less, so a weaker rule here would be indefensible.
+        </p>
+        @!field.error()
+      @end
+
+      @field.root({ name: 'role' })
+        @!field.label({ text: 'Role' })
+        @!select.control({
+          options: [
+            { value: 'support', name: 'Support — sees everything, changes what customers are blocked on' },
+            { value: 'admin', name: 'Admin — can also move money, remove access and manage staff' },
+          ],
+        })
+        @!field.error()
+      @end
+    @end
+    @slot('footer')
+      @!button({
+        text: 'Cancel',
+        variant: 'outline',
+        onclick: "document.getElementById('new-staff').close()",
+      })
+      @!button({ text: 'Create account', type: 'submit', form: 'new-staff-form' })
+    @end
+  @end
+@end

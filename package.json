@@ -37,6 +37,8 @@
     "#config/*": "./config/*.js",
     "#auth/*": "./app/auth/*.js",
     "#api/*": "./app/api/*.js",
+    "#audit/*": "./app/audit/*.js",
+    "#admin/*": "./app/admin/*.js",
     "#billing/*": "./app/billing/*.js",
     "#mail/*": "./app/mail/*.js",
     "#organizations/*": "./app/organizations/*.js",

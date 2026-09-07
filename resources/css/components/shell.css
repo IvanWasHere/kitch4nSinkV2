@@ -360,3 +360,59 @@ img.sidebar-avatar {
   text-decoration: underline;
   white-space: nowrap;
 }
+
+/*
+| The impersonation banner (plan §6, §13.5).
+|
+| Purple, the admin accent, so it is never read as part of the customer's own
+| UI — and sticky rather than static, because an impersonation scrolled out of
+| view is an impersonation somebody forgets they are in.
+*/
+.impersonation-banner {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--purple-500);
+  color: var(--white);
+}
+
+.impersonation-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.2);
+  flex-shrink: 0;
+}
+
+.impersonation-mark svg {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 2;
+}
+
+.impersonation-text {
+  flex: 1;
+}
+
+.impersonation-stop {
+  margin: 0;
+}
+
+.impersonation-banner .btn-outline {
+  background: transparent;
+  border-color: rgb(255 255 255 / 0.6);
+  color: var(--white);
+}
+
+.impersonation-banner .btn-outline:hover {
+  background: rgb(255 255 255 / 0.15);
+}

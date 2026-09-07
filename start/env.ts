@@ -114,6 +114,19 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   /*
   |--------------------------------------------------------------------------
+  | Back-office — §12, wired up in M7
+  |--------------------------------------------------------------------------
+  |
+  | Comma-separated addresses allowed to reach /admin at all. Empty disables
+  | the check, which is the right default for a laptop and the wrong one for
+  | production. It is a second layer, never the boundary — the staff guard
+  | and mandatory two-factor are.
+  |
+  */
+  ADMIN_IP_ALLOWLIST: Env.schema.string.optional(),
+
+  /*
+  |--------------------------------------------------------------------------
   | Rate limiting — §11, wired up in M6
   |--------------------------------------------------------------------------
   |

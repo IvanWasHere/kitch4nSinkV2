@@ -1,0 +1,54 @@
+{{--
+  Organisation search (plan §12).
+
+  One box, because a ticket gives you an email, half a name, or an id pasted
+  out of a URL — and three boxes that each work for one of those is three
+  chances to use the wrong one.
+--}}
+@component('layouts/admin', { title: 'Organisations' })
+  <div class="settings-card">
+    @form({ route: 'admin.organizations.index', method: 'GET' })
+      @field.root({ name: 'q' })
+        @!field.label({ text: 'Find a workspace' })
+        @!input.control({ value: term, placeholder: 'name, slug, org_… or a member’s email' })
+      @end
+      <div class="btn-row">
+        @!button({ text: 'Search', type: 'submit', size: 'sm' })
+      </div>
+    @end
+  </div>
+
+  @panel.root({ title: term ? `Results for “${term}”` : 'Newest workspaces', flush: true })
+    @if(organizations.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr><th>Workspace</th><th>Id</th><th>Plan</th><th>Status</th><th>Created</th></tr>
+          </thead>
+          <tbody>
+            @each(organization in organizations)
+              <tr>
+                <td>
+                  <a class="order-id" href="{{ urlFor('admin.organizations.show', { id: organization.publicId }) }}">
+                    {{ organization.name }}
+                  </a>
+                </td>
+                <td><span class="tx-id">{{ organization.publicId }}</span></td>
+                <td>{{ organization.planKey }}</td>
+                <td>
+                  @!badge({
+                    text: organization.status,
+                    tone: organization.status === 'active' ? 'success' : organization.status === 'suspended' ? 'danger' : 'warning',
+                  })
+                </td>
+                <td style="white-space: nowrap">{{ organization.createdAt.toFormat('d LLL yyyy') }}</td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({ icon: 'package', title: 'Nothing found', description: 'Try an email address, or the org_ id from a URL.' })
+    @end
+  @end
+@end

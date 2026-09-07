@@ -144,6 +144,13 @@ export default {
       },
     },
 
+    audit_logs: {
+      columns: {
+        actor_type: union('user', 'staff', 'api_key', 'system'),
+        metadata: json('Record<string, any>'),
+      },
+    },
+
     api_keys: {
       columns: {
         /**

@@ -5,9 +5,16 @@
 
 export const controllers = {
   admin: {
+    AuditLog: () => import('#controllers/admin/audit_log_controller'),
     Dashboard: () => import('#controllers/admin/dashboard_controller'),
+    Impersonation: () => import('#controllers/admin/impersonation_controller'),
     Job: () => import('#controllers/admin/job_controller'),
+    Organization: () => import('#controllers/admin/organization_controller'),
     Session: () => import('#controllers/admin/session_controller'),
+    Staff: () => import('#controllers/admin/staff_controller'),
+    Subscription: () => import('#controllers/admin/subscription_controller'),
+    User: () => import('#controllers/admin/user_controller'),
+    Webhook: () => import('#controllers/admin/webhook_controller'),
   },
   apiKeys: {
     ApiKey: () => import('#controllers/api_keys/api_key_controller'),

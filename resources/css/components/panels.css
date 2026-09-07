@@ -198,3 +198,22 @@
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+/*
+| A raw JSON payload in the back-office — the webhook ledger's detail view.
+| Monospaced, scrollable in both directions, and never wrapped: a wrapped
+| payload is one somebody misreads.
+*/
+.payload-dump {
+  margin: 0;
+  padding: 14px 16px;
+  max-height: 480px;
+  overflow: auto;
+  background: var(--gray-900);
+  border-radius: var(--radius);
+  color: var(--gray-100);
+  font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+}

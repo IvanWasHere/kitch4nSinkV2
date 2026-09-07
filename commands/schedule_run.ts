@@ -34,9 +34,10 @@ export default class ScheduleRun extends BaseCommand {
     const { default: syncBillingJob } = await import('#queue/jobs/sync_billing_job')
     const { default: purgeDeletedFilesJob } = await import('#queue/jobs/purge_deleted_files_job')
     const { default: rollupApiUsageJob } = await import('#queue/jobs/rollup_api_usage_job')
+    const { default: pruneAuditLogsJob } = await import('#queue/jobs/prune_audit_logs_job')
 
     /**
-     * Milestones add rows here: PruneAuditLogsJob in M7 (plan §9).
+     * Every recurring job the application has.
      */
     const schedules: Record<
       string,
@@ -52,6 +53,7 @@ export default class ScheduleRun extends BaseCommand {
         { name: 'reconcile billing', handler: syncBillingJob },
         { name: 'purge deleted files', handler: purgeDeletedFilesJob },
         { name: 'roll up API usage', handler: rollupApiUsageJob },
+        { name: 'prune audit logs', handler: pruneAuditLogsJob },
       ],
     }
 

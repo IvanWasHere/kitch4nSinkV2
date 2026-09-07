@@ -1,0 +1,105 @@
+{{--
+  The audit log (plan §12).
+
+  Filterable because the questions support asks are compound — "what did this
+  staff member do to this customer" — and a flat reverse-chronological list
+  answers none of them once there is a month of history.
+--}}
+@component('layouts/admin', { title: 'Audit log' })
+  <div class="settings-card">
+    @form({ route: 'admin.audit_logs.index', method: 'GET' })
+      <div class="field-row" style="grid-template-columns: 2fr 1fr 1fr">
+        @field.root({ name: 'organization' })
+          @!field.label({ text: 'Workspace' })
+          @!input.control({ value: filters.organization, placeholder: 'org_…' })
+        @end
+
+        @field.root({ name: 'actor_type' })
+          @!field.label({ text: 'Actor' })
+          @!select.control({
+            options: [{ value: '', name: 'Anyone' }].concat(
+              actorTypes.map((type) => ({ value: type, name: type }))
+            ),
+            value: filters.actorType,
+          })
+        @end
+
+        @field.root({ name: 'action' })
+          @!field.label({ text: 'Action' })
+          {{--
+            Offered from what is actually recorded rather than from the full
+            vocabulary, so the dropdown only ever contains filters that would
+            return something.
+          --}}
+          @!select.control({
+            options: [{ value: '', name: 'Anything' }].concat(
+              actions.map((action) => ({ value: action, name: action }))
+            ),
+            value: filters.action,
+          })
+        @end
+      </div>
+      <div class="btn-row">
+        @!button({ text: 'Filter', type: 'submit', size: 'sm' })
+        @!link({ route: 'admin.audit_logs.index', text: 'Clear', class: 'btn btn-outline btn-sm' })
+      </div>
+    @end
+  </div>
+
+  @panel.root({ title: `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}`, flush: true })
+    @if(entries.length)
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr><th>When</th><th>Action</th><th>Actor</th><th>Workspace</th><th>Subject</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            @each(entry in entries)
+              <tr>
+                <td style="white-space: nowrap">{{ entry.createdAt.toFormat('d LLL HH:mm:ss') }}</td>
+                <td><span class="tx-id">{{ entry.action }}</span></td>
+                <td>
+                  {{ entry.metadata && entry.metadata.staffEmail ? entry.metadata.staffEmail : entry.actorType }}
+                  @if(entry.isImpersonated)
+                    {{--
+                      Both ids survive in the record: the action was taken *as*
+                      the user, *by* a staff member (plan §6).
+                    --}}
+                    @!badge({ text: 'impersonated', tone: 'accent' })
+                  @end
+                </td>
+                <td>
+                  @let(auditOrg = entry.organizationId ? organizations.get(entry.organizationId) : null)
+                  @if(auditOrg)
+                    <a href="{{ urlFor('admin.organizations.show', { id: auditOrg.publicId }) }}">
+                      {{ auditOrg.name }}
+                    </a>
+                  @else
+                    <span class="field-hint">—</span>
+                  @end
+                </td>
+                <td class="field-hint">{{ entry.subjectId ?? '—' }}</td>
+                <td class="field-hint">
+                  @if(entry.metadata && entry.metadata.reason)
+                    {{ entry.metadata.reason }}
+                  @elseif(entry.metadata)
+                    {{ JSON.stringify(entry.metadata) }}
+                  @else
+                    —
+                  @end
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({ icon: 'list', title: 'Nothing matches', description: 'Try clearing the filters.' })
+    @end
+  @end
+
+  <p class="field-hint">
+    Append-only. Nothing in the application updates an entry, and the only thing that deletes one is
+    the nightly prune at the end of the two-year retention window.
+  </p>
+@end

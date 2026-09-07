@@ -1,0 +1,88 @@
+{{--
+  User search and the three things support can do about one (plan §12).
+  All reversible, all support-level, all audited.
+--}}
+@component('layouts/admin', { title: 'Users' })
+  <div class="settings-card">
+    @form({ route: 'admin.users.index', method: 'GET' })
+      @field.root({ name: 'q' })
+        @!field.label({ text: 'Find a user' })
+        @!input.control({ value: term, placeholder: 'email, name or usr_…' })
+      @end
+      <div class="btn-row">
+        @!button({ text: 'Search', type: 'submit', size: 'sm' })
+      </div>
+    @end
+  </div>
+
+  @panel.root({ title: term ? `Results for “${term}”` : 'Newest users', flush: true })
+    @if(users.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr><th>Email</th><th>Workspace</th><th>State</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @each(user in users)
+              <tr>
+                <td>
+                  {{ user.email }}
+                  <div class="field-hint">{{ user.publicId }}</div>
+                </td>
+                <td>
+                  @if(user.organization)
+                    <a class="order-id" href="{{ urlFor('admin.organizations.show', { id: user.organization.publicId }) }}">
+                      {{ user.organization.name }}
+                    </a>
+                  @end
+                </td>
+                <td>
+                  @!badge({ text: user.role, tone: user.isOwner ? 'info' : 'neutral' })
+                  @if(!user.hasVerifiedEmail)
+                    @!badge({ text: 'Unverified', tone: 'warning' })
+                  @end
+                  @if(user.hasTwoFactor)
+                    @!badge({ text: '2FA', tone: 'success' })
+                  @end
+                  @if(user.isDeleted)
+                    @!badge({ text: 'Removed', tone: 'danger' })
+                  @end
+                </td>
+                <td>
+                  <div class="btn-row" style="margin-top: 0">
+                    @if(!user.hasVerifiedEmail)
+                      @form({ route: 'admin.users.resend_verification', routeParams: { id: user.publicId }, method: 'POST' })
+                        @!button({ text: 'Resend', variant: 'outline', size: 'xs', type: 'submit' })
+                      @end
+                      {{--
+                        The escape hatch for a provider silently dropping our
+                        mail, which does happen and leaves somebody locked out
+                        of an account they paid for.
+                      --}}
+                      @form({ route: 'admin.users.verify', routeParams: { id: user.publicId }, method: 'POST' })
+                        @!button({ text: 'Verify by hand', variant: 'outline', size: 'xs', type: 'submit' })
+                      @end
+                    @end
+                    @if(user.hasTwoFactor)
+                      @form({ route: 'admin.users.reset_two_factor', routeParams: { id: user.publicId }, method: 'POST' })
+                        @!button({ text: 'Clear 2FA', variant: 'danger', size: 'xs', type: 'submit' })
+                      @end
+                    @end
+                  </div>
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({ icon: 'users', title: 'Nothing found' })
+    @end
+  @end
+
+  <p class="field-hint">
+    Clearing two-factor removes it — it is not reset to something we choose. The customer enrols
+    again from their own security screen, so staff never hold a credential that would let them sign
+    in as somebody. Impersonation is the sanctioned, audited way to see what a customer sees.
+  </p>
+@end

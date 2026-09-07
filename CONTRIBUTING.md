@@ -120,6 +120,12 @@ list; `createdByUserId` is provenance for the UI and must never appear in an acc
 8. **`config/shield.ts` CSRF-exempts by URL prefix, and the API needs it.** A bearer-authenticated
    client has no session, no cookie and no way to obtain a CSRF token — without the exemption every
    `POST /api/…` is a 403 that looks like an authorisation bug.
+9. **`convertEmptyStringsToNull` means an empty form field arrives as `null`.** `String(null)` is
+   the string `"null"` — neither empty nor a number — so "clear this value" silently did nothing
+   until the null was handled before stringifying. Read the raw input first.
+10. **Bouncer refuses an HTML POST with a redirect, and a GET with a 403.** A test asserting 403 on
+   a denied POST fails even though the refusal worked; assert the redirect *and* that nothing
+   changed.
 
 ## Adding a table
 
@@ -478,6 +484,107 @@ before they have a key. The document is hand-written in `app/api/openapi.ts` rat
 by reflection: a generated spec silently changes shape when somebody adds a column, which is the
 exact failure the transformers exist to prevent. `tests/functional/api/endpoints.spec.ts` asserts
 the document still describes the routes that exist.
+
+## The back-office
+
+Mounted at `/admin`, behind its own guard, its own table and its own login (D5). Two-factor is
+mandatory for staff — the guard sends anyone without it to enrolment before any admin route runs.
+
+### Support and admin
+
+The split is not seniority, it is **blast radius**. Support can see everything and fix what a
+customer is blocked on; admin is required for anything that moves money, removes access, or changes
+what somebody is entitled to.
+
+| | support | admin |
+|---|---|---|
+| Every screen except staff management | ✓ | ✓ |
+| Resend verification, confirm an address, clear a lost second factor | ✓ | ✓ |
+| Retry a job, replay a webhook, re-sync a subscription | ✓ | ✓ |
+| Impersonate | read-only | writable |
+| Override a plan or a limit | | ✓ |
+| Cancel a subscription, suspend a workspace | | ✓ |
+| Manage staff | | ✓ |
+
+Replay and retry are support-level because both are **idempotent by construction** — the queue is
+at-least-once and the webhook handler upserts on provider ids, so the worst case of replaying one is
+that nothing changes.
+
+The checks live in `StaffPolicy`, called from inside each controller rather than as middleware on
+the route, so a support agent sees a screen **without its dangerous buttons** instead of a 403.
+
+### Two Bouncers
+
+`ctx.bouncer` is typed against the tenant `User`; `ctx.staffBouncer` against `StaffUser`. They are
+separate because one Bouncer cannot be typed against both — registering a `StaffUser` policy on the
+tenant map makes the whole map incompatible, at which point **every** tenant policy silently drops
+out of the type-level action list and `bouncer.with('TodoPolicy')` stops compiling.
+
+That is also why `StaffPolicy` lives in `app/admin/` rather than `app/policies/`: that directory is
+scanned to build `#generated/policies`.
+
+### Impersonation
+
+The rules, and each exists because of a specific way this goes wrong:
+
+- **Time-boxed to 60 minutes, absolutely.** Not a sliding window, which a polling page keeps open
+  for ever.
+- **The staff row is re-read every request.** Revoking access ends a session in flight rather than
+  at the next sign-in.
+- **`support` is read-only** — enforced by HTTP method, not by a list of routes, because a list is
+  something somebody forgets to add to. The one exception is the route that *ends* the
+  impersonation, which is itself a POST: without exempting it, support could start a session it
+  could not leave.
+- **The banner renders on every tenant screen** with the button that ends it. An impersonation gets
+  forgotten when leaving requires remembering a URL.
+- **Both ids are in every audit entry.** The action was taken *as* the user, *by* a staff member;
+  losing either half makes the trail a lie in one direction or the other.
+
+Ending it is a tenant route (`/stop-impersonating`), so it has no staff middleware — which means the
+actor for that audit entry comes from the **session**, not from the guard. Taking it from the guard
+recorded an "ended by nobody" entry, which is worse than none because it looks like a record.
+
+### The audit trail
+
+Append-only. Nothing updates a row; the only thing that deletes one is `PruneAuditLogsJob` at the
+end of a **two-year** window — longer than anything else here, because the questions an audit trail
+answers arrive late.
+
+`AuditService` never throws. A support agent whose "suspend this workspace" 500s because the audit
+insert broke will simply do it again, and now there are two attempts and still no record.
+
+Action strings are a closed set in `AUDIT_ACTIONS` and are treated like API error codes: screens
+filter on them and support reads them months later, so renaming one orphans the history it
+describes.
+
+### The dashboard numbers
+
+Computed from our own tables, never fetched from the payment provider — this screen is opened when
+something is wrong, which is exactly when an outbound call is least likely to answer. Where our view
+disagrees with the provider, `billing:sync` is the tool that says so.
+
+**MRR** is the list price of every *entitling* subscription, `past_due` included: the customer is
+still on the plan and we are still trying to collect, so excluding them would make a dunning problem
+look like churn. It knows nothing about discounts or proration, and the screen says so.
+
+**Churn** is null rather than zero when there is nothing to divide by — a shop with no customers has
+not retained them all.
+
+### Subscriptions
+
+Two actions only: **ask the provider again** (sync) and **tell them to stop** (cancel). Never "edit
+our copy". Cancelling goes to the provider and lets the resulting webhook change our row — our copy
+agreeing without the provider would leave a customer billed for a plan the admin panel says they
+cancelled.
+
+### The IP allowlist
+
+`ADMIN_IP_ALLOWLIST` (comma-separated) gates the whole of `/admin`, login page included. Empty
+disables it, which is the right default for a laptop and the wrong one for production.
+
+It is a **second layer, never the boundary** — the staff guard and mandatory two-factor are, and an
+allowlist is trivially defeated by anything that can spoof a proxy header. The refusal is a **404**
+so that somebody probing for an admin panel learns nothing.
 
 ## Local email
 

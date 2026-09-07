@@ -1,0 +1,124 @@
+{{--
+  Subscriptions (plan §12).
+
+  Everything here mirrors the provider, so the two actions are "ask them
+  again" and "tell them to stop" — never "edit our copy".
+--}}
+@component('layouts/admin', { title: 'Subscriptions' })
+  @slot('actions')
+    @!link({
+      route: 'admin.subscriptions.reconciliation',
+      text: 'Run reconciliation',
+      class: 'btn btn-outline btn-sm',
+    })
+  @end
+
+  <div class="btn-row" style="margin-bottom: 18px">
+    <a class="btn btn-sm {{ status === '' ? 'btn-primary' : 'btn-outline' }}" href="{{ urlFor('admin.subscriptions.index') }}">All</a>
+    @each(one in statuses)
+      <a
+        class="btn btn-sm {{ status === one ? 'btn-primary' : 'btn-outline' }}"
+        href="{{ urlFor('admin.subscriptions.index') }}?status={{ one }}"
+      >{{ one }}</a>
+    @end
+  </div>
+
+  @panel.root({ flush: true })
+    @if(subscriptions.length)
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr><th>Workspace</th><th>Plan</th><th>Status</th><th>Period ends</th><th>Provider id</th><th></th></tr>
+          </thead>
+          <tbody>
+            @each(subscription in subscriptions)
+              <tr>
+                <td>
+                  @if(subscription.organization)
+                    <a class="tx-id" href="{{ urlFor('admin.organizations.show', { id: subscription.organization.publicId }) }}">
+                      {{ subscription.organization.name }}
+                    </a>
+                  @end
+                </td>
+                <td>{{ subscription.planKey }}</td>
+                <td>
+                  @!badge({
+                    text: subscription.status,
+                    tone: subscription.isEntitling ? (subscription.status === 'past_due' ? 'warning' : 'success') : 'neutral',
+                  })
+                  @if(subscription.isEndingSoon)
+                    @!badge({ text: 'ending', tone: 'warning' })
+                  @end
+                </td>
+                <td style="white-space: nowrap">
+                  {{ subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toFormat('d LLL yyyy') : '—' }}
+                </td>
+                <td><span class="tx-id">{{ subscription.providerSubscriptionId }}</span></td>
+                <td>
+                  <div class="btn-row" style="margin-top: 0">
+                    @form({ route: 'admin.subscriptions.sync', routeParams: { id: subscription.id }, method: 'POST' })
+                      @!button({ text: 'Sync', variant: 'outline', size: 'xs', type: 'submit' })
+                    @end
+                    @if(canManage && !subscription.isCanceled)
+                      @!button({
+                        text: 'Cancel',
+                        variant: 'danger',
+                        size: 'xs',
+                        onclick: `document.getElementById('cancel-${subscription.id}').showModal()`,
+                      })
+                    @end
+                  </div>
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({ icon: 'creditCard', title: 'No subscriptions' })
+    @end
+  @end
+
+  {{--
+    Cancellation asks for a reason and defaults to the end of the period —
+    the customer paid for this month, and taking it away early is a refund
+    conversation nobody had.
+  --}}
+  @if(canManage)
+    @each(subscription in subscriptions)
+      @if(!subscription.isCanceled)
+        @modal({
+          id: `cancel-${subscription.id}`,
+          title: 'Cancel at the provider',
+          description: 'This cancels at the provider. Our copy changes when the resulting webhook arrives.',
+        })
+          @form({ route: 'admin.subscriptions.cancel', routeParams: { id: subscription.id }, method: 'POST', id: `cancel-form-${subscription.id}` })
+            @field.root({ name: 'reason' })
+              @!field.label({ text: 'Reason' })
+              @!input.control({ placeholder: 'Required — this is what the audit log will say' })
+            @end
+            <div class="check-row">
+              <input type="checkbox" name="immediately" value="1" id="immediately-{{ subscription.id }}" />
+              <label for="immediately-{{ subscription.id }}">
+                Cancel immediately rather than at the end of the paid period
+              </label>
+            </div>
+          @end
+          @slot('footer')
+            @!button({
+              text: 'Back',
+              variant: 'outline',
+              onclick: `document.getElementById('cancel-${subscription.id}').close()`,
+            })
+            @!button({
+              text: 'Cancel subscription',
+              variant: 'danger',
+              type: 'submit',
+              form: `cancel-form-${subscription.id}`,
+            })
+          @end
+        @end
+      @end
+    @end
+  @end
+@end

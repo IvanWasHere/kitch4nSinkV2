@@ -93,6 +93,28 @@ export type ScannedRoutes = {
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.jobs.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.organizations.index': { paramsTuple?: []; params?: {} }
+    'admin.organizations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.organizations.suspend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.organizations.plan': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.organizations.limits': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.users.index': { paramsTuple?: []; params?: {} }
+    'admin.users.resend_verification': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.users.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.users.reset_two_factor': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.impersonation.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.subscriptions.index': { paramsTuple?: []; params?: {} }
+    'admin.subscriptions.reconciliation': { paramsTuple?: []; params?: {} }
+    'admin.subscriptions.sync': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.subscriptions.cancel': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.webhooks.index': { paramsTuple?: []; params?: {} }
+    'admin.webhooks.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.webhooks.replay': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.audit_logs.index': { paramsTuple?: []; params?: {} }
+    'admin.staff.index': { paramsTuple?: []; params?: {} }
+    'admin.staff.store': { paramsTuple?: []; params?: {} }
+    'admin.staff.toggle': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'impersonation.destroy': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'docs.index': { paramsTuple?: []; params?: {} }
     'docs.openapi': { paramsTuple?: []; params?: {} }
@@ -135,6 +157,15 @@ export type ScannedRoutes = {
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
+    'admin.organizations.index': { paramsTuple?: []; params?: {} }
+    'admin.organizations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.users.index': { paramsTuple?: []; params?: {} }
+    'admin.subscriptions.index': { paramsTuple?: []; params?: {} }
+    'admin.subscriptions.reconciliation': { paramsTuple?: []; params?: {} }
+    'admin.webhooks.index': { paramsTuple?: []; params?: {} }
+    'admin.webhooks.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.audit_logs.index': { paramsTuple?: []; params?: {} }
+    'admin.staff.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'docs.index': { paramsTuple?: []; params?: {} }
     'docs.openapi': { paramsTuple?: []; params?: {} }
@@ -177,6 +208,15 @@ export type ScannedRoutes = {
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
+    'admin.organizations.index': { paramsTuple?: []; params?: {} }
+    'admin.organizations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.users.index': { paramsTuple?: []; params?: {} }
+    'admin.subscriptions.index': { paramsTuple?: []; params?: {} }
+    'admin.subscriptions.reconciliation': { paramsTuple?: []; params?: {} }
+    'admin.webhooks.index': { paramsTuple?: []; params?: {} }
+    'admin.webhooks.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.audit_logs.index': { paramsTuple?: []; params?: {} }
+    'admin.staff.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'docs.index': { paramsTuple?: []; params?: {} }
     'docs.openapi': { paramsTuple?: []; params?: {} }
@@ -232,6 +272,19 @@ export type ScannedRoutes = {
     'admin.session.destroy': { paramsTuple?: []; params?: {} }
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.jobs.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.organizations.suspend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.organizations.plan': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.organizations.limits': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.users.resend_verification': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.users.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.users.reset_two_factor': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.impersonation.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.subscriptions.sync': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.subscriptions.cancel': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.webhooks.replay': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.staff.store': { paramsTuple?: []; params?: {} }
+    'admin.staff.toggle': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'impersonation.destroy': { paramsTuple?: []; params?: {} }
   }
   PATCH: {
     'api.lists.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 
 import type User from '#models/user'
 import type ApiKey from '#models/api_key'
+import type StaffUser from '#models/staff_user'
 import type Organization from '#models/organization'
 import type { ApiScope } from '#api/scopes'
 import registration from '#auth/registration_service'
@@ -202,6 +203,13 @@ export class FakePaymentProvider implements PaymentProvider {
   subscriptions = new Map<string, ProviderSubscription>()
 
   /**
+   * What was asked of the provider, so a test can assert that a refused
+   * action never reached it — "nothing changed locally" is not the same as
+   * "we did not tell them to cancel".
+   */
+  cancellations: { subscriptionId: string; atPeriodEnd: boolean }[] = []
+
+  /**
    * Set to make the next provider call fail, the way an outage does.
    */
   failWith: Error | null = null
@@ -238,6 +246,8 @@ export class FakePaymentProvider implements PaymentProvider {
 
   async cancelSubscription(input: { subscriptionId: string; atPeriodEnd: boolean }) {
     this.throwIfFailing()
+    this.cancellations.push(input)
+
     return this.subscriptions.get(input.subscriptionId)!
   }
 
@@ -454,4 +464,33 @@ export async function clearRateLimits(): Promise<void> {
   const { default: limiter } = await import('@adonisjs/limiter/services/main')
 
   await limiter.clear()
+}
+
+/**
+ * A staff account with two-factor already enrolled, ready to sign in.
+ *
+ * Two-factor is mandatory for staff, so a fixture without it lands on the
+ * enrolment screen instead of the back-office — which makes every admin test
+ * look like an authorisation failure.
+ */
+export async function createStaff(
+  overrides: { email?: string; role?: 'admin' | 'support'; disabled?: boolean } = {}
+): Promise<StaffUser> {
+  const { default: StaffUser } = await import('#models/staff_user')
+
+  const staff = await StaffUser.create({
+    email: overrides.email ?? `staff-${Math.random().toString(36).slice(2, 10)}@example.com`,
+    fullName: 'Sam Staff',
+    password: TEST_PASSWORD,
+    role: overrides.role ?? 'admin',
+  })
+
+  await enableTwoFactor(staff)
+
+  if (overrides.disabled) {
+    staff.disabledAt = DateTime.utc()
+    await staff.save()
+  }
+
+  return staff
 }

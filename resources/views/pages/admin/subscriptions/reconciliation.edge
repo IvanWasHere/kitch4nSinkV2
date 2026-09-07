@@ -1,0 +1,62 @@
+{{--
+  The same diff `billing:sync --dry-run` and the nightly job produce, run on
+  demand (plan §7.5) — so an operator sees exactly what cron would have.
+--}}
+@component('layouts/admin', { title: 'Reconciliation' })
+  @slot('actions')
+    @!link({ route: 'admin.subscriptions.index', text: 'Subscriptions', class: 'btn btn-outline btn-sm' })
+  @end
+
+  <div class="info-box">
+    <p><strong>Checked {{ report.checked }} subscription{{ report.checked === 1 ? '' : 's' }}.</strong></p>
+    <p>
+      Read-only. Nothing here was changed — this is the dry run. The nightly job corrects a status
+      that disagrees, and reports everything else rather than quietly fixing it, because drift that
+      is repaired every night is drift nobody ever finds the cause of.
+    </p>
+  </div>
+
+  @panel.root({ title: `Drift (${report.drifted.length})`, flush: true })
+    @if(report.drifted.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead><tr><th>Subscription</th><th>Field</th><th>Ours</th><th>Theirs</th></tr></thead>
+          <tbody>
+            @each(entry in report.drifted)
+              <tr>
+                <td><span class="tx-id">{{ entry.providerSubscriptionId }}</span></td>
+                <td>{{ entry.field }}</td>
+                <td>{{ entry.ours ?? '—' }}</td>
+                <td>{{ entry.theirs ?? '—' }}</td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({ icon: 'check', title: 'No drift', description: 'Our copy agrees with the provider.' })
+    @end
+  @end
+
+  @if(report.missing.length)
+    @panel.root({ title: `The provider has never heard of these (${report.missing.length})`, flush: true })
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead><tr><th>Subscription</th><th>Our status</th></tr></thead>
+          <tbody>
+            @each(entry in report.missing)
+              <tr>
+                <td><span class="tx-id">{{ entry.providerSubscriptionId }}</span></td>
+                <td>{{ entry.ours }}</td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+      <p class="field-hint" style="margin-top: 12px">
+        Do not delete these rows — they are the evidence. Seed data and test-mode subscriptions show
+        up here too.
+      </p>
+    @end
+  @end
+@end

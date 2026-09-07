@@ -83,6 +83,33 @@ export class ApiUsageDaySchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class AuditLogSchema extends BaseModel {
+  static $columns = ['action', 'actorId', 'actorType', 'createdAt', 'id', 'ip', 'metadata', 'organizationId', 'subjectId', 'subjectType', 'userAgent'] as const
+  $columns = AuditLogSchema.$columns
+  @column()
+  declare action: string
+  @column()
+  declare actorId: number | null
+  @column()
+  declare actorType: 'user' | 'staff' | 'api_key' | 'system'
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare ip: string | null
+  @jsonColumn()
+  declare metadata: Record<string, any> | null
+  @column()
+  declare organizationId: number | null
+  @column()
+  declare subjectId: string | null
+  @column()
+  declare subjectType: string | null
+  @column()
+  declare userAgent: string | null
+}
+
 export class AuthTokenSchema extends BaseModel {
   static $columns = ['consumedAt', 'createdAt', 'expiresAt', 'id', 'tokenHash', 'type', 'userId'] as const
   $columns = AuthTokenSchema.$columns

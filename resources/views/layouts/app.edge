@@ -13,6 +13,12 @@
                 banner is rendered by this layout and needs no slot.
 --}}
 @component('layouts/base', { title: $props.get('title') })
+  {{--
+    Above the shell, not inside it, so it is the first thing on the page on
+    every screen and cannot be scrolled past (plan §6).
+  --}}
+  @include('partials/impersonation_banner')
+
   <div class="dash-layout" x-data="sidebar">
     <aside class="dash-sidebar" :class="open && 'open'">
       <div class="dash-sidebar-logo">

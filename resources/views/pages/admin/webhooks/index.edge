@@ -1,0 +1,74 @@
+{{--
+  The webhook ledger (plan §12).
+
+  Unprocessed first by default: this screen is opened because something did
+  not happen, so the events that never applied belong at the top.
+--}}
+@component('layouts/admin', { title: 'Webhook ledger' })
+  <div class="btn-row" style="margin-bottom: 18px">
+    @each(one in [
+      { key: 'unprocessed', label: 'Never applied' },
+      { key: 'failed', label: 'Failed with an error' },
+      { key: 'all', label: 'Everything' },
+    ])
+      <a
+        class="btn btn-sm {{ filter === one.key ? 'btn-primary' : 'btn-outline' }}"
+        href="{{ urlFor('admin.webhooks.index') }}?filter={{ one.key }}"
+      >{{ one.label }}</a>
+    @end
+  </div>
+
+  @panel.root({ flush: true })
+    @if(events.length)
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr><th>Event</th><th>Type</th><th>Signed</th><th>Applied</th><th>Attempts</th><th>Received</th></tr>
+          </thead>
+          <tbody>
+            @each(event in events)
+              <tr>
+                <td>
+                  <a class="tx-id" href="{{ urlFor('admin.webhooks.show', { id: event.id }) }}">
+                    {{ event.providerEventId }}
+                  </a>
+                </td>
+                <td>{{ event.eventType }}</td>
+                <td>
+                  @if(event.signatureVerified)
+                    @!badge({ text: 'Yes', tone: 'success' })
+                  @else
+                    @!badge({ text: 'No', tone: 'danger' })
+                  @end
+                </td>
+                <td>
+                  @if(event.isProcessed)
+                    @!badge({ text: 'Applied', tone: 'success' })
+                  @elseif(event.hasFailed)
+                    @!badge({ text: 'Failed', tone: 'danger' })
+                  @else
+                    @!badge({ text: 'Pending', tone: 'warning' })
+                  @end
+                </td>
+                <td>{{ event.attempts }}</td>
+                <td style="white-space: nowrap">{{ event.receivedAt.toFormat('d LLL HH:mm') }}</td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({
+        icon: 'check',
+        title: filter === 'all' ? 'No webhooks recorded' : 'Nothing outstanding',
+        description: 'Every event the provider sent has been applied.',
+      })
+    @end
+  @end
+
+  <p class="field-hint">
+    Every payload is kept, which is what makes this answerable at all: when a customer's
+    entitlements and their invoice disagree, the reason is in here. Replaying is safe — the handler
+    upserts on the provider's own ids, so the worst case is that nothing changes.
+  </p>
+@end

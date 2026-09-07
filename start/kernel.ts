@@ -39,6 +39,13 @@ router.use([
   () => import('@adonisjs/auth/initialize_auth_middleware'),
   () => import('#middleware/silent_auth_middleware'),
   () => import('#middleware/initialize_bouncer_middleware'),
+
+  /**
+   * Impersonation is enforced on **every** request rather than on the tenant
+   * route group, so its expiry and its read-only rule cannot be escaped by a
+   * route that forgot to opt in (plan §6).
+   */
+  () => import('#middleware/impersonation'),
 ])
 
 /**
@@ -62,4 +69,10 @@ export const middleware = router.named({
   trackApiUsage: () => import('#middleware/track_api_usage'),
   apiKeyAuth: () => import('#middleware/api_key_auth'),
   apiRateLimit: () => import('#middleware/api_rate_limit'),
+
+  /**
+   * The back-office (plan §12). The allowlist runs before the guard, so an
+   * address that is not permitted never even sees the login page.
+   */
+  adminIpAllowlist: () => import('#middleware/admin_ip_allowlist'),
 })

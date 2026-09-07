@@ -1,0 +1,310 @@
+{{--
+  One workspace, everything about it (plan §12).
+
+  The order is the order a ticket gets answered: who they are and what state
+  they are in, what they are paying, what they have, and what has been done
+  to them.
+--}}
+@component('layouts/admin', { title: organization.name })
+  @slot('actions')
+    @!link({ route: 'admin.organizations.index', text: 'All organisations', class: 'btn btn-outline btn-sm' })
+  @end
+
+  <div class="billing-current">
+    <div class="billing-current-info">
+      <span class="stat-icon stat-icon-purple">
+        @!icon({ name: 'package' })
+      </span>
+      <div>
+        <div class="billing-current-plan">
+          {{ organization.name }}
+          @!badge({
+            text: organization.status,
+            tone: organization.status === 'active' ? 'success' : organization.status === 'suspended' ? 'danger' : 'warning',
+          })
+        </div>
+        <div class="billing-current-meta">
+          <span class="tx-id">{{ organization.publicId }}</span> ·
+          {{ usage.plan.name }} plan ·
+          {{ organization.timezone }} ·
+          since {{ organization.createdAt.toFormat('d LLL yyyy') }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="usage-grid" style="margin-bottom: 22px">
+    @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
+    @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
+    @!usageMeter({ label: 'Storage (MB)', current: usage.storage.current, limit: usage.storage.limit })
+  </div>
+
+  <div class="panel-grid">
+    @panel.root({ title: `Members (${members.length})`, flush: true })
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead><tr><th>Email</th><th>Role</th><th>Verified</th><th></th></tr></thead>
+          <tbody>
+            @each(member in members)
+              <tr>
+                <td>{{ member.email }}</td>
+                <td>
+                  @!badge({ text: member.role, tone: member.isOwner ? 'info' : 'neutral' })
+                </td>
+                <td>
+                  @if(member.hasVerifiedEmail)
+                    @!badge({ text: 'Yes', tone: 'success' })
+                  @else
+                    @!badge({ text: 'No', tone: 'warning' })
+                  @end
+                </td>
+                <td>
+                  {{--
+                    Impersonation starts from here rather than from the user
+                    list, because this is the screen where somebody already
+                    knows which workspace they are looking into (plan §6).
+                  --}}
+                  @form({ route: 'admin.impersonation.store', routeParams: { id: member.publicId }, method: 'POST' })
+                    @!button({ text: 'Impersonate', variant: 'outline', size: 'xs', type: 'submit' })
+                  @end
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @end
+
+    @panel.root({ title: 'Subscription' })
+      @if(subscription)
+        <div class="settings-row">
+          <span class="settings-row-label">Status</span>
+          <span class="settings-row-value">
+            @!badge({ text: subscription.status, tone: subscription.isEntitling ? 'success' : 'neutral' })
+          </span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Provider id</span>
+          <span class="settings-row-value tx-id">{{ subscription.providerSubscriptionId }}</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Period ends</span>
+          <span class="settings-row-value">
+            {{ subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toFormat('d LLL yyyy') : '—' }}
+          </span>
+        </div>
+        <div class="btn-row">
+          @form({ route: 'admin.subscriptions.sync', routeParams: { id: subscription.id }, method: 'POST' })
+            @!button({ text: 'Re-fetch from provider', variant: 'outline', size: 'sm', type: 'submit' })
+          @end
+        </div>
+      @else
+        @!emptyState({ icon: 'creditCard', title: 'No subscription', description: 'This workspace is on the free tier.' })
+      @end
+    @end
+  </div>
+
+  @panel.root({ title: 'Payments', flush: true })
+    @if(payments.length)
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead><tr><th>Reference</th><th>Description</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>
+            @each(payment in payments)
+              <tr>
+                <td><span class="tx-id">{{ payment.publicId }}</span></td>
+                <td>{{ payment.description ?? 'Subscription' }}</td>
+                <td style="white-space: nowrap">{{ payment.occurredAt.toFormat('d LLL yyyy') }}</td>
+                <td><span class="tx-amount {{ payment.isRefunded ? 'refund' : '' }}">{{ payment.formattedAmount }}</span></td>
+                <td>
+                  @!badge({
+                    text: payment.status,
+                    tone: payment.isRefunded ? 'refunded' : 'success',
+                  })
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({ icon: 'creditCard', title: 'No payments recorded' })
+    @end
+  @end
+
+  <div class="panel-grid">
+    @panel.root({ title: `Files (${files.length})`, flush: true })
+      @if(files.length)
+        <div class="table-scroll">
+          <table class="orders-table">
+            <thead><tr><th>Name</th><th>Type</th><th>Size</th></tr></thead>
+            <tbody>
+              @each(file in files)
+                <tr>
+                  <td>{{ file.originalName }}</td>
+                  <td class="field-hint">{{ file.mimeType }}</td>
+                  <td>{{ file.formattedSize }}</td>
+                </tr>
+              @end
+            </tbody>
+          </table>
+        </div>
+      @else
+        @!emptyState({ icon: 'folder', title: 'No files' })
+      @end
+    @end
+
+    @panel.root({ title: `API keys (${keys.length})`, flush: true })
+      @if(keys.length)
+        <div class="table-scroll">
+          <table class="orders-table">
+            <thead><tr><th>Name</th><th>Key</th><th>Last used</th></tr></thead>
+            <tbody>
+              @each(key in keys)
+                <tr>
+                  <td>{{ key.name }}</td>
+                  <td><span class="tx-id">{{ key.prefix }}…</span></td>
+                  <td class="field-hint">
+                    {{ key.lastUsedAt ? key.lastUsedAt.toFormat('d LLL yyyy') : 'Never' }}
+                  </td>
+                </tr>
+              @end
+            </tbody>
+          </table>
+        </div>
+      @else
+        @!emptyState({ icon: 'key', title: 'No API keys' })
+      @end
+    @end
+  </div>
+
+  {{--
+    Everything below changes what the customer gets. Support sees the screen
+    without these; admin sees them with a reason box, because the next
+    question is always "who did this and why" (plan §6).
+  --}}
+  @if(canOverride)
+    <div class="settings-card">
+      <h2 class="section-title">Override the plan</h2>
+      <p class="section-desc">
+        Writes <code>plan_key</code> and nothing else. The subscription mirror keeps saying what the
+        provider actually thinks, so <code>billing:sync</code> will report the difference rather than
+        the two silently agreeing.
+      </p>
+
+      @form({ route: 'admin.organizations.plan', routeParams: { id: organization.publicId }, method: 'POST' })
+        <div class="field-row" style="grid-template-columns: 1fr 2fr">
+          @field.root({ name: 'plan_key' })
+            @!field.label({ text: 'Plan' })
+            @!select.control({
+              options: planKeys.map((key) => ({ value: key, name: key })),
+              value: organization.planKey,
+            })
+          @end
+          @field.root({ name: 'reason' })
+            @!field.label({ text: 'Reason' })
+            @!input.control({ placeholder: 'Ticket #, or why this is not a paid upgrade' })
+          @end
+        </div>
+        <div class="btn-row">
+          @!button({ text: 'Apply plan override', type: 'submit', size: 'sm', variant: 'outline' })
+        </div>
+      @end
+    </div>
+
+    <div class="settings-card">
+      <h2 class="section-title">Override one limit</h2>
+      <p class="section-desc">
+        The “just let this customer have five more lists while we sort out billing” lever. Empty
+        clears the override and returns them to their plan’s own limit; <code>unlimited</code> grants
+        no ceiling.
+      </p>
+
+      @form({ route: 'admin.organizations.limits', routeParams: { id: organization.publicId }, method: 'POST' })
+        <div class="field-row" style="grid-template-columns: 1fr 1fr">
+          @field.root({ name: 'limit' })
+            @!field.label({ text: 'Limit' })
+            @!select.control({
+              options: ['seats', 'lists', 'todosPerList', 'storageMb', 'apiKeys', 'apiCallsPerMonth'].map((key) => ({ value: key, name: key })),
+            })
+          @end
+          @field.root({ name: 'value' })
+            @!field.label({ text: 'Value' })
+            @!input.control({ placeholder: 'a number, empty to clear, or unlimited' })
+          @end
+        </div>
+        <div class="btn-row">
+          @!button({ text: 'Apply limit override', type: 'submit', size: 'sm', variant: 'outline' })
+        </div>
+      @end
+
+      @if(organization.limitOverrides)
+        <p class="field-hint">
+          Current overrides: <code>{{ JSON.stringify(organization.limitOverrides) }}</code>
+        </p>
+      @end
+    </div>
+  @end
+
+  @if(canManage)
+    <div class="settings-card danger-zone">
+      <h2 class="section-title">
+        {{ organization.status === 'suspended' ? 'Restore workspace' : 'Suspend workspace' }}
+      </h2>
+      <p class="section-desc">
+        @if(organization.status === 'suspended')
+          Returns the workspace to <code>active</code>. If billing is still failing, the next webhook
+          or sync will put it back to <code>past_due</code>.
+        @else
+          Signs everyone out and denies access until it is restored. Nothing is deleted.
+        @end
+      </p>
+
+      @form({ route: 'admin.organizations.suspend', routeParams: { id: organization.publicId }, method: 'POST' })
+        @if(organization.status !== 'suspended')
+          @field.root({ name: 'reason' })
+            @!field.label({ text: 'Reason' })
+            @!input.control({ placeholder: 'Required — this is what the audit log will say' })
+          @end
+        @end
+        <div class="btn-row">
+          @!button({
+            text: organization.status === 'suspended' ? 'Restore' : 'Suspend',
+            variant: organization.status === 'suspended' ? 'outline' : 'danger',
+            size: 'sm',
+            type: 'submit',
+          })
+        </div>
+      @end
+    </div>
+  @end
+
+  @panel.root({ title: 'What has been done to this workspace', flush: true })
+    @if(trail.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead><tr><th>Action</th><th>Actor</th><th>Detail</th><th>When</th></tr></thead>
+          <tbody>
+            @each(entry in trail)
+              <tr>
+                <td><span class="order-id">{{ entry.action }}</span></td>
+                <td>
+                  {{ entry.metadata && entry.metadata.staffEmail ? entry.metadata.staffEmail : entry.actorType }}
+                  @if(entry.isImpersonated)
+                    @!badge({ text: 'impersonated', tone: 'accent' })
+                  @end
+                </td>
+                <td class="field-hint">
+                  {{ entry.metadata && entry.metadata.reason ? entry.metadata.reason : (entry.subjectId ?? '—') }}
+                </td>
+                <td style="white-space: nowrap">{{ entry.createdAt.toFormat('d LLL HH:mm') }}</td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({ icon: 'list', title: 'Nothing recorded', description: 'No staff action has touched this workspace.' })
+    @end
+  @end
+@end

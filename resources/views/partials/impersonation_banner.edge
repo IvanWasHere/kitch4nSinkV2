@@ -1,0 +1,32 @@
+{{--
+  The impersonation banner (plan §6, §13.5).
+
+  Fixed above everything, in the admin accent so it is never mistaken for
+  part of the customer's own UI, and on **every** screen — the way an
+  impersonation gets forgotten is having to remember a URL to end it.
+
+  It says three things, because all three are things somebody forgets:
+  whose account this is, that support cannot change anything, and when it
+  ends by itself.
+--}}
+@if(impersonation)
+  <div class="impersonation-banner" role="alert">
+    <span class="impersonation-mark">
+      @!icon({ name: 'shield', width: 14, height: 14 })
+    </span>
+    <span class="impersonation-text">
+      <strong>Impersonating.</strong>
+      Signed in as <strong>{{ auth.user ? auth.user.email : 'a customer' }}</strong>
+      by {{ impersonation.staffEmail }}.
+      @if(impersonation.readOnly)
+        This session is <strong>read-only</strong> — nothing you do here can change their data.
+      @else
+        Anything you do here happens <strong>as them</strong>, and is audited.
+      @end
+    </span>
+
+    @form({ route: 'impersonation.destroy', method: 'POST', class: 'impersonation-stop' })
+      <button type="submit" class="btn btn-sm btn-outline">Stop impersonating</button>
+    @end
+  </div>
+@end

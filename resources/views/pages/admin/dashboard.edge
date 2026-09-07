@@ -1,3 +1,10 @@
+{{--
+  The back-office dashboard (plan §12).
+
+  Ordered by what somebody opening it needs. **What is broken** comes first:
+  a dashboard that leads with MRR is a dashboard nobody opens during an
+  incident.
+--}}
 @component('layouts/admin', { title: 'Dashboard' })
   @slot('actions')
     @form({ route: 'admin.session.destroy', method: 'POST' })
@@ -5,11 +12,151 @@
     @end
   @end
 
-  @panel.root()
-    @!emptyState({
-      icon: 'shield',
-      title: `Signed in as ${staff.email}`,
-      description: 'The back-office screens — organisations, subscriptions, the webhook ledger, the job queue and the audit log — are built in M7. The staff guard, the separate table and mandatory two-factor are live now.',
+  @if(metrics.failedJobs > 0 || metrics.unprocessedWebhooks > 0 || attention.length > 0)
+    <div class="info-box info-box-warning">
+      <p><strong>Needs attention</strong></p>
+      <p>
+        @if(metrics.failedJobs > 0)
+          <a href="{{ urlFor('admin.jobs.index') }}">{{ metrics.failedJobs }} failed job{{ metrics.failedJobs === 1 ? '' : 's' }}</a>.
+        @end
+        @if(metrics.unprocessedWebhooks > 0)
+          <a href="{{ urlFor('admin.webhooks.index') }}">{{ metrics.unprocessedWebhooks }} webhook{{ metrics.unprocessedWebhooks === 1 ? '' : 's' }} never applied</a> —
+          a customer's entitlements and their invoice may disagree.
+        @end
+        @if(attention.length > 0)
+          {{ attention.length }} workspace{{ attention.length === 1 ? '' : 's' }} past due or suspended.
+        @end
+      </p>
+    </div>
+  @end
+
+  <div class="stats-grid">
+    @!statCard({
+      label: 'MRR',
+      value: `$${(metrics.mrrCents / 100).toFixed(0)}`,
+      icon: 'creditCard',
+      tone: 'green',
     })
+    @!statCard({ label: 'Active subscriptions', value: metrics.activeSubscriptions, icon: 'check', tone: 'blue' })
+    @!statCard({
+      label: 'Past due',
+      value: metrics.pastDueSubscriptions,
+      icon: 'alert',
+      tone: metrics.pastDueSubscriptions > 0 ? 'red' : 'green',
+    })
+    @!statCard({
+      label: 'Signups this month',
+      value: metrics.signupsThisMonth,
+      icon: 'users',
+      tone: 'purple',
+      change: metrics.signupsLastMonth > 0
+        ? {
+            direction: metrics.signupsThisMonth >= metrics.signupsLastMonth ? 'up' : 'down',
+            text: `${metrics.signupsLastMonth} last month`,
+          }
+        : undefined,
+    })
+  </div>
+
+  <p class="field-hint" style="margin: -10px 0 22px">
+    MRR is the list price of every entitling subscription, `past_due` included — we are still
+    trying to collect. It knows nothing about discounts or proration, because nothing here sells
+    them yet.
+  </p>
+
+  <div class="panel-grid">
+    @panel.root({ title: 'Needs attention', flush: true })
+      @if(attention.length)
+        <div class="table-scroll">
+          <table class="orders-table">
+            <thead>
+              <tr><th>Workspace</th><th>Status</th><th>Plan</th></tr>
+            </thead>
+            <tbody>
+              @each(organization in attention)
+                <tr>
+                  <td>
+                    <a class="order-id" href="{{ urlFor('admin.organizations.show', { id: organization.publicId }) }}">
+                      {{ organization.name }}
+                    </a>
+                  </td>
+                  <td>
+                    @!badge({
+                      text: organization.status,
+                      tone: organization.status === 'suspended' ? 'danger' : 'warning',
+                    })
+                  </td>
+                  <td>{{ organization.planKey }}</td>
+                </tr>
+              @end
+            </tbody>
+          </table>
+        </div>
+      @else
+        @!emptyState({ icon: 'check', title: 'Nothing needs attention', description: 'No suspended or past-due workspaces.' })
+      @end
+    @end
+
+    @panel.root({ title: 'Recent signups', flush: true })
+      @if(signups.length)
+        <div class="table-scroll">
+          <table class="orders-table">
+            <thead>
+              <tr><th>Owner</th><th>Workspace</th><th>Joined</th></tr>
+            </thead>
+            <tbody>
+              @each(user in signups)
+                <tr>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    @if(user.organization)
+                      <a class="order-id" href="{{ urlFor('admin.organizations.show', { id: user.organization.publicId }) }}">
+                        {{ user.organization.name }}
+                      </a>
+                    @end
+                  </td>
+                  <td style="white-space: nowrap">{{ user.createdAt.toFormat('d LLL yyyy') }}</td>
+                </tr>
+              @end
+            </tbody>
+          </table>
+        </div>
+      @else
+        @!emptyState({ icon: 'users', title: 'No signups yet' })
+      @end
+    @end
+  </div>
+
+  @panel.root({ title: 'Latest activity', flush: true })
+    @slot('actions')
+      @!link({ route: 'admin.audit_logs.index', text: 'Audit log', class: 'btn-ghost' })
+    @end
+
+    @if(trail.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr><th>Action</th><th>Actor</th><th>Subject</th><th>When</th></tr>
+          </thead>
+          <tbody>
+            @each(entry in trail)
+              <tr>
+                <td><span class="order-id">{{ entry.action }}</span></td>
+                <td>
+                  {{ entry.metadata && entry.metadata.staffEmail ? entry.metadata.staffEmail : entry.actorType }}
+                  @if(entry.isImpersonated)
+                    @!badge({ text: 'impersonated', tone: 'accent' })
+                  @end
+                </td>
+                <td class="field-hint">{{ entry.subjectId ?? '—' }}</td>
+                <td style="white-space: nowrap">{{ entry.createdAt.toFormat('d LLL HH:mm') }}</td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({ icon: 'list', title: 'Nothing recorded yet' })
+    @end
   @end
 @end

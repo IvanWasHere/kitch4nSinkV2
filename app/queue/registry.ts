@@ -9,6 +9,7 @@ import processWebhookJob from '#queue/jobs/process_webhook_job'
 import syncBillingJob from '#queue/jobs/sync_billing_job'
 import purgeDeletedFilesJob from '#queue/jobs/purge_deleted_files_job'
 import rollupApiUsageJob from '#queue/jobs/rollup_api_usage_job'
+import pruneAuditLogsJob from '#queue/jobs/prune_audit_logs_job'
 
 /**
  * Every handler the worker knows how to run, keyed by the name stored in
@@ -18,7 +19,8 @@ import rollupApiUsageJob from '#queue/jobs/rollup_api_usage_job'
  * silently disappeared should be a loud "unknown job" failure the admin panel
  * shows, not a job that is quietly never picked up.
  *
- * Milestones add to this — PruneAuditLogsJob in M7 (plan §9).
+ * Every recurring job the application has is here; `schedule:run` is what
+ * dispatches them.
  */
 export const jobHandlers: Record<string, JobHandler<any>> = {
   [sendMailJob.name]: sendMailJob,
@@ -30,6 +32,7 @@ export const jobHandlers: Record<string, JobHandler<any>> = {
   [syncBillingJob.name]: syncBillingJob,
   [purgeDeletedFilesJob.name]: purgeDeletedFilesJob,
   [rollupApiUsageJob.name]: rollupApiUsageJob,
+  [pruneAuditLogsJob.name]: pruneAuditLogsJob,
 }
 
 export function handlerFor(name: string): JobHandler<any> | null {
