@@ -40,9 +40,12 @@ export default class BillingController {
       )
 
       /**
-       * An external redirect, so `toPath` rather than a named route.
+       * An external redirect, so `toPath` rather than a named route — and
+       * `clearQs()`, because `config/app.ts` forwards the request's query
+       * string onto every redirect and appending it to a provider's checkout
+       * URL would change the link they built.
        */
-      return response.redirect().toPath(url)
+      return response.redirect().clearQs().toPath(url)
     } catch (error) {
       if (error instanceof BillingError) {
         session.flash('error', error.message)
@@ -101,7 +104,12 @@ export default class BillingController {
   async portal({ response, session, organization }: HttpContext) {
     try {
       const { url } = await billing.startPortal(organization)
-      return response.redirect().toPath(url)
+
+      /**
+       * `clearQs()` for the same reason as checkout: never append our query
+       * string to a URL somebody else built.
+       */
+      return response.redirect().clearQs().toPath(url)
     } catch (error) {
       if (error instanceof BillingError) {
         session.flash('error', error.message)

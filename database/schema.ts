@@ -6,7 +6,7 @@
 
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
-import { jsonColumn, bigIntColumn, encryptedColumn, encryptedJsonColumn, booleanColumn } from '#database/columns'
+import { bigIntColumn, jsonColumn, encryptedColumn, encryptedJsonColumn, booleanColumn } from '#database/columns'
 
 export class AuthTokenSchema extends BaseModel {
   static $columns = ['consumedAt', 'createdAt', 'expiresAt', 'id', 'tokenHash', 'type', 'userId'] as const
@@ -25,6 +25,43 @@ export class AuthTokenSchema extends BaseModel {
   declare type: 'verify_email' | 'reset_password'
   @column()
   declare userId: number
+}
+
+export class FileSchema extends BaseModel {
+  static $columns = ['attachableId', 'attachableType', 'checksum', 'createdAt', 'deletedAt', 'disk', 'id', 'key', 'mimeType', 'organizationId', 'originalName', 'publicId', 'sizeBytes', 'updatedAt', 'userId', 'visibility'] as const
+  $columns = FileSchema.$columns
+  @column()
+  declare attachableId: number | null
+  @column()
+  declare attachableType: 'User' | 'Organization' | null
+  @column()
+  declare checksum: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column()
+  declare disk: 'private' | 'public'
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare key: string
+  @column()
+  declare mimeType: string
+  @column()
+  declare organizationId: number
+  @column()
+  declare originalName: string
+  @column()
+  declare publicId: string
+  @bigIntColumn()
+  declare sizeBytes: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number | null
+  @column()
+  declare visibility: 'private' | 'public'
 }
 
 export class InvitationSchema extends BaseModel {
@@ -88,7 +125,7 @@ export class JobSchema extends BaseModel {
 }
 
 export class OrganizationSchema extends BaseModel {
-  static $columns = ['createdAt', 'deletedAt', 'id', 'limitOverrides', 'name', 'ownerId', 'planKey', 'publicId', 'slug', 'status', 'storageUsedBytes', 'timezone', 'trialEndsAt', 'updatedAt'] as const
+  static $columns = ['createdAt', 'deletedAt', 'id', 'limitOverrides', 'logoKey', 'name', 'ownerId', 'planKey', 'publicId', 'slug', 'status', 'storageUsedBytes', 'timezone', 'trialEndsAt', 'updatedAt'] as const
   $columns = OrganizationSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -98,6 +135,8 @@ export class OrganizationSchema extends BaseModel {
   declare id: number
   @jsonColumn()
   declare limitOverrides: Record<string, number | null> | null
+  @column()
+  declare logoKey: string | null
   @column()
   declare name: string
   @column()

@@ -40,7 +40,16 @@ export const http = defineConfig({
     /**
      * When enabled, all redirects automatically carry over the current
      * request's query string parameters to the redirect destination.
-     * Use withQs(false) to opt out for a specific redirect.
+     *
+     * Useful for a redirect back to one of our own screens — a filter or a
+     * page number survives the round trip. **Dangerous for a redirect to an
+     * absolute URL somebody else built**: the forwarded parameters are
+     * appended after that URL's own query string, which turns a signed
+     * storage URL or a provider's checkout link into a 401.
+     *
+     * Every redirect that leaves the application therefore calls
+     * `.clearQs()` first — the signed-URL and checkout paths in
+     * `FileController` and `BillingController`.
      */
     forwardQueryString: true,
   },

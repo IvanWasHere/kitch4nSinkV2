@@ -4,6 +4,11 @@ build
 tmp/*
 !tmp/.gitkeep
 
+# Uploaded files on the local `fs` disk (plan §10). Deployed environments put
+# these in R2 instead, so nothing here is ever part of a release.
+storage/*
+!storage/.gitkeep
+
 # Secrets
 .env
 .env.local

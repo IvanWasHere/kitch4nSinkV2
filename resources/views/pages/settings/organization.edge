@@ -76,6 +76,42 @@
   </div>
 
   {{--
+    The logo is owner-only, like the workspace name, and lives on the public
+    disk so the shell can render it without signing a URL per page (plan §10).
+  --}}
+  @if(canManage)
+    <div class="settings-card">
+      <h2 class="section-title">Logo</h2>
+      <p class="section-desc">Shown in the sidebar for everyone in this workspace.</p>
+
+      @form({ route: 'settings.organization.logo', method: 'POST', enctype: 'multipart/form-data' })
+        @if(organization.logoKey)
+          <div class="settings-row" style="align-items: center">
+            <span class="settings-row-label">Current</span>
+            <span class="settings-row-value">
+              <img
+                src="{{ await publicFileUrl(organization.logoKey) }}"
+                alt="{{ organization.name }}"
+                style="max-height: 40px; border-radius: 6px"
+              />
+            </span>
+          </div>
+        @end
+
+        @!fileDrop({
+          name: 'logo',
+          accept: 'image/png,image/jpeg,image/gif,image/webp',
+          hint: 'PNG, JPEG, GIF or WebP. It counts against your workspace storage.',
+        })
+
+        <div class="btn-row">
+          @!button({ text: 'Upload logo', type: 'submit', size: 'sm' })
+        </div>
+      @end
+    </div>
+  @end
+
+  {{--
     Ownership transfer is its own card because it is the only way anyone's
     role changes: there is exactly one owner, so promoting somebody
     necessarily demotes the person doing it.

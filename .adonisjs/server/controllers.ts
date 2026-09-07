@@ -23,6 +23,9 @@ export const controllers = {
     Webhook: () => import('#controllers/billing/webhook_controller'),
   },
   Dashboard: () => import('#controllers/dashboard_controller'),
+  files: {
+    File: () => import('#controllers/files/file_controller'),
+  },
   organizations: {
     Invitation: () => import('#controllers/organizations/invitation_controller'),
     Member: () => import('#controllers/organizations/member_controller'),

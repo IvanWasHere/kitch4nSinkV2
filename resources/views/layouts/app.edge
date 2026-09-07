@@ -17,10 +17,23 @@
     <aside class="dash-sidebar" :class="open && 'open'">
       <div class="dash-sidebar-logo">
         <a href="{{ hasRoute('dashboard.index') ? urlFor('dashboard.index') : urlFor('home') }}" class="logo">
-          <span class="logo-icon">
-            @!icon({ name: 'layers' })
-          </span>
-          <span class="logo-text">{{ appName }}</span>
+          {{--
+            A workspace that uploaded a logo gets it here; everyone else keeps
+            the product mark. Public disk, so this is a plain cacheable URL —
+            a signed one would expire while somebody had the page open.
+          --}}
+          @if(organization && organization.logoKey)
+            <img
+              class="logo-image"
+              src="{{ await publicFileUrl(organization.logoKey) }}"
+              alt="{{ organization.name }}"
+            />
+          @else
+            <span class="logo-icon">
+              @!icon({ name: 'layers' })
+            </span>
+          @end
+          <span class="logo-text">{{ organization ? organization.name : appName }}</span>
         </a>
       </div>
 
@@ -34,7 +47,11 @@
             href="{{ hasRoute('settings.profile') ? urlFor('settings.profile') : '#' }}"
             class="sidebar-user"
           >
-            <span class="sidebar-avatar">{{ auth.user.initials }}</span>
+            @!avatar({
+              initials: auth.user.initials,
+              src: await publicFileUrl(auth.user.avatarKey),
+              alt: auth.user.fullName ?? auth.user.email,
+            })
             <span class="sidebar-user-info">
               <span class="sidebar-user-name">{{ auth.user.fullName ?? auth.user.email }}</span>
               <span class="sidebar-user-email">{{ auth.user.email }}</span>

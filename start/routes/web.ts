@@ -21,6 +21,9 @@ router
     router
       .post('/settings/profile', [controllers.settings.Profile, 'update'])
       .as('settings.profile.update')
+    router
+      .post('/settings/profile/avatar', [controllers.settings.Profile, 'updateAvatar'])
+      .as('settings.profile.avatar')
 
     /**
      * Workspace settings and the team. Reading them is open to every member;
@@ -33,6 +36,9 @@ router
     router
       .post('/settings/organization', [controllers.settings.Organization, 'update'])
       .as('settings.organization.update')
+    router
+      .post('/settings/organization/logo', [controllers.settings.Organization, 'updateLogo'])
+      .as('settings.organization.logo')
     router
       .post('/settings/organization/transfer', [controllers.organizations.Ownership, 'transfer'])
       .as('settings.organization.transfer')
@@ -60,6 +66,18 @@ router
     router.post('/todos/:id/complete', [controllers.todos.Todo, 'complete']).as('todos.complete')
     router.post('/todos/:id/delete', [controllers.todos.Todo, 'destroy']).as('todos.destroy')
     router.post('/todos/:id/move', [controllers.todos.Todo, 'move']).as('todos.move')
+
+    /**
+     * Files (plan §10). Uploading is open to every member; deleting is the
+     * uploader's or the owner's, decided by `FilePolicy`.
+     *
+     * `show` redirects to a short-lived signed URL rather than streaming the
+     * bytes, so a download does not go through our event loop.
+     */
+    router.get('/files', [controllers.files.File, 'index']).as('files.index')
+    router.post('/files', [controllers.files.File, 'store']).as('files.store')
+    router.get('/files/:id', [controllers.files.File, 'show']).as('files.show')
+    router.post('/files/:id/delete', [controllers.files.File, 'destroy']).as('files.destroy')
 
     router.get('/members', [controllers.organizations.Member, 'index']).as('members.index')
     router

@@ -7,6 +7,7 @@ import reconcileCountersJob from '#queue/jobs/reconcile_counters_job'
 import normalizePositionsJob from '#queue/jobs/normalize_positions_job'
 import processWebhookJob from '#queue/jobs/process_webhook_job'
 import syncBillingJob from '#queue/jobs/sync_billing_job'
+import purgeDeletedFilesJob from '#queue/jobs/purge_deleted_files_job'
 
 /**
  * Every handler the worker knows how to run, keyed by the name stored in
@@ -16,8 +17,8 @@ import syncBillingJob from '#queue/jobs/sync_billing_job'
  * silently disappeared should be a loud "unknown job" failure the admin panel
  * shows, not a job that is quietly never picked up.
  *
- * Milestones add to this — PurgeDeletedFilesJob in M5, RollupApiUsageJob in
- * M6, PruneAuditLogsJob in M7 (plan §9).
+ * Milestones add to this — RollupApiUsageJob in M6, PruneAuditLogsJob in M7
+ * (plan §9).
  */
 export const jobHandlers: Record<string, JobHandler<any>> = {
   [sendMailJob.name]: sendMailJob,
@@ -27,6 +28,7 @@ export const jobHandlers: Record<string, JobHandler<any>> = {
   [normalizePositionsJob.name]: normalizePositionsJob,
   [processWebhookJob.name]: processWebhookJob,
   [syncBillingJob.name]: syncBillingJob,
+  [purgeDeletedFilesJob.name]: purgeDeletedFilesJob,
 }
 
 export function handlerFor(name: string): JobHandler<any> | null {

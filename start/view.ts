@@ -12,6 +12,7 @@ import env from '#start/env'
 import router from '@adonisjs/core/services/router'
 
 import plans from '#billing/plan_service'
+import storage from '#storage/disk_storage'
 
 /**
  * The product name, rendered in the logo, the <title> and transactional mail.
@@ -60,4 +61,23 @@ edge.global('withinLimit', function (this: any, limit: 'lists' | 'seats') {
   const usage = this?.usage ?? this?.state?.usage
 
   return usage?.[limit] ? !usage[limit].isFull : true
+})
+
+/**
+ * A URL for a public stored object — an avatar or a workspace logo (plan §10).
+ *
+ * Goes through `DiskStorage` rather than Drive's own `driveUrl` global so that
+ * the rule holds everywhere: nothing outside `app/storage/` decides how an
+ * object is addressed. Null in, null out, because a user without a picture is
+ * the normal case and the avatar component falls back to initials.
+ *
+ * Only ever the **public** disk. A private object needs a signed URL with a
+ * TTL, and a template is the wrong place to be choosing one.
+ */
+edge.global('publicFileUrl', async (key: string | null | undefined) => {
+  if (!key) {
+    return null
+  }
+
+  return storage.urlFor({ disk: 'public', key })
 })

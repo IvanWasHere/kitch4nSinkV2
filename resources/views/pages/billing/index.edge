@@ -57,6 +57,11 @@
     <div class="usage-grid">
       @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
       @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
+      @!usageMeter({
+        label: 'Storage (MB)',
+        current: usage.storage.current,
+        limit: usage.storage.limit,
+      })
     </div>
     <p class="field-hint" style="margin-top: 12px">
       Archived lists still count — archiving hides a list, it does not free a slot. Deleting one
@@ -105,6 +110,12 @@
             {{ entry.plan.limits.todosPerList === null
               ? 'Unlimited'
               : entry.plan.limits.todosPerList }} todos per list
+          </li>
+          <li>
+            <span class="plan-check">&check;</span>
+            {{ entry.plan.limits.storageMb === null
+              ? 'Unlimited'
+              : `${entry.plan.limits.storageMb / 1000} GB` }} storage
           </li>
           <li>
             <span class="plan-check {{ entry.plan.features.includes('api') ? '' : 'plan-empty' }}">

@@ -34,6 +34,11 @@
     <div class="usage-grid">
       @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
       @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
+      @!usageMeter({
+        label: 'Storage (MB)',
+        current: usage.storage.current,
+        limit: usage.storage.limit,
+      })
     </div>
   @end
 

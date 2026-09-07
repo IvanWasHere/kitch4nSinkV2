@@ -78,6 +78,19 @@
   flex-shrink: 0;
 }
 
+/*
+| A workspace's own logo replaces the product mark in the app sidebar
+| (plan §10). Constrained to the mark's box so an oversized upload cannot
+| push the nav around, and `object-fit` keeps a non-square image undistorted.
+*/
+.logo-image {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .logo-icon svg {
   width: 18px;
   height: 18px;

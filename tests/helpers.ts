@@ -332,3 +332,68 @@ export function subscriptionWebhook(options: {
     },
   }
 }
+
+/**
+ * Bytes that look like each of the formats the allowlist accepts.
+ *
+ * Real magic numbers, because the sniffer under test reads them (plan §10) —
+ * a fixture that only satisfies a fake would prove nothing about a real
+ * upload.
+ */
+export const FILE_FIXTURES = {
+  png: Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    Buffer.alloc(64, 0x01),
+  ]),
+  jpg: Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 0x02)]),
+  gif: Buffer.concat([Buffer.from('GIF89a', 'ascii'), Buffer.alloc(64, 0x03)]),
+  webp: Buffer.concat([
+    Buffer.from('RIFF', 'ascii'),
+    Buffer.from([0x24, 0x00, 0x00, 0x00]),
+    Buffer.from('WEBP', 'ascii'),
+    Buffer.alloc(64, 0x04),
+  ]),
+  pdf: Buffer.concat([Buffer.from('%PDF-1.7\n', 'ascii'), Buffer.alloc(64, 0x05)]),
+  txt: Buffer.from('a plain note, nothing more\n', 'utf8'),
+  csv: Buffer.from('name,quantity\nwidget,3\n', 'utf8'),
+
+  /**
+   * The upload this whole layer exists to refuse: a document that a sniffing
+   * browser would render as HTML, wearing an image extension.
+   */
+  html: Buffer.from('<html><script>alert(1)</script></html>', 'utf8'),
+} as const
+
+/**
+ * Write a fixture to a temporary path and hand back what an upload looks
+ * like to `FileService`.
+ */
+export async function fixtureUpload(
+  kind: keyof typeof FILE_FIXTURES,
+  options: { clientName?: string; bytes?: Buffer } = {}
+): Promise<{ tmpPath: string; clientName: string; sizeBytes: number }> {
+  const { mkdtemp, writeFile } = await import('node:fs/promises')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+
+  const bytes = options.bytes ?? Buffer.from(FILE_FIXTURES[kind])
+  const directory = await mkdtemp(join(tmpdir(), 'upload-'))
+  const clientName = options.clientName ?? `fixture.${kind}`
+  const tmpPath = join(directory, 'upload.bin')
+
+  await writeFile(tmpPath, bytes)
+
+  return { tmpPath, clientName, sizeBytes: bytes.length }
+}
+
+/**
+ * Empty the local disks between tests, so one test's uploads cannot make the
+ * next one's orphan-detection lie.
+ */
+export async function clearStorage(): Promise<void> {
+  const { rm } = await import('node:fs/promises')
+  const { default: app } = await import('@adonisjs/core/services/app')
+  const { default: env } = await import('#start/env')
+
+  await rm(app.makePath(env.get('DRIVE_FS_ROOT', 'storage')), { recursive: true, force: true })
+}

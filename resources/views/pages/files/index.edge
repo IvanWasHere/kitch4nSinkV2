@@ -1,0 +1,94 @@
+{{--
+  The Files screen (plan §13.5).
+
+  The mockup's product grid re-cut as file cards, plus the drop zone from the
+  component library. Every member can upload; only the uploader or the owner
+  can delete, decided by FilePolicy.
+--}}
+@component('layouts/app', { title: 'Files' })
+  {{--
+    At the storage cap the upload form is replaced by the upsell rather than
+    left there to fail on submit (plan §7.4). Everything already uploaded
+    stays readable and downloadable — only adding more is blocked.
+  --}}
+  @if(storage.isFull)
+    <div class="info-box info-box-warning">
+      <p>
+        <strong>
+          This workspace is using all {{ storage.limit }} MB of storage your plan includes.
+        </strong>
+      </p>
+      <p>
+        Nothing is locked — every file here still downloads. Deleting one frees its space
+        immediately,
+        @if(isOwner && hasRoute('billing.index'))
+          or <a href="{{ urlFor('billing.index') }}">upgrade for more</a>.
+        @else
+          or ask the workspace owner to upgrade.
+        @end
+      </p>
+    </div>
+  @else
+    <div class="settings-card">
+      @form({ route: 'files.store', method: 'POST', enctype: 'multipart/form-data' })
+        @!fileDrop({
+          name: 'file',
+          accept: accept,
+          hint: `Up to ${maxFileSize} each. Images, PDFs, text and CSV.`,
+        })
+
+        <div class="btn-row">
+          @!button({ text: 'Upload', type: 'submit', size: 'sm' })
+        </div>
+      @end
+    </div>
+  @end
+
+  <div class="usage-grid" style="margin-bottom: 22px">
+    @!usageMeter({ label: 'Storage (MB)', current: storage.current, limit: storage.limit })
+  </div>
+
+  @if(files.length)
+    <div class="card-grid">
+      @each(file in files)
+        <div class="entity-card">
+          <span class="card-stripe card-stripe-{{ file.isImage ? 'blue' : 'gray' }}"></span>
+          <div class="entity-card-body">
+            <p class="entity-card-name">{{ file.originalName }}</p>
+            <p class="field-hint" style="margin-bottom: 10px">
+              {{ file.mimeType }} · uploaded
+              {{ file.createdAt.setZone(organization.timezone).toFormat('d LLL yyyy') }}
+              @if(file.user)
+                by {{ file.user.displayName }}
+              @end
+            </p>
+            <div class="entity-card-meta">
+              <span class="count-pill count-ok">{{ file.formattedSize }}</span>
+              <span class="btn-row" style="margin-top: 0">
+                {{--
+                  A link, not a form: `show` redirects to a short-lived signed
+                  URL rather than streaming the bytes through the app.
+                --}}
+                <a
+                  class="btn btn-outline btn-xs"
+                  href="{{ urlFor('files.show', { id: file.publicId }) }}?download=1"
+                >Download</a>
+                @form({ route: 'files.destroy', routeParams: { id: file.publicId }, method: 'POST' })
+                  @!button({ text: 'Delete', variant: 'danger', size: 'xs', type: 'submit' })
+                @end
+              </span>
+            </div>
+          </div>
+        </div>
+      @end
+    </div>
+  @else
+    @panel.root()
+      @!emptyState({
+        icon: 'folder',
+        title: 'No files yet',
+        description: 'Files belong to the workspace, so everyone on your team can see and download them. Deleting one is reversible for 30 days.',
+      })
+    @end
+  @end
+@end

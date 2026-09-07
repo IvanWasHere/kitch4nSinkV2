@@ -560,6 +560,100 @@ test.group('Tenant isolation', (group) => {
     assert.equal(usageB.lists.current, 2)
   })
 
+  /**
+   * Files (M5). Two injection points: fetching another workspace's file by
+   * its public id, and deleting one.
+   */
+  test('a file belonging to another workspace behaves exactly like a missing one', async ({
+    assert,
+    client,
+  }) => {
+    const { a, b } = await twoWorkspaces()
+    const { default: files } = await import('#storage/file_service')
+    const { fixtureUpload } = await import('#tests/helpers')
+
+    const theirs = await files.upload(b.organization, b.user, await fixtureUpload('pdf'))
+
+    assert.isNull(await files.find(a.organization, theirs.publicId))
+
+    const foreign = await client.get(`/files/${theirs.publicId}`).loginAs(a.user).redirects(0)
+    const missing = await client.get('/files/fil_zzzzzzzzzzzz').loginAs(a.user).redirects(0)
+
+    assert.equal(foreign.status(), missing.status())
+    assert.deepEqual(
+      foreign.flashMessages(),
+      missing.flashMessages(),
+      'and says the same thing, so a foreign id cannot be probed for existence'
+    )
+  })
+
+  test('one workspace cannot delete a file belonging to another', async ({ assert, client }) => {
+    const { a, b } = await twoWorkspaces()
+    const { default: files } = await import('#storage/file_service')
+    const { fixtureUpload } = await import('#tests/helpers')
+
+    const theirs = await files.upload(b.organization, b.user, await fixtureUpload('pdf'))
+
+    await client
+      .post(`/files/${theirs.publicId}/delete`)
+      .loginAs(a.user)
+      .withCsrfToken()
+      .redirects(0)
+
+    await theirs.refresh()
+    assert.isNull(theirs.deletedAt, "B's file is untouched")
+  })
+
+  test('the files screen lists only its own workspace', async ({ assert, client }) => {
+    const { a, b } = await twoWorkspaces()
+    const { default: files } = await import('#storage/file_service')
+    const { fixtureUpload } = await import('#tests/helpers')
+
+    await files.upload(
+      b.organization,
+      b.user,
+      await fixtureUpload('pdf', { clientName: 'B-confidential.pdf' })
+    )
+
+    const response = await client.get('/files').loginAs(a.user)
+
+    response.assertStatus(200)
+    assert.notInclude(response.text(), 'B-confidential.pdf')
+    assert.isEmpty(await files.forOrganization(a.organization))
+  })
+
+  /**
+   * The object key carries the tenant, so a leak would be visible in the key
+   * itself rather than only in a database column (plan §10).
+   */
+  test('object keys are prefixed with the workspace that owns them', async ({ assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const { default: files } = await import('#storage/file_service')
+    const { keyBelongsTo } = await import('#storage/keys')
+    const { fixtureUpload } = await import('#tests/helpers')
+
+    const mine = await files.upload(a.organization, a.user, await fixtureUpload('png'))
+    const theirs = await files.upload(b.organization, b.user, await fixtureUpload('png'))
+
+    assert.isTrue(keyBelongsTo(mine.key, a.organization.publicId))
+    assert.isFalse(keyBelongsTo(mine.key, b.organization.publicId))
+    assert.isFalse(keyBelongsTo(theirs.key, a.organization.publicId))
+  })
+
+  test('storage is counted per workspace', async ({ assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const { default: files } = await import('#storage/file_service')
+    const { fixtureUpload } = await import('#tests/helpers')
+
+    await files.upload(b.organization, b.user, await fixtureUpload('pdf'))
+
+    await a.organization.refresh()
+    await b.organization.refresh()
+
+    assert.equal(a.organization.storageUsedBytes, 0, "B's upload does not count against A")
+    assert.isAbove(b.organization.storageUsedBytes, 0)
+  })
+
   test('every organisation-scoped table carries its own rows only', async ({ assert }) => {
     const { a, b } = await twoWorkspaces()
 

@@ -86,7 +86,7 @@ list; `createdByUserId` is provenance for the UI and must never appear in an acc
   `tests/functional/tenant_isolation.spec.ts`.** That suite seeds two workspaces and asserts one can
   never read or mutate the other. A leak there is an incident, not a bug report.
 
-## Two traps this codebase has already hit
+## Traps this codebase has already hit
 
 1. **A nullable column that was never assigned is `undefined`, not `null`.** On a freshly created
    model `acceptedAt !== null` is `true`, so a brand-new invitation reports itself as accepted.
@@ -103,6 +103,16 @@ list; `createdByUserId` is provenance for the UI and must never appear in an acc
    SQLite, which is correct — better-sqlite3 serialises writes anyway — so a *missing* lock also
    passes the whole suite on SQLite and lets two parallel requests both take the last slot on
    Postgres. Concurrency tests only mean something on the Postgres leg of the matrix.
+5. **A redirect to somebody else's URL needs `.clearQs()`.** `config/app.ts` sets
+   `forwardQueryString: true`, which is right for a redirect back to one of our own screens and
+   wrong for one that leaves the application: the forwarded parameters are appended *after* that
+   URL's own query string, so `…&signature=…?download=1` is no longer the string that was signed
+   and the download 401s. Every outbound redirect — signed storage URLs, provider checkout and
+   portal links — calls `.clearQs()` first.
+6. **A column with a database default is `undefined` on the model that just created it.** Nothing
+   assigned it, so `organization.storageUsedBytes + size` on a freshly registered workspace is
+   `NaN`, and a quota compared against `NaN` refuses everything. Counters get a `@beforeCreate`
+   hook that initialises them — see `Organization`.
 
 ## Adding a table
 
@@ -275,6 +285,83 @@ silently ignored billing event is indistinguishable from one that never arrived.
 
 Secrets declared with `Env.schema.secret()` come back as a `Secret` wrapper, not a string. Call
 `.release()` before handing one to `createHmac` or a fetch header.
+
+## Files and storage
+
+`config/drive.ts` chooses two things separately, and keeping them separate is the whole design:
+
+- **Which disk** a file lives on is a *purpose* — `private` (everything, by default) or `public`
+  (avatars and logos, served straight from a CDN). Application code names one of these two and
+  nothing else.
+- **What backs a disk** is an environment concern — the local filesystem on a laptop, Cloudflare R2
+  when deployed, chosen by `DRIVE_DISK`.
+
+So moving to R2 is one variable, and `files.disk` keeps recording which *purpose* a row belongs to
+rather than which vendor held it.
+
+**The database stores `disk` + `key`, never a URL.** That single rule is what makes a provider
+migration a config change instead of a data migration. Reading a file means going through
+`FileService`, which is where the signing policy lives; `File` deliberately has no `get url()`,
+because one would be a URL cached in a template with a TTL nobody chose.
+
+### Key convention
+
+    orgs/{organization_public_id}/{yyyy}/{mm}/{uuid}.{ext}
+
+**Tenant first**, which is the part that matters: a per-tenant bucket policy is expressible, "export
+everything this customer has" is a prefix listing, and the purge job's orphan sweep is one call per
+workspace. The filename is a uuid and **never** anything from the request — a client filename can
+carry path traversal, a second extension, or somebody else's key (this is what v7's `move()` defaults
+guard against, CVE-2026-21440). `original_name` is kept for display only.
+
+### Upload order, and why it is that order
+
+**Validate → move → write the row and the counter in one transaction.** Moving first would leave an
+orphan object behind every rejected upload; writing the row first would let a failed move leave a
+file the product believes it has. When the transaction refuses an upload that was already moved —
+the over-quota race — `FileService` deletes the object it just wrote, and a failure to clean up is
+logged rather than thrown, because the customer's error is the quota.
+
+Everything about the request is a claim:
+
+- the filename picks an extension from the allowlist and is then display-only;
+- the reported size is **re-measured** while the checksum is computed;
+- the content type is decided by **sniffing the first bytes** (`app/storage/mime.ts`), never from
+  the request header. A `.png` that is really an HTML document is the classic stored-XSS upload and
+  the extension alone cannot tell you.
+
+A mismatch between bytes and extension is **refused, not corrected** — silently renaming a file to
+match its content is how something executable ends up served as an image. SVG is deliberately not on
+the allowlist: it is a document that can carry script.
+
+`MAX_FILE_BYTES` (20 MB) must stay **below** the multipart limit in `config/bodyparser.ts` (25 MB),
+which is the outer envelope for the whole request. The other way round, a file inside the cap would
+be rejected by the parser before the application could say anything useful about it.
+
+### Quota and deletion
+
+`organizations.storage_used_bytes` moves inside the same transaction as the `files` row, behind a
+lock on the organisation — the same rule `todos_count` follows. The comparison is in **bytes** and
+the report is in **megabytes**: comparing rounded megabytes would let a 100 MB plan hold 100.9 MB.
+
+Deletion is **soft**. The quota is released immediately — somebody who deleted a file to make room
+should have that room now — while the object stays for 30 days, so deleting the wrong thing is
+recoverable. `PurgeDeletedFilesJob` removes the object **first** and the row second, so a crash in
+between leaves a row pointing at nothing (recoverable, and the next run finishes it) rather than an
+object nothing points at.
+
+The same job reports two kinds of drift and repairs neither: `storage_used_bytes` against the sum of
+the rows, and objects in the bucket that no row claims. Both are bugs if they happen, and a job that
+quietly fixes them nightly hides the bug for ever.
+
+### Local development
+
+Uploads land in `storage/` (gitignored). `DRIVE_FS_ROOT` moves that — the test suite points it at
+`tmp/test-storage` so a suite run never scatters files through the working directory.
+
+Private files are served locally by Drive's own route and **still require a signature there**, so
+the local and deployed access rules are the same rules. A private file that is readable on a laptop
+and not in production is a bug found by a customer.
 
 ## Local email
 

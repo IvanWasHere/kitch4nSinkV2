@@ -39,6 +39,7 @@
     "#mail/*": "./app/mail/*.js",
     "#organizations/*": "./app/organizations/*.js",
     "#queue/*": "./app/queue/*.js",
+    "#storage/*": "./app/storage/*.js",
     "#todos/*": "./app/todos/*.js"
   },
   "devDependencies": {
@@ -71,12 +72,15 @@
     "@adonisjs/auth": "^10.1.0",
     "@adonisjs/bouncer": "^4.0.1",
     "@adonisjs/core": "^7.5.0",
+    "@adonisjs/drive": "^4.0.0",
     "@adonisjs/lucid": "^22.4.2",
     "@adonisjs/mail": "^10.4.0",
     "@adonisjs/session": "^8.1.0",
     "@adonisjs/shield": "^9.0.0",
     "@adonisjs/static": "^2.0.1",
     "@adonisjs/vite": "^6.0.1",
+    "@aws-sdk/client-s3": "^3.1127.0",
+    "@aws-sdk/s3-request-presigner": "^3.1127.0",
     "@vinejs/vine": "^4.4.0",
     "better-sqlite3": "^13.0.3",
     "edge.js": "^6.5.1",

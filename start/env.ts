@@ -89,6 +89,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   |--------------------------------------------------------------------------
   */
   DRIVE_DISK: Env.schema.enum.optional(['fs', 'r2'] as const),
+
+  /**
+   * Where the local `fs` disks live, relative to the application root.
+   * Defaults to `storage`; the test suite points it at a disposable folder.
+   */
+  DRIVE_FS_ROOT: Env.schema.string.optional(),
   R2_ACCOUNT_ID: Env.schema.string.optional(),
   R2_ACCESS_KEY_ID: Env.schema.string.optional(),
   R2_SECRET_ACCESS_KEY: Env.schema.secret.optional(),

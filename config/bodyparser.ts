@@ -92,9 +92,14 @@ const bodyParserConfig = defineConfig({
 
     /**
      * Maximum limit of data to parse including all files
-     * and fields
+     * and fields.
+     *
+     * The **outer** envelope: it stops a huge request before it reaches the
+     * application at all. The per-file cap customers see is
+     * `FileService.MAX_FILE_BYTES`, which is deliberately smaller — this has
+     * to leave room for the file plus the form fields around it (plan §10).
      */
-    limit: '20mb',
+    limit: '25mb',
 
     /**
      * Content types that should be parsed as multipart form data.

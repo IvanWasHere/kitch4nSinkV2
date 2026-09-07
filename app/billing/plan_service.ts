@@ -43,7 +43,14 @@ export interface PlanUsage {
   plan: PlanDefinition
   lists: LimitUsage
   seats: LimitUsage
+  storage: LimitUsage
 }
+
+/**
+ * One megabyte, as the `storageMb` limit means it. Binary, because that is
+ * what every file manager the customer will compare against shows.
+ */
+export const BYTES_PER_MB = 1024 * 1024
 
 /**
  * Entitlements, usage and enforcement — the single source for all three
@@ -196,7 +203,51 @@ export class PlanService {
       plan: this.planFor(organization),
       lists: this.describe(lists, this.limit(organization, 'lists')),
       seats: this.describe(seats.used, seats.limit),
+      storage: this.storageUsage(organization),
     }
+  }
+
+  /**
+   * Storage, in whole megabytes, for the meter.
+   *
+   * Read from `organizations.storage_used_bytes` — moved in the same
+   * transaction as every `files` insert and delete, the same rule
+   * `todos_count` follows (plan §10). Rounded **up**, so a workspace holding
+   * a single 1-byte file does not read as using nothing.
+   */
+  storageUsage(organization: Organization): LimitUsage {
+    const usedMb = Math.ceil(organization.storageUsedBytes / BYTES_PER_MB)
+
+    return this.describe(usedMb, this.limit(organization, 'storageMb'))
+  }
+
+  /**
+   * Whether another `additionalBytes` would fit.
+   *
+   * Compared in **bytes** and reported in megabytes. Comparing the rounded
+   * megabytes instead would let a 100 MB plan hold 100.9 MB, or refuse a file
+   * that fits — the limit is a number a customer is paying for, so it is
+   * enforced at the resolution the data actually has.
+   */
+  assertStorageWithinLimit(organization: Organization, additionalBytes: number): void {
+    const allowedMb = this.limit(organization, 'storageMb')
+
+    if (allowedMb === null) {
+      return
+    }
+
+    const used = organization.storageUsedBytes
+    const allowedBytes = allowedMb * BYTES_PER_MB
+
+    if (used + additionalBytes <= allowedBytes) {
+      return
+    }
+
+    throw new PlanLimitExceededException({
+      limit: 'storageMb',
+      allowed: allowedMb,
+      current: Math.ceil(used / BYTES_PER_MB),
+    })
   }
 
   /**

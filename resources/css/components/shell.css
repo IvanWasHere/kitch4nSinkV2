@@ -157,6 +157,16 @@
   object-fit: cover;
 }
 
+/*
+| The avatar component puts `.sidebar-avatar` on the <img> itself when a
+| picture exists, rather than wrapping one — so the crop has to be declared
+| for that case too, or an uploaded non-square photo stretches.
+*/
+img.sidebar-avatar {
+  object-fit: cover;
+  padding: 0;
+}
+
 .sidebar-user-info {
   flex: 1;
   min-width: 0;

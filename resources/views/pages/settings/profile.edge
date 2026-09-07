@@ -1,6 +1,39 @@
 @component('layouts/app', { title: 'Settings' })
   @include('partials/settings_nav')
 
+  {{--
+    The avatar goes on the public disk, so the shell can render it without a
+    signed URL expiring mid-session (plan §10). The drop zone wraps a real
+    file input, so the plain POST still works with JavaScript off (§13.3).
+  --}}
+  <div class="settings-card">
+    <h2 class="section-title">Your picture</h2>
+    <p class="section-desc">Shown next to your name everywhere in the workspace.</p>
+
+    @form({ route: 'settings.profile.avatar', method: 'POST', enctype: 'multipart/form-data' })
+      <div class="settings-row" style="align-items: center">
+        <span class="settings-row-label">Current</span>
+        <span class="settings-row-value">
+          @!avatar({
+            initials: auth.user.initials,
+            src: await publicFileUrl(auth.user.avatarKey),
+            alt: auth.user.fullName ?? auth.user.email,
+          })
+        </span>
+      </div>
+
+      @!fileDrop({
+        name: 'avatar',
+        accept: 'image/png,image/jpeg,image/gif,image/webp',
+        hint: 'PNG, JPEG, GIF or WebP. It counts against your workspace storage.',
+      })
+
+      <div class="btn-row">
+        @!button({ text: 'Upload picture', type: 'submit', size: 'sm' })
+      </div>
+    @end
+  </div>
+
   <div class="settings-card">
     <h2 class="section-title">Profile information</h2>
     <p class="section-desc">How you appear to everyone else in {{ organization.name }}.</p>

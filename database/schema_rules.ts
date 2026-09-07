@@ -144,6 +144,18 @@ export default {
       },
     },
 
+    files: {
+      columns: {
+        /**
+         * The purpose disk, not the vendor — see `config/drive.ts`.
+         */
+        disk: union('private', 'public'),
+        visibility: union('private', 'public'),
+        size_bytes: bigIntCounter,
+        attachable_type: union('User', 'Organization'),
+      },
+    },
+
     todo_lists: {
       columns: {
         /**

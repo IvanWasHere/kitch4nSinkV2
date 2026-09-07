@@ -1,8 +1,10 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
+import files from '#storage/file_service'
 import memberships from '#organizations/membership_service'
 import { seatUsage } from '#organizations/seats'
 import { planFor } from '#config/plans'
+import { UploadRejectedError } from '#storage/contracts'
 import {
   deleteOrganizationValidator,
   organizationSettingsValidator,
@@ -28,6 +30,51 @@ export default class OrganizationSettingsController {
       usage: await seatUsage(organization),
       members: allMembers.filter((member) => member.id !== organization.ownerId),
     })
+  }
+
+  /**
+   * A workspace logo, on the **public** disk for the same reason an avatar is
+   * (plan §10): the shell renders it on every page, so it must have a plain
+   * cacheable URL rather than one that expires.
+   *
+   * Owner-only, through the same policy that guards renaming the workspace.
+   */
+  async updateLogo({ request, response, session, auth, organization, bouncer }: HttpContext) {
+    await bouncer.with('OrganizationPolicy').authorize('update', organization)
+
+    const upload = request.file('logo')
+
+    if (!upload || !upload.tmpPath) {
+      session.flash('error', 'Choose an image to upload.')
+      return response.redirect().toRoute('settings.organization')
+    }
+
+    try {
+      const file = await files.replaceAttachment(organization, auth.use('web').user!, {
+        tmpPath: upload.tmpPath,
+        clientName: upload.clientName,
+        sizeBytes: upload.size,
+        attachTo: { type: 'Organization', id: organization.id },
+      })
+
+      if (!file.isImage) {
+        throw new UploadRejectedError('A logo has to be an image.', 'extension_not_allowed')
+      }
+
+      organization.logoKey = file.key
+      await organization.save()
+
+      session.flash('success', 'Your logo has been updated.')
+    } catch (error) {
+      if (error instanceof UploadRejectedError) {
+        session.flash('error', error.message)
+        return response.redirect().toRoute('settings.organization')
+      }
+
+      throw error
+    }
+
+    return response.redirect().toRoute('settings.organization')
   }
 
   async update({ request, response, session, organization, bouncer }: HttpContext) {
