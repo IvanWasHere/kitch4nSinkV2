@@ -654,6 +654,189 @@ test.group('Tenant isolation', (group) => {
     assert.isAbove(b.organization.storageUsedBytes, 0)
   })
 
+  /**
+   * The organisation API (M6). The key *is* the scope, so the isolation
+   * question here is whether a key can be talked into touching anything
+   * outside its own workspace — by id, by filter, or by assignment.
+   */
+  test('a key cannot read another workspace’s list by id', async ({ assert, client }) => {
+    const { keyed, other } = await twoKeyedWorkspaces()
+
+    const theirs = await createList(other.organization, other.user, 'Theirs')
+
+    const foreign = await client.get(`/api/v1/lists/${theirs.publicId}`).headers(keyed.headers)
+    const missing = await client.get('/api/v1/lists/lst_zzzzzzzzzzzz').headers(keyed.headers)
+
+    foreign.assertStatus(404)
+    assert.deepEqual(
+      foreign.body(),
+      missing.body(),
+      'and answers identically, so a foreign id cannot be probed for existence'
+    )
+  })
+
+  test('a key cannot mutate or delete another workspace’s list', async ({ assert, client }) => {
+    const { keyed, other } = await twoKeyedWorkspaces()
+
+    const theirs = await createList(other.organization, other.user, 'Theirs')
+
+    const patched = await client
+      .patch(`/api/v1/lists/${theirs.publicId}`)
+      .headers(keyed.headers)
+      .json({ name: 'Mine now' })
+    const deleted = await client.delete(`/api/v1/lists/${theirs.publicId}`).headers(keyed.headers)
+
+    patched.assertStatus(404)
+    deleted.assertStatus(404)
+
+    await theirs.refresh()
+    assert.equal(theirs.name, 'Theirs')
+    assert.isNull(theirs.deletedAt)
+  })
+
+  test('a key cannot read or write another workspace’s todos', async ({ assert, client }) => {
+    const { keyed, other } = await twoKeyedWorkspaces()
+
+    const theirList = await createList(other.organization, other.user, 'Theirs', ['Secret task'])
+    const [theirTodo] = await theirList.related('todos').query()
+
+    const listed = await client
+      .get(`/api/v1/lists/${theirList.publicId}/todos`)
+      .headers(keyed.headers)
+    const fetched = await client.get(`/api/v1/todos/${theirTodo.publicId}`).headers(keyed.headers)
+    const created = await client
+      .post(`/api/v1/lists/${theirList.publicId}/todos`)
+      .headers(keyed.headers)
+      .json({ title: 'Injected' })
+    const completed = await client
+      .post(`/api/v1/todos/${theirTodo.publicId}/complete`)
+      .headers(keyed.headers)
+
+    listed.assertStatus(404)
+    fetched.assertStatus(404)
+    created.assertStatus(404)
+    completed.assertStatus(404)
+
+    await theirTodo.refresh()
+    assert.isNull(theirTodo.completedAt)
+    assert.equal(theirList.todosCount, 1, 'nothing was added')
+  })
+
+  /**
+   * The injection point the todo domain warns about (plan §5.6): an
+   * `assigned_to` from another organisation, arriving in a request body.
+   */
+  test('a key cannot assign a todo to another workspace’s member', async ({ assert, client }) => {
+    const { keyed, other } = await twoKeyedWorkspaces()
+
+    const mine = await createList(keyed.organization, keyed.user, 'Mine')
+
+    const response = await client
+      .post(`/api/v1/lists/${mine.publicId}/todos`)
+      .headers(keyed.headers)
+      .json({ title: 'Not theirs to do', assigned_to: other.user.publicId })
+
+    response.assertStatus(422)
+    response.assertTextIncludes('assigned_to')
+
+    assert.isEmpty(await todoService.forList(mine))
+  })
+
+  test('the member directory is scoped to the key’s workspace', async ({ assert, client }) => {
+    const { keyed, other } = await twoKeyedWorkspaces()
+
+    const response = await client.get('/api/v1/members').headers(keyed.headers)
+
+    response.assertStatus(200)
+
+    const emails = response.body().data.map((row: { email: string }) => row.email)
+    assert.notInclude(emails, other.user.email)
+    assert.include(emails, keyed.user.email)
+  })
+
+  test('GET /organization reports the key’s own workspace and nobody else’s', async ({
+    assert,
+    client,
+  }) => {
+    const { keyed, other } = await twoKeyedWorkspaces()
+
+    other.organization.planKey = 'business'
+    await other.organization.save()
+
+    const response = await client.get('/api/v1/organization').headers(keyed.headers)
+
+    assert.equal(response.body().data.id, keyed.organization.publicId)
+    assert.equal(response.body().data.plan.key, 'pro', 'not the other workspace’s plan')
+  })
+
+  /**
+   * A cursor is an internal id in disguise. Handing one workspace's cursor to
+   * another must not walk into their rows — the query is scoped regardless,
+   * which is the point.
+   */
+  test('another workspace’s cursor cannot be used to walk their rows', async ({
+    assert,
+    client,
+  }) => {
+    const { keyed, other } = await twoKeyedWorkspaces()
+
+    for (const name of ['Theirs one', 'Theirs two', 'Theirs three']) {
+      await createList(other.organization, other.user, name)
+    }
+
+    await createList(keyed.organization, keyed.user, 'Mine')
+
+    const theirPage = await client.get('/api/v1/lists?limit=1').headers(other.headers)
+
+    const stolen = await client
+      .get(`/api/v1/lists?cursor=${theirPage.body().meta.next_cursor}`)
+      .headers(keyed.headers)
+
+    stolen.assertStatus(200)
+
+    const names = stolen.body().data.map((row: { name: string }) => row.name)
+    assert.isEmpty(
+      names.filter((name: string) => name.startsWith('Theirs')),
+      'not one row from the other workspace'
+    )
+  })
+
+  test('API request logs are attributed to the calling workspace only', async ({
+    assert,
+    client,
+  }) => {
+    const { keyed, other } = await twoKeyedWorkspaces()
+    const { default: ApiRequest } = await import('#models/api_request')
+
+    await client.get('/api/v1/lists').headers(keyed.headers)
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    const rows = await ApiRequest.all()
+
+    assert.isNotEmpty(rows)
+    for (const row of rows) {
+      assert.equal(row.organizationId, keyed.organization.id)
+      assert.notEqual(row.organizationId, other.organization.id)
+    }
+  })
+
+  /**
+   * Two workspaces, each with a real API key.
+   */
+  async function twoKeyedWorkspaces() {
+    const { createApiWorkspace } = await import('#tests/helpers')
+
+    const keyed = await createApiWorkspace({ name: 'A key' })
+    const other = await createApiWorkspace({ name: 'B key' })
+
+    for (const workspace of [keyed, other]) {
+      workspace.organization.limitOverrides = { seats: 5 }
+      await workspace.organization.save()
+    }
+
+    return { keyed, other }
+  }
+
   test('every organisation-scoped table carries its own rows only', async ({ assert }) => {
     const { a, b } = await twoWorkspaces()
 

@@ -1,0 +1,45 @@
+{{--
+  The API reference (plan §11).
+
+  Renders `/openapi.json` with Scalar, loaded from a CDN rather than bundled:
+  the docs viewer is not part of the application, and putting a megabyte of
+  somebody else's JavaScript through our build to render a page most users
+  never open is a poor trade.
+
+  If the CDN is unreachable the page still says what this is and links to the
+  raw document, which is the thing an integrator actually needs.
+--}}
+@component('layouts/marketing', { title: 'API reference' })
+  <noscript>
+    <div class="info-box">
+      <p><strong>The interactive reference needs JavaScript.</strong></p>
+      <p>
+        The machine-readable document is at
+        <a href="{{ urlFor('docs.openapi') }}">/openapi.json</a> — point your OpenAPI tooling at
+        that.
+      </p>
+    </div>
+  </noscript>
+
+  <div id="api-reference" data-url="{{ urlFor('docs.openapi') }}"></div>
+
+  <div class="info-box" id="docs-fallback" hidden>
+    <p><strong>Could not load the interactive reference.</strong></p>
+    <p>
+      The document itself is at <a href="{{ urlFor('docs.openapi') }}">/openapi.json</a>.
+    </p>
+  </div>
+
+  <script>
+    /**
+     * Loaded imperatively so a CDN failure shows the fallback rather than a
+     * blank page — `onerror` on a bare <script> tag is the only signal we get.
+     */
+    var script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference'
+    script.onerror = function () {
+      document.getElementById('docs-fallback').hidden = false
+    }
+    document.body.appendChild(script)
+  </script>
+@end

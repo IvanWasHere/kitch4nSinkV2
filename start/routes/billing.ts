@@ -35,6 +35,18 @@ router
     router.get('/billing/status', [controllers.billing.Billing, 'status']).as('billing.status')
 
     router.post('/billing/portal', [controllers.billing.Billing, 'portal']).as('billing.portal')
+
+    /**
+     * API keys sit in this owner-only group rather than with the tenant
+     * screens (plan §6): a key can spend the organisation's whole monthly
+     * call allowance and can be granted write access to everything, which
+     * makes it billing-adjacent rather than a member-level setting.
+     */
+    router.get('/settings/api-keys', [controllers.apiKeys.ApiKey, 'index']).as('api_keys.index')
+    router.post('/settings/api-keys', [controllers.apiKeys.ApiKey, 'store']).as('api_keys.store')
+    router
+      .post('/settings/api-keys/:id/revoke', [controllers.apiKeys.ApiKey, 'destroy'])
+      .as('api_keys.destroy')
   })
   .use([
     middleware.auth(),

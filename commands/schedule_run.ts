@@ -33,10 +33,10 @@ export default class ScheduleRun extends BaseCommand {
     const { default: normalizePositionsJob } = await import('#queue/jobs/normalize_positions_job')
     const { default: syncBillingJob } = await import('#queue/jobs/sync_billing_job')
     const { default: purgeDeletedFilesJob } = await import('#queue/jobs/purge_deleted_files_job')
+    const { default: rollupApiUsageJob } = await import('#queue/jobs/rollup_api_usage_job')
 
     /**
-     * Milestones add rows here: RollupApiUsageJob in M6,
-     * PruneAuditLogsJob in M7 (plan §9).
+     * Milestones add rows here: PruneAuditLogsJob in M7 (plan §9).
      */
     const schedules: Record<
       string,
@@ -51,6 +51,7 @@ export default class ScheduleRun extends BaseCommand {
         { name: 'normalize list positions', handler: normalizePositionsJob },
         { name: 'reconcile billing', handler: syncBillingJob },
         { name: 'purge deleted files', handler: purgeDeletedFilesJob },
+        { name: 'roll up API usage', handler: rollupApiUsageJob },
       ],
     }
 

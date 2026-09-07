@@ -2,7 +2,9 @@ import { createHmac } from 'node:crypto'
 import { DateTime } from 'luxon'
 
 import type User from '#models/user'
+import type ApiKey from '#models/api_key'
 import type Organization from '#models/organization'
+import type { ApiScope } from '#api/scopes'
 import registration from '#auth/registration_service'
 import twoFactor from '#auth/two_factor_service'
 import { CreemProvider } from '#billing/providers/creem'
@@ -396,4 +398,60 @@ export async function clearStorage(): Promise<void> {
   const { default: env } = await import('#start/env')
 
   await rm(app.makePath(env.get('DRIVE_FS_ROOT', 'storage')), { recursive: true, force: true })
+}
+
+/**
+ * A workspace on a plan that includes the API, with a key.
+ *
+ * Every API test needs all three, and building them by hand invites one test
+ * quietly granting itself a scope another does not have.
+ */
+export async function createApiWorkspace(
+  options: { planKey?: 'pro' | 'business'; scopes?: ApiScope[]; name?: string } = {}
+): Promise<{
+  user: User
+  organization: Organization
+  apiKey: ApiKey
+  secret: string
+  headers: Record<string, string>
+}> {
+  const { default: apiKeys } = await import('#api/api_key_service')
+
+  const { user, organization } = await createWorkspace()
+
+  organization.planKey = options.planKey ?? 'pro'
+  await organization.save()
+
+  const { apiKey, secret } = await apiKeys.create(organization, user, {
+    name: options.name ?? 'test key',
+    scopes: options.scopes ?? [
+      'lists:read',
+      'lists:write',
+      'todos:read',
+      'todos:write',
+      'members:read',
+    ],
+  })
+
+  return {
+    user,
+    organization,
+    apiKey,
+    secret,
+    headers: { authorization: `Bearer ${secret}` },
+  }
+}
+
+/**
+ * Reset the rate limiter between tests.
+ *
+ * The store is process-global while the database is truncated per test, so
+ * ids repeat and one test's traffic would otherwise land in the next one's
+ * bucket — and a rate-limit test that fails because of the test before it is
+ * worse than none.
+ */
+export async function clearRateLimits(): Promise<void> {
+  const { default: limiter } = await import('@adonisjs/limiter/services/main')
+
+  await limiter.clear()
 }

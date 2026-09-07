@@ -113,6 +113,13 @@ list; `createdByUserId` is provenance for the UI and must never appear in an acc
    assigned it, so `organization.storageUsedBytes + size` on a freshly registered workspace is
    `NaN`, and a quota compared against `NaN` refuses everything. Counters get a `@beforeCreate`
    hook that initialises them — see `Organization`.
+7. **A rate-limit window longer than ~24.8 days is silently broken on the memory store.** It expires
+   records with `setTimeout`, and Node fires a timeout past `2^31` ms immediately — so the counter
+   resets on *every* request, looking exactly like an unlimited plan. The database store has no such
+   limit. `ApiRateLimitMiddleware` clamps every window below the ceiling.
+8. **`config/shield.ts` CSRF-exempts by URL prefix, and the API needs it.** A bearer-authenticated
+   client has no session, no cookie and no way to obtain a CSRF token — without the exemption every
+   `POST /api/…` is a 403 that looks like an authorisation bug.
 
 ## Adding a table
 
@@ -362,6 +369,115 @@ Uploads land in `storage/` (gitignored). `DRIVE_FS_ROOT` moves that — the test
 Private files are served locally by Drive's own route and **still require a signature there**, so
 the local and deployed access rules are the same rules. A private file that is readable on a laptop
 and not in production is a bug found by a customer.
+
+## The organisation API
+
+`/api/v1`, JSON only, versioned by URL segment. **The key is the scope**: no endpoint accepts an
+organisation id, so there is nothing for a caller to pass and nothing to forge. Every query filters
+on `ctx.organization.id`, which the key establishes.
+
+### Keys
+
+`sk_live_<32 chars>` / `sk_test_…`. We store the **prefix and a SHA-256 hash**, never the key — so
+a leaked backup of `api_keys` grants nothing, and the secret exists for exactly one HTTP response.
+
+SHA-256 unsalted and fast, deliberately. A key is 32 random characters, so there is no dictionary
+to attack and nothing for a salt to defend; a slow hash would instead put its cost on **every
+authenticated request**.
+
+A key is **not a user**. It carries explicit scopes (`lists:read`, `lists:write`, `todos:read`,
+`todos:write`, `members:read`) rather than inheriting the role of whoever created it — so promoting
+that person does not silently widen what an integration can do, and removing them does not break
+it. The web app's owner-only list deletion is mirrored as "needs `lists:write`".
+
+Keys are owner-only (D4): one can spend the workspace's entire monthly allowance and be granted
+write access to everything, which makes it billing-adjacent rather than a member-level setting.
+
+### Middleware order
+
+    trackApiUsage → apiKeyAuth → apiRateLimit
+
+Tracking is **outermost** so a 401 or a 402 is recorded too — those are exactly the responses
+somebody asks support about. For the same reason `ApiKeyAuthMiddleware` puts the organisation on
+the context *before* the plan check: the key authenticated, so a 402 is attributable.
+
+Entitlement is re-checked per request, not at key creation. A cancelled subscription closes the API
+immediately without anybody having to revoke a key.
+
+`last_used_at` is throttled to once a minute. It has to be maintained — it is what tells a customer
+which key is safe to revoke — but a write per request would double the API's database traffic.
+
+### Responses
+
+One envelope: `{ data }` for an item, `{ data, meta }` for a page. Never a bare array — a top-level
+array cannot grow a `meta` key later without breaking every client.
+
+Responses are built by **transformers** with every field named explicitly, so adding a column to a
+model can never widen the public contract, and an integer id never leaves the process. Keys are
+snake_case on the wire; the translation happens in the transformer, once.
+
+**Every timestamp goes out as `toUTC().toISO()`.** A DateTime read from the database renders as
+`…+00:00` and one just created renders as `…Z`; an API emitting both for the same field breaks a
+client comparing strings.
+
+Errors are `{ error: { code, message, details? } }`. **`code` is the contract** — integrations
+branch on it, so those strings are as permanent as a column name. The message is for a human and
+may be reworded freely. `app/exceptions/handler.ts` decides JSON by **URL prefix**, not by the
+`Accept` header, so a client that forgets the header still gets JSON rather than an HTML error page.
+
+### Pagination
+
+Cursor, not offset. Under concurrent writes offset pagination duplicates and skips rows without
+ever erroring — a customer syncing tasks would silently miss records, which is the failure mode
+that makes an integration untrustworthy. The cursor is an opaque base64 of the last row's id;
+`limit + 1` rows are fetched so "is there a next page?" costs no second query, and `next_cursor:
+null` is how a sync knows it is done. A malformed cursor starts from the beginning rather than
+erroring, so a truncated query string cannot kill a sync loop.
+
+### Rate limiting
+
+Two rules, `limiter.multi()`, different jobs:
+
+- **Burst**, keyed by API key — protects us. `x-ratelimit-limit` / `-remaining` / `-reset`.
+- **Monthly quota**, keyed by *organisation* — enforces what the plan sold, so a second key does
+  not double the allowance. `x-quota-limit` / `-remaining` / `-reset`.
+
+Separate headers on purpose: one header that sometimes means "this minute" and sometimes "this
+month" is worse than two that each mean one thing. Headers are set on **every** response, not just
+a 429, because a client that only learns its budget by exceeding it cannot pace itself.
+
+The calendar month lives in the **key** (`api:month:{org}:2026-09`), not in the duration —
+`rate-limiter-flexible` windows slide from first consumption, which would drift away from the
+invoice date.
+
+`multi()` is not atomic: a request that trips the monthly rule has already spent a burst point.
+That is fine — the request was refused anyway.
+
+### 402 is a stop signal
+
+`POST /lists` and `POST /lists/{id}/todos` return `402 plan_limit_exceeded` with the numbers and an
+upgrade URL. This is the one genuinely unusual thing about the API, and it is documented
+prominently in the OpenAPI description, because integrations treat a non-2xx as retryable by
+default and retrying a quota block forever is the worst possible reading.
+
+Bulk imports should call `GET /organization`, size the batch to `usage.*.remaining`, and treat a
+mid-batch 402 as "stop and tell the customer".
+
+### Usage
+
+`api_requests` gets a row per call and is the trail support follows from an `x-request-id`. It grows
+faster than anything else in the schema, so `RollupApiUsageJob` aggregates it nightly into
+`api_usage_days` and prunes rows past 30 days — only once their day is rolled up, so pruning cannot
+outrun the aggregate. The rollup **recomputes** rather than increments, because the queue is
+at-least-once and an incrementing aggregate doubles on its second run.
+
+### Documentation
+
+`/docs` and `/openapi.json` are public — somebody deciding whether to build against this reads them
+before they have a key. The document is hand-written in `app/api/openapi.ts` rather than generated
+by reflection: a generated spec silently changes shape when somebody adds a column, which is the
+exact failure the transformers exist to prevent. `tests/functional/api/endpoints.spec.ts` asserts
+the document still describes the routes that exist.
 
 ## Local email
 

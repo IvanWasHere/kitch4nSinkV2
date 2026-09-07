@@ -114,6 +114,17 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   /*
   |--------------------------------------------------------------------------
+  | Rate limiting — §11, wired up in M6
+  |--------------------------------------------------------------------------
+  |
+  | `database` everywhere real; `memory` in tests, so one test's traffic is
+  | not another test's rate limit.
+  |
+  */
+  LIMITER_STORE: Env.schema.enum.optional(['database', 'memory'] as const),
+
+  /*
+  |--------------------------------------------------------------------------
   | Queue — §9, wired up in M3
   |--------------------------------------------------------------------------
   */

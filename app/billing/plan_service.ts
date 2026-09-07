@@ -313,6 +313,17 @@ export class PlanService {
     await organization.save()
   }
 
+  /**
+   * Shape a count the meters understand.
+   *
+   * Public because M6's API-key screen counts something this class does not
+   * own — the rows live in `ApiKeyService` — and it must still render through
+   * the same meter, with the same amber-at-80% rule, as every other quota.
+   */
+  describeCount(current: number, limit: number | null): LimitUsage {
+    return this.describe(current, limit)
+  }
+
   private describe(current: number, limit: number | null): LimitUsage {
     return {
       current,

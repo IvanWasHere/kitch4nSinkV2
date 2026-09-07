@@ -66,7 +66,24 @@ export type ScannedRoutes = {
     'billing.return': { paramsTuple?: []; params?: {} }
     'billing.status': { paramsTuple?: []; params?: {} }
     'billing.portal': { paramsTuple?: []; params?: {} }
+    'api_keys.index': { paramsTuple?: []; params?: {} }
+    'api_keys.store': { paramsTuple?: []; params?: {} }
+    'api_keys.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'webhooks.creem': { paramsTuple?: []; params?: {} }
+    'api.organization.show': { paramsTuple?: []; params?: {} }
+    'api.members.index': { paramsTuple?: []; params?: {} }
+    'api.lists.index': { paramsTuple?: []; params?: {} }
+    'api.lists.store': { paramsTuple?: []; params?: {} }
+    'api.lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.lists.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.lists.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.index': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'api.todos.store': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'api.todos.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.uncomplete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.session.store': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
@@ -77,6 +94,8 @@ export type ScannedRoutes = {
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.jobs.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
+    'docs.index': { paramsTuple?: []; params?: {} }
+    'docs.openapi': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
   }
   GET: {
@@ -105,11 +124,20 @@ export type ScannedRoutes = {
     'billing.index': { paramsTuple?: []; params?: {} }
     'billing.return': { paramsTuple?: []; params?: {} }
     'billing.status': { paramsTuple?: []; params?: {} }
+    'api_keys.index': { paramsTuple?: []; params?: {} }
+    'api.organization.show': { paramsTuple?: []; params?: {} }
+    'api.members.index': { paramsTuple?: []; params?: {} }
+    'api.lists.index': { paramsTuple?: []; params?: {} }
+    'api.lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.index': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'api.todos.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
+    'docs.index': { paramsTuple?: []; params?: {} }
+    'docs.openapi': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
@@ -138,11 +166,20 @@ export type ScannedRoutes = {
     'billing.index': { paramsTuple?: []; params?: {} }
     'billing.return': { paramsTuple?: []; params?: {} }
     'billing.status': { paramsTuple?: []; params?: {} }
+    'api_keys.index': { paramsTuple?: []; params?: {} }
+    'api.organization.show': { paramsTuple?: []; params?: {} }
+    'api.members.index': { paramsTuple?: []; params?: {} }
+    'api.lists.index': { paramsTuple?: []; params?: {} }
+    'api.lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.index': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'api.todos.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
+    'docs.index': { paramsTuple?: []; params?: {} }
+    'docs.openapi': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
   }
   POST: {
@@ -183,12 +220,26 @@ export type ScannedRoutes = {
     'settings.security.two_factor.disable': { paramsTuple?: []; params?: {} }
     'billing.checkout': { paramsTuple?: []; params?: {} }
     'billing.portal': { paramsTuple?: []; params?: {} }
+    'api_keys.store': { paramsTuple?: []; params?: {} }
+    'api_keys.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'webhooks.creem': { paramsTuple?: []; params?: {} }
+    'api.lists.store': { paramsTuple?: []; params?: {} }
+    'api.todos.store': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'api.todos.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.uncomplete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.session.store': { paramsTuple?: []; params?: {} }
     'admin.two_factor.store': { paramsTuple?: []; params?: {} }
     'admin.session.destroy': { paramsTuple?: []; params?: {} }
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.jobs.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+  }
+  PATCH: {
+    'api.lists.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+  }
+  DELETE: {
+    'api.lists.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

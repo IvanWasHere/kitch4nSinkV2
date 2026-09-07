@@ -9,6 +9,16 @@ export const controllers = {
     Job: () => import('#controllers/admin/job_controller'),
     Session: () => import('#controllers/admin/session_controller'),
   },
+  apiKeys: {
+    ApiKey: () => import('#controllers/api_keys/api_key_controller'),
+  },
+  api: {
+    v1: {
+      List: () => import('#controllers/api/v1/list_controller'),
+      Organization: () => import('#controllers/api/v1/organization_controller'),
+      Todo: () => import('#controllers/api/v1/todo_controller'),
+    },
+  },
   auth: {
     EmailVerification: () => import('#controllers/auth/email_verification_controller'),
     InvitationAcceptance: () => import('#controllers/auth/invitation_acceptance_controller'),
@@ -23,6 +33,9 @@ export const controllers = {
     Webhook: () => import('#controllers/billing/webhook_controller'),
   },
   Dashboard: () => import('#controllers/dashboard_controller'),
+  docs: {
+    Docs: () => import('#controllers/docs/docs_controller'),
+  },
   files: {
     File: () => import('#controllers/files/file_controller'),
   },

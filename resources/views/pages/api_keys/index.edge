@@ -1,0 +1,186 @@
+{{--
+  API Keys (plan §13.5) — the mockup's `.tx-table` for the key list, the
+  modal for creation, and `copy_field` for the one moment the secret exists.
+
+  Owner-only; the route group enforces that, so nothing here re-checks it.
+--}}
+@component('layouts/app', { title: 'API Keys' })
+  @slot('actions')
+    @if(keyUsage.limit === 0)
+      {{-- Free has `apiKeys: 0`, which means "not on this plan", not "none yet" --}}
+      @!button({ text: 'New key', size: 'sm', disabled: true, title: 'The API is not included in your plan.' })
+    @elseif(keyUsage.isFull)
+      @!button({
+        text: 'New key',
+        size: 'sm',
+        disabled: true,
+        title: `Your plan allows ${keyUsage.limit} keys. Revoke one to free a slot.`,
+      })
+    @else
+      @!button({
+        text: 'New key',
+        size: 'sm',
+        onclick: "document.getElementById('new-api-key').showModal()",
+      })
+    @end
+  @end
+
+  {{--
+    The secret, shown once and never again. Rendered first and loudly,
+    because a customer who scrolls past it has to mint another key.
+  --}}
+  @if(flashMessages.has('createdApiKey'))
+    @let(created = flashMessages.get('createdApiKey'))
+    <div class="info-box info-box-success">
+      <p><strong>"{{ created.name }}" is ready.</strong></p>
+      <p>
+        This is the only time we can show you the key — we store a hash of it, not the key itself.
+        Copy it into your integration now. If you lose it, revoke this key and create another.
+      </p>
+      @!copyField({ value: created.secret, label: 'API key' })
+    </div>
+  @end
+
+  @if(keyUsage.limit === 0)
+    <div class="info-box info-box-warning">
+      <p><strong>The API is not included in your plan.</strong></p>
+      <p>
+        Upgrade to create keys and call the API.
+        @if(hasRoute('billing.index'))
+          <a href="{{ urlFor('billing.index') }}">See plans</a>.
+        @end
+      </p>
+    </div>
+  @end
+
+  <div class="usage-grid" style="margin-bottom: 22px">
+    @!usageMeter({ label: 'Keys', current: keyUsage.current, limit: keyUsage.limit })
+    @!usageMeter({
+      label: 'API calls this month',
+      current: callUsage.current,
+      limit: callUsage.limit,
+    })
+  </div>
+
+  @panel.root({ title: 'Keys', flush: true })
+    @if(keys.length)
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Key</th>
+              <th>Can do</th>
+              <th>Last used</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(key in keys)
+              <tr>
+                <td>
+                  {{ key.name }}
+                  @if(key.isExpired)
+                    @!badge({ text: 'Expired', tone: 'neutral' })
+                  @end
+                </td>
+                <td><span class="tx-id">{{ key.prefix }}…</span></td>
+                <td>
+                  @each(scope in key.scopes)
+                    @!badge({ text: scope, tone: scope.endsWith(':write') ? 'warning' : 'neutral' })
+                  @end
+                </td>
+                <td style="white-space: nowrap">
+                  @if(key.lastUsedAt)
+                    {{ key.lastUsedAt.setZone(organization.timezone).toFormat('d LLL yyyy') }}
+                  @else
+                    <span class="field-hint">Never</span>
+                  @end
+                </td>
+                <td>
+                  @form({ route: 'api_keys.destroy', routeParams: { id: key.publicId }, method: 'POST' })
+                    @!button({ text: 'Revoke', variant: 'danger', size: 'xs', type: 'submit' })
+                  @end
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({
+        icon: 'key',
+        title: 'No API keys yet',
+        description: 'A key authenticates your whole workspace, not a person. Give each integration its own so you can revoke one without breaking the others.',
+      })
+    @end
+  @end
+
+  {{--
+    Recent traffic. Raw request rows are pruned after 30 days and rolled up
+    into daily totals first, so this survives the pruning (plan §5.2).
+  --}}
+  @panel.root({ title: 'Requests, last 14 days' })
+    <div class="usage-sparkline">
+      @each(day in recentDays)
+        @let(peak = Math.max(...recentDays.map((entry) => entry.requests), 1))
+        <span
+          class="usage-bar{{ day.errors > 0 ? ' has-errors' : '' }}"
+          style="height: {{ Math.max(Math.round((day.requests / peak) * 100), 2) }}%"
+          title="{{ day.day }}: {{ day.requests }} requests, {{ day.errors }} errors"
+        ></span>
+      @end
+    </div>
+    <p class="field-hint" style="margin-top: 10px">
+      {{ recentDays.reduce((total, day) => total + day.requests, 0) }} requests,
+      {{ recentDays.reduce((total, day) => total + day.errors, 0) }} of them errors. Bars turn red
+      on a day with errors.
+    </p>
+  @end
+
+  @modal({
+    id: 'new-api-key',
+    title: 'New API key',
+    description: 'It authenticates your whole workspace. Grant only what the integration needs.',
+  })
+    @form({ route: 'api_keys.store', method: 'POST', id: 'new-api-key-form' })
+      @field.root({ name: 'name' })
+        @!field.label({ text: 'Name' })
+        @!input.control({ placeholder: 'Zapier, nightly sync, …' })
+        @!field.error()
+      @end
+
+      @field.root({ name: 'scopes' })
+        @!field.label({ text: 'What it may do' })
+        @checkbox.group()
+          @each(scope in scopes)
+            @!checkbox.control({ name: 'scopes[]', value: scope.value, label: scope.label })
+          @end
+        @end
+        @!field.error()
+      @end
+
+      @field.root({ name: 'environment' })
+        @!field.label({ text: 'Environment' })
+        @!select.control({
+          options: [
+            { value: 'live', name: 'Live (sk_live_…)' },
+            { value: 'test', name: 'Test (sk_test_…)' },
+          ],
+        })
+        <p class="field-hint">
+          Only the prefix differs — both work against this workspace. The marker is there so a
+          script cannot be pointed at the wrong environment by accident.
+        </p>
+      @end
+    @end
+    @slot('footer')
+      @!button({
+        text: 'Cancel',
+        variant: 'outline',
+        onclick: "document.getElementById('new-api-key').close()",
+      })
+      @!button({ text: 'Create key', type: 'submit', form: 'new-api-key-form' })
+    @end
+  @end
+@end

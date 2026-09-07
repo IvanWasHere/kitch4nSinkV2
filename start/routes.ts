@@ -10,13 +10,22 @@
 
 import app from '@adonisjs/core/services/app'
 import router from '@adonisjs/core/services/router'
+import { controllers } from '#generated/controllers'
 
 import '#start/routes/auth'
 import '#start/routes/web'
 import '#start/routes/billing'
+import '#start/routes/api'
 import '#start/routes/admin'
 
 router.on('/').render('pages/home').as('home')
+
+/**
+ * API documentation (plan §11). Public on purpose: somebody deciding whether
+ * to build against this needs to read it before they have a key.
+ */
+router.get('/docs', [controllers.docs.Docs, 'index']).as('docs.index')
+router.get('/openapi.json', [controllers.docs.Docs, 'openapi']).as('docs.openapi')
 
 /**
  * The component library, rendered against the design tokens. Development only

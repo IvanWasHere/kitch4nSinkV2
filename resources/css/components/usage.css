@@ -228,3 +228,27 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
 }
+
+/*
+| A bare-bones request-per-day chart on the API keys screen. Deliberately
+| CSS rather than a charting library: fourteen bars do not justify a
+| dependency, and this degrades to nothing rather than to a broken canvas.
+*/
+.usage-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 90px;
+  padding-top: 4px;
+}
+
+.usage-sparkline .usage-bar {
+  flex: 1;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: var(--blue-500);
+}
+
+.usage-sparkline .usage-bar.has-errors {
+  background: var(--red-500);
+}

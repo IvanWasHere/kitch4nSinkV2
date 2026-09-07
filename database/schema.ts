@@ -6,7 +6,82 @@
 
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
-import { bigIntColumn, jsonColumn, encryptedColumn, encryptedJsonColumn, booleanColumn } from '#database/columns'
+import { jsonColumn, bigIntColumn, encryptedColumn, encryptedJsonColumn, booleanColumn } from '#database/columns'
+
+export class ApiKeySchema extends BaseModel {
+  static $columns = ['createdAt', 'createdByUserId', 'expiresAt', 'id', 'keyHash', 'lastUsedAt', 'name', 'organizationId', 'prefix', 'publicId', 'revokedAt', 'scopes', 'updatedAt'] as const
+  $columns = ApiKeySchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare createdByUserId: number | null
+  @column.dateTime()
+  declare expiresAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare keyHash: string
+  @column.dateTime()
+  declare lastUsedAt: DateTime | null
+  @column()
+  declare name: string
+  @column()
+  declare organizationId: number
+  @column()
+  declare prefix: string
+  @column()
+  declare publicId: string
+  @column.dateTime()
+  declare revokedAt: DateTime | null
+  @jsonColumn()
+  declare scopes: ('lists:read' | 'lists:write' | 'todos:read' | 'todos:write' | 'members:read')[]
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class ApiRequestSchema extends BaseModel {
+  static $columns = ['apiKeyId', 'createdAt', 'durationMs', 'id', 'ip', 'method', 'organizationId', 'path', 'requestId', 'status'] as const
+  $columns = ApiRequestSchema.$columns
+  @column()
+  declare apiKeyId: number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare durationMs: number
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare ip: string | null
+  @column()
+  declare method: string
+  @column()
+  declare organizationId: number
+  @column()
+  declare path: string
+  @column()
+  declare requestId: string | null
+  @column()
+  declare status: number
+}
+
+export class ApiUsageDaySchema extends BaseModel {
+  static $columns = ['createdAt', 'day', 'errors', 'id', 'organizationId', 'requests', 'updatedAt'] as const
+  $columns = ApiUsageDaySchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare day: string
+  @column()
+  declare errors: number
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare organizationId: number
+  @column()
+  declare requests: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
 
 export class AuthTokenSchema extends BaseModel {
   static $columns = ['consumedAt', 'createdAt', 'expiresAt', 'id', 'tokenHash', 'type', 'userId'] as const
@@ -192,6 +267,17 @@ export class PaymentSchema extends BaseModel {
   declare subscriptionId: number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+}
+
+export class RateLimitSchema extends BaseModel {
+  static $columns = ['expire', 'key', 'points'] as const
+  $columns = RateLimitSchema.$columns
+  @column()
+  declare expire: bigint | number | null
+  @column({ isPrimary: true })
+  declare key: string
+  @column()
+  declare points: number
 }
 
 export class SocialAccountSchema extends BaseModel {

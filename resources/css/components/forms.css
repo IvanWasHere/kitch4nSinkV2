@@ -197,3 +197,14 @@ select.field-input {
   width: 100%;
   background: var(--green-500);
 }
+
+/*
+| A set of checkboxes submitting under one array field — the API key scope
+| picker. Spaced so a mis-tap lands on nothing rather than on the wrong
+| permission.
+*/
+.check-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

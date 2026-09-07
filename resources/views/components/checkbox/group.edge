@@ -1,10 +1,24 @@
+{{--
+  A set of checkboxes that submit under one array field, e.g. `scopes[]`.
+
+  The group owns the field name and the old-value lookup; each control only
+  knows its own value. That is what lets a control render a stable, unique id
+  — several checkboxes sharing one id is invalid markup and breaks clicking
+  the label, which is how most people tick a box.
+
+  Props:
+    name — the field name, without the `[]`
+--}}
 @let(fieldKey = $props.get('name'))
 @inject({
   name: `${fieldKey}[]`,
-  id: $props.get('id') ?? fieldKey,
-  groupCounter: 0,
-  oldValue: old(fieldKey) || '',
-  errors: flashMessages.get('inputErrorsBag', {})[fieldKey],
-  hasErrors: fieldKey in flashMessages.get('inputErrorsBag', {}),
+  idPrefix: $props.get('id') ?? fieldKey,
+  /**
+   * Repopulated from the last submission, so a validation error does not
+   * silently clear everything the user had ticked.
+   */
+  oldValues: old(fieldKey) ?? [],
 })
-{{{ await $slots.main() }}}
+<div class="check-group">
+  {{{ await $slots.main() }}}
+</div>

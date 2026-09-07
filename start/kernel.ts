@@ -53,4 +53,13 @@ export const middleware = router.named({
   owner: () => import('#middleware/require_owner'),
   staffAuth: () => import('#middleware/staff_auth'),
   staffGuest: () => import('#middleware/staff_guest'),
+
+  /**
+   * The organisation API (plan §11). Order matters and is fixed by the route
+   * group: usage tracking outermost so a 401 is still recorded, then
+   * authentication, then the rate limiter, which needs the key to limit on.
+   */
+  trackApiUsage: () => import('#middleware/track_api_usage'),
+  apiKeyAuth: () => import('#middleware/api_key_auth'),
+  apiRateLimit: () => import('#middleware/api_rate_limit'),
 })

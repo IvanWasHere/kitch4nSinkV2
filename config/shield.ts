@@ -49,14 +49,22 @@ const shieldConfig = defineConfig({
      * (plan §7.5). A CSRF token would be meaningless to the provider and
      * would reject every delivery.
      *
+     * The organisation API is exempt for the same reason: it is
+     * authenticated by a bearer token, has no session and no cookie, so
+     * there is no cross-site request to forge — and a token-authenticated
+     * client has no way to obtain a CSRF token anyway.
+     *
      * A predicate rather than a list of patterns, because the array form is
      * an **exact** match on `route.pattern` — `'/webhooks/*'` there silently
      * matches nothing, and the failure looks like a provider signing its
-     * requests wrong rather than a config typo. This also means a second
-     * provider's endpoint is exempt the moment it is added under the same
-     * prefix.
+     * requests wrong rather than a config typo. This also means a new
+     * endpoint under either prefix is exempt the moment it is added.
      */
-    exceptRoutes: (ctx) => Boolean(ctx.route?.pattern.startsWith('/webhooks/')),
+    exceptRoutes: (ctx) => {
+      const pattern = ctx.route?.pattern ?? ''
+
+      return pattern.startsWith('/webhooks/') || pattern.startsWith('/api/')
+    },
 
     /**
      * Enable XSRF-TOKEN cookie for JavaScript frameworks.

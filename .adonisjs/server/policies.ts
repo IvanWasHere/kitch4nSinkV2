@@ -1,4 +1,5 @@
 export const policies = {
+  ApiKeyPolicy: () => import('#policies/api_key_policy'),
   FilePolicy: () => import('#policies/file_policy'),
   InvitationPolicy: () => import('#policies/invitation_policy'),
   MemberPolicy: () => import('#policies/member_policy'),

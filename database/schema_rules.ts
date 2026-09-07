@@ -144,6 +144,18 @@ export default {
       },
     },
 
+    api_keys: {
+      columns: {
+        /**
+         * The closed set from plan §11. A scope that is not in this union is
+         * a compile error at every call site that checks one.
+         */
+        scopes: json(
+          "('lists:read' | 'lists:write' | 'todos:read' | 'todos:write' | 'members:read')[]"
+        ),
+      },
+    },
+
     files: {
       columns: {
         /**
