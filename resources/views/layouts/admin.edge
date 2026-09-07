@@ -55,10 +55,13 @@
           @!navItem({ route: 'admin.audit_logs.index', icon: 'list', label: 'Audit log' })
         @end
 
-        @if(hasRoute('admin.staff.index'))
+        {{--
+          Staff management is admin-only (plan §6), so support does not see
+          the item at all rather than seeing one that answers 403 — the same
+          rule the tenant sidebar follows for Billing and API Keys.
+        --}}
+        @if(staff && staff.isAdmin && hasRoute('admin.staff.index'))
           <div class="nav-section-title">Access</div>
-        @end
-        @if(hasRoute('admin.staff.index'))
           @!navItem({ route: 'admin.staff.index', icon: 'shield', label: 'Staff' })
         @end
       </nav>

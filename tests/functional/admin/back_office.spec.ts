@@ -52,6 +52,21 @@ test.group('Back-office access', (group) => {
     response.assertStatus(200)
   })
 
+  /**
+   * And support is not shown a nav item that answers 403 — the same rule the
+   * tenant sidebar follows for Billing and API Keys (plan §6).
+   */
+  test('support is not offered the staff screen in the nav', async ({ client, assert }) => {
+    const support = await createStaff({ role: 'support' })
+    const admin = await createStaff({ role: 'admin' })
+
+    const asSupport = await client.get('/admin').withGuard('staff').loginAs(support)
+    const asAdmin = await client.get('/admin').withGuard('staff').loginAs(admin)
+
+    assert.notInclude(asSupport.text(), '/admin/staff')
+    assert.include(asAdmin.text(), '/admin/staff')
+  })
+
   test('a tenant user cannot reach the back-office at all', async ({ client }) => {
     const { user } = await createWorkspace()
 
