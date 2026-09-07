@@ -6,7 +6,8 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import User from '#models/user'
 import Invitation from '#models/invitation'
 import Organization from '#models/organization'
-import { hasSeatAvailable } from '#organizations/seats'
+import plans from '#billing/plan_service'
+import { hasSeatAvailable, seatUsage } from '#organizations/seats'
 
 /**
  * How long an invitation stays open. Long enough to survive a holiday, short
@@ -67,16 +68,25 @@ export class InvitationService {
         .update({ revoked_at: DateTime.utc().toSQL() })
 
       /**
-       * The seat check runs inside the transaction that claims the seat, so
-       * two simultaneous invitations to the last seat cannot both pass
-       * (plan §5.5).
+       * The seat check runs inside the transaction that claims the seat and
+       * behind a lock on the organisation row, so two simultaneous
+       * invitations to the last seat cannot both pass (plan §5.5). Without
+       * the lock the two transactions read the same count on Postgres and
+       * both succeed — SQLite hides that by serialising writes anyway, which
+       * is exactly why the suite runs on both engines.
+       *
+       * This one raises the plan-limit exception rather than an
+       * `InvitationError`, because the person hitting it is the owner — the
+       * customer who can actually do something about the ceiling. They get
+       * the usage numbers and the upsell (plan §7.4). Accepting an invitation
+       * hits the same cap from the other side and deliberately does not: an
+       * invitee cannot upgrade anything, and selling to them would be
+       * absurd.
        */
-      if (!(await hasSeatAvailable(input.organization, trx))) {
-        throw new InvitationError(
-          'This workspace has no seats left. Upgrade the plan or remove a member first.',
-          'seat_limit'
-        )
-      }
+      await plans.lockAndAssertLimit(trx, input.organization, 'seats', async (client) => {
+        const seats = await seatUsage(input.organization, client)
+        return seats.used
+      })
 
       return Invitation.create(
         {
@@ -128,7 +138,12 @@ export class InvitationService {
         throw new InvitationError('That invitation is no longer valid.', 'already_invited')
       }
 
+      /**
+       * Locked for the same reason the invite path locks it: two people
+       * accepting at once against one remaining seat must not both get in.
+       */
       const organization = await Organization.query({ client: trx })
+        .forUpdate()
         .where('id', invitation.organizationId)
         .whereNull('deleted_at')
         .firstOrFail()

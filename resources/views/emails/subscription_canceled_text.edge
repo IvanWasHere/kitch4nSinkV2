@@ -1,0 +1,9 @@
+{{ organization.name }} is back on the Free plan
+
+@if(endedAt)
+The subscription ended on {{ endedAt.toFormat('d LLLL yyyy') }}.
+@end
+
+Nothing has been deleted. Every list, todo and team member is still there and still editable — only creating something new beyond the free limits is blocked. Resubscribing lifts the caps again immediately, with nothing to restore.
+
+Choose a plan: {{ url }}

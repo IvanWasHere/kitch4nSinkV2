@@ -1,7 +1,8 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 
-import invitations, { InvitationError } from '#organizations/invitation_service'
+import invitations from '#organizations/invitation_service'
+import PlanLimitExceededException from '#exceptions/plan_limit_exceeded_exception'
 import { seatUsage } from '#organizations/seats'
 import { limitFor, planFor, plans } from '#config/plans'
 import { addMember, createWorkspace } from '#tests/helpers'
@@ -81,14 +82,34 @@ test.group('Seats', (group) => {
     assert.isTrue(usage.isFull)
   })
 
+  /**
+   * Since M4 the owner hitting the seat cap gets the plan-limit exception,
+   * not an `InvitationError` — they are the customer who can raise the
+   * ceiling, so they get the numbers and the upsell (plan §7.4).
+   */
   test('refuses the invitation that would exceed the limit', async ({ assert }) => {
     const { user, organization } = await createWorkspace()
     await invitations.invite({ organization, invitedBy: user, email: 'a@example.com' })
 
     await assert.rejects(
       () => invitations.invite({ organization, invitedBy: user, email: 'b@example.com' }),
-      InvitationError
+      PlanLimitExceededException
     )
+  })
+
+  test('the refusal carries the usage the upsell renders', async ({ assert }) => {
+    const { user, organization } = await createWorkspace()
+    await invitations.invite({ organization, invitedBy: user, email: 'a@example.com' })
+
+    try {
+      await invitations.invite({ organization, invitedBy: user, email: 'b@example.com' })
+      assert.fail('the second invitation should have been refused')
+    } catch (error) {
+      assert.instanceOf(error, PlanLimitExceededException)
+      assert.equal((error as PlanLimitExceededException).details.limit, 'seats')
+      assert.equal((error as PlanLimitExceededException).details.allowed, 2)
+      assert.equal((error as PlanLimitExceededException).details.current, 2)
+    }
   })
 
   /**

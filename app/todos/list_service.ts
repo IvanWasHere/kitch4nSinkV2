@@ -6,6 +6,7 @@ import Todo from '#models/todo'
 import type User from '#models/user'
 import TodoList from '#models/todo_list'
 import type Organization from '#models/organization'
+import plans from '#billing/plan_service'
 import { nextPosition } from '#todos/position'
 
 export type ListColor = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'gray'
@@ -29,9 +30,8 @@ export class ListError extends Error {
  * Lists belong to the organisation (D8). Every method here therefore takes
  * the organisation and scopes by it — there is no "my lists".
  *
- * Plan §7.4 puts the `lists` quota guard in this class. It is **not** here
- * yet: limits land in M4 so the quota code is written once, against a real
- * plan, rather than twice.
+ * `create` is the one place the `lists` quota is enforced (plan §7.4), and it
+ * is enforced *inside* the transaction that does the insert.
  */
 export class ListService {
   /**
@@ -72,8 +72,21 @@ export class ListService {
       .first()
   }
 
+  /**
+   * Create a list, if the plan has room for one.
+   *
+   * The quota check is the first thing inside the transaction and it locks
+   * the organisation row (plan §7.4): a plain count-then-insert lets two
+   * simultaneous requests both read 2 against a three-list plan and both
+   * insert. Archived lists are counted, so archiving cannot be used to dodge
+   * the cap; soft-deleted ones are not, so deleting genuinely frees a slot.
+   */
   async create(organization: Organization, actor: User, data: CreateListData): Promise<TodoList> {
     return db.transaction(async (trx) => {
+      await plans.lockAndAssertLimit(trx, organization, 'lists', (client) =>
+        plans.listCount(organization, client)
+      )
+
       await this.assertNameIsFree(organization, data.name, trx)
 
       const positions = await this.currentPositions(organization, trx)

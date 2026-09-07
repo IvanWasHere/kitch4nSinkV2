@@ -30,6 +30,16 @@ const json = (tsType: string) => ({
   decorators: [{ name: '@jsonColumn' }],
 })
 
+/**
+ * SQLite stores booleans as 0/1 and Postgres as real booleans, so every
+ * boolean column is read through a cast (portability rule 7).
+ */
+const boolean = {
+  tsType: 'boolean',
+  imports: [{ source: '#database/columns', namedImports: ['booleanColumn'] }],
+  decorators: [{ name: '@booleanColumn' }],
+}
+
 const bigIntCounter = {
   tsType: 'number',
   imports: [{ source: '#database/columns', namedImports: ['bigIntColumn'] }],
@@ -92,6 +102,45 @@ export default {
     invitations: {
       columns: {
         role: union('owner', 'member'),
+      },
+    },
+
+    subscriptions: {
+      columns: {
+        provider: union('creem'),
+        status: union('trialing', 'active', 'past_due', 'paused', 'canceled', 'expired'),
+        cancel_at_period_end: boolean,
+      },
+    },
+
+    payments: {
+      columns: {
+        provider: union('creem'),
+        status: union('succeeded', 'refunded', 'partially_refunded', 'disputed'),
+      },
+    },
+
+    webhook_events: {
+      columns: {
+        provider: union('creem'),
+        /**
+         * The normalized event type (plan §7.2), not Creem's own — the ledger
+         * records what we decided the event *meant*, so a replay applies the
+         * same thing the live delivery did.
+         */
+        event_type: union(
+          'subscription.activated',
+          'subscription.updated',
+          'subscription.trialing',
+          'subscription.past_due',
+          'subscription.paused',
+          'subscription.canceled',
+          'payment.succeeded',
+          'payment.refunded',
+          'dispute.created'
+        ),
+        payload: json('Record<string, any>'),
+        signature_verified: boolean,
       },
     },
 

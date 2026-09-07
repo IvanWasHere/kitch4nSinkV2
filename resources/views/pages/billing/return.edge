@@ -1,0 +1,64 @@
+{{--
+  Where the provider sends a customer back to (plan §7.5).
+
+  **Optimistic UI only.** This URL grants nothing — anyone can type it — so
+  it waits for the webhook rather than assuming the checkout worked, and says
+  plainly that the wait is normal.
+--}}
+@component('layouts/app', { title: 'Activating' })
+  @panel.root()
+    <div
+      class="empty-state"
+      x-data="{
+        active: {{ isActive ? 'true' : 'false' }},
+        elapsed: 0,
+        poll() {
+          if (this.active) return
+          fetch('{{ urlFor('billing.status') }}', { headers: { accept: 'application/json' } })
+            .then((response) => response.json())
+            .then((status) => {
+              this.active = status.active
+              if (this.active) window.location.assign('{{ urlFor('billing.index') }}')
+            })
+            .catch(() => {})
+        },
+      }"
+      x-init="
+        if (!active) {
+          const timer = setInterval(() => { elapsed += 2; poll() }, 2000);
+          $watch('active', (value) => value && clearInterval(timer));
+          setTimeout(() => clearInterval(timer), 60000)
+        }
+      "
+    >
+      <div class="empty-state-icon">
+        @!icon({ name: 'creditCard' })
+      </div>
+
+      <template x-if="!active">
+        <div>
+          <p class="empty-state-title">Activating your subscription…</p>
+          <p class="empty-state-desc">
+            Your payment went through. We are waiting for the confirmation from our payment
+            provider, which usually takes a few seconds — this page updates itself.
+          </p>
+          <p class="field-hint" x-show="elapsed > 20" x-cloak>
+            Still waiting. You can safely leave this page: the plan applies as soon as the
+            confirmation lands, and nothing is lost if you close the tab.
+          </p>
+        </div>
+      </template>
+
+      <template x-if="active">
+        <div>
+          <p class="empty-state-title">You are all set</p>
+          <p class="empty-state-desc">Your plan is active.</p>
+        </div>
+      </template>
+
+      <div class="btn-row" style="justify-content: center">
+        @!link({ route: 'billing.index', text: 'Go to billing', class: 'btn btn-outline btn-sm' })
+      </div>
+    </div>
+  @end
+@end

@@ -6,7 +6,7 @@
 
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
-import { jsonColumn, bigIntColumn, encryptedColumn, encryptedJsonColumn } from '#database/columns'
+import { jsonColumn, bigIntColumn, encryptedColumn, encryptedJsonColumn, booleanColumn } from '#database/columns'
 
 export class AuthTokenSchema extends BaseModel {
   static $columns = ['consumedAt', 'createdAt', 'expiresAt', 'id', 'tokenHash', 'type', 'userId'] as const
@@ -120,6 +120,41 @@ export class OrganizationSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class PaymentSchema extends BaseModel {
+  static $columns = ['amountCents', 'createdAt', 'currency', 'description', 'id', 'occurredAt', 'organizationId', 'provider', 'providerOrderId', 'publicId', 'receiptUrl', 'refundedAmountCents', 'status', 'subscriptionId', 'updatedAt'] as const
+  $columns = PaymentSchema.$columns
+  @column()
+  declare amountCents: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare currency: string
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare occurredAt: DateTime
+  @column()
+  declare organizationId: number
+  @column()
+  declare provider: 'creem'
+  @column()
+  declare providerOrderId: string
+  @column()
+  declare publicId: string
+  @column()
+  declare receiptUrl: string | null
+  @column()
+  declare refundedAmountCents: number
+  @column()
+  declare status: 'succeeded' | 'refunded' | 'partially_refunded' | 'disputed'
+  @column()
+  declare subscriptionId: number | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class SocialAccountSchema extends BaseModel {
   static $columns = ['accessToken', 'createdAt', 'id', 'provider', 'providerEmail', 'providerUserId', 'updatedAt', 'userId'] as const
   $columns = SocialAccountSchema.$columns
@@ -168,6 +203,39 @@ export class StaffUserSchema extends BaseModel {
   declare twoFactorRecoveryCodes: string[] | null
   @encryptedColumn()
   declare twoFactorSecret: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class SubscriptionSchema extends BaseModel {
+  static $columns = ['cancelAtPeriodEnd', 'canceledAt', 'createdAt', 'currentPeriodEnd', 'currentPeriodStart', 'id', 'organizationId', 'planKey', 'provider', 'providerCustomerId', 'providerSubscriptionId', 'status', 'trialEndsAt', 'updatedAt'] as const
+  $columns = SubscriptionSchema.$columns
+  @booleanColumn()
+  declare cancelAtPeriodEnd: boolean
+  @column.dateTime()
+  declare canceledAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare currentPeriodEnd: DateTime | null
+  @column.dateTime()
+  declare currentPeriodStart: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare organizationId: number
+  @column()
+  declare planKey: string
+  @column()
+  declare provider: 'creem'
+  @column()
+  declare providerCustomerId: string | null
+  @column()
+  declare providerSubscriptionId: string
+  @column()
+  declare status: 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled' | 'expired'
+  @column.dateTime()
+  declare trialEndsAt: DateTime | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }
@@ -275,4 +343,29 @@ export class UserSchema extends BaseModel {
   declare twoFactorSecret: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+}
+
+export class WebhookEventSchema extends BaseModel {
+  static $columns = ['attempts', 'eventType', 'id', 'lastError', 'payload', 'processedAt', 'provider', 'providerEventId', 'receivedAt', 'signatureVerified'] as const
+  $columns = WebhookEventSchema.$columns
+  @column()
+  declare attempts: number
+  @column()
+  declare eventType: 'subscription.activated' | 'subscription.updated' | 'subscription.trialing' | 'subscription.past_due' | 'subscription.paused' | 'subscription.canceled' | 'payment.succeeded' | 'payment.refunded' | 'dispute.created'
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare lastError: string | null
+  @jsonColumn()
+  declare payload: Record<string, any> | null
+  @column.dateTime()
+  declare processedAt: DateTime | null
+  @column()
+  declare provider: 'creem'
+  @column()
+  declare providerEventId: string
+  @column.dateTime()
+  declare receivedAt: DateTime
+  @booleanColumn()
+  declare signatureVerified: boolean
 }

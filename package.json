@@ -35,6 +35,7 @@
     "#start/*": "./start/*.js",
     "#config/*": "./config/*.js",
     "#auth/*": "./app/auth/*.js",
+    "#billing/*": "./app/billing/*.js",
     "#mail/*": "./app/mail/*.js",
     "#organizations/*": "./app/organizations/*.js",
     "#queue/*": "./app/queue/*.js",

@@ -1,9 +1,13 @@
+import { createHmac } from 'node:crypto'
 import { DateTime } from 'luxon'
 
 import type User from '#models/user'
 import type Organization from '#models/organization'
 import registration from '#auth/registration_service'
 import twoFactor from '#auth/two_factor_service'
+import { CreemProvider } from '#billing/providers/creem'
+import { fakePaymentProvider, restorePaymentProvider } from '#billing/provider'
+import type { CheckoutInput, PaymentProvider, ProviderSubscription } from '#billing/contracts'
 
 export const TEST_PASSWORD = 'secret-password-12'
 
@@ -173,4 +177,158 @@ export async function enableTwoFactor(subject: Parameters<typeof twoFactor.begin
 export async function totpFor(secret: string): Promise<string> {
   const { generate } = await import('otplib')
   return generate({ secret })
+}
+
+/**
+ * A payment provider that answers from memory (plan §15).
+ *
+ * Billing is the one area where a test that reaches the network is worse than
+ * no test: it needs an account, it is slow, and it charges things. This
+ * records what was asked of it and answers with whatever the test set up, so
+ * the checkout and portal flows are exercised end to end through the real
+ * controllers.
+ *
+ * Webhook parsing and signature verification are deliberately **not** faked —
+ * they delegate to the real `CreemProvider`, because those two are exactly
+ * what a billing test is for.
+ */
+export class FakePaymentProvider implements PaymentProvider {
+  readonly name = 'creem'
+
+  checkouts: CheckoutInput[] = []
+  portals: { customerId: string; returnUrl: string }[] = []
+  subscriptions = new Map<string, ProviderSubscription>()
+
+  /**
+   * Set to make the next provider call fail, the way an outage does.
+   */
+  failWith: Error | null = null
+
+  private real = new CreemProvider({
+    apiKey: 'test-api-key',
+    apiUrl: 'https://test-api.creem.io',
+    webhookSecret: CREEM_TEST_SECRET,
+  })
+
+  async createCheckoutSession(input: CheckoutInput) {
+    this.throwIfFailing()
+    this.checkouts.push(input)
+
+    return { url: `https://checkout.test/${input.productId}`, sessionId: 'ch_test_1' }
+  }
+
+  async createPortalSession(input: { customerId: string; returnUrl: string }) {
+    this.throwIfFailing()
+    this.portals.push(input)
+
+    return { url: `https://portal.test/${input.customerId}` }
+  }
+
+  async getSubscription(id: string) {
+    this.throwIfFailing()
+    return this.subscriptions.get(id) ?? null
+  }
+
+  async changePlan(input: { subscriptionId: string; productId: string }) {
+    this.throwIfFailing()
+    return this.subscriptions.get(input.subscriptionId)!
+  }
+
+  async cancelSubscription(input: { subscriptionId: string; atPeriodEnd: boolean }) {
+    this.throwIfFailing()
+    return this.subscriptions.get(input.subscriptionId)!
+  }
+
+  async resumeSubscription(id: string) {
+    this.throwIfFailing()
+    return this.subscriptions.get(id)!
+  }
+
+  verifyWebhook(rawBody: Buffer, headers: Record<string, string | string[] | undefined>) {
+    return this.real.verifyWebhook(rawBody, headers)
+  }
+
+  parseWebhook(rawBody: Buffer) {
+    return this.real.parseWebhook(rawBody)
+  }
+
+  private throwIfFailing() {
+    if (this.failWith) {
+      const error = this.failWith
+      this.failWith = null
+      throw error
+    }
+  }
+}
+
+/**
+ * Must match `CREEM_WEBHOOK_SECRET` in `.env.test`, because the signature
+ * check under test is the real one.
+ */
+export const CREEM_TEST_SECRET = 'test-webhook-secret'
+
+/**
+ * Install the fake for one test and take it away afterwards, so a leaked
+ * provider cannot make the next test pass for the wrong reason.
+ */
+export function useFakePaymentProvider(): FakePaymentProvider {
+  const fake = new FakePaymentProvider()
+  fakePaymentProvider(fake)
+  return fake
+}
+
+export { restorePaymentProvider }
+
+/**
+ * A Creem webhook body and its signature.
+ *
+ * The signature is HMAC-SHA256 over `JSON.stringify(body)`, which is exactly
+ * the bytes the test client will put on the wire when the same object is
+ * passed to `.json()` — so the real signature check runs against a real
+ * match, and tampering with the body in a test genuinely breaks it.
+ */
+export function signedWebhook(body: Record<string, any>): {
+  body: Record<string, any>
+  raw: string
+  headers: Record<string, string>
+} {
+  const raw = JSON.stringify(body)
+  const signature = createHmac('sha256', CREEM_TEST_SECRET).update(raw).digest('hex')
+
+  return { body, raw, headers: { 'creem-signature': signature } }
+}
+
+/**
+ * A `subscription.active` payload for an organisation, with the fields the
+ * handler actually reads.
+ */
+export function subscriptionWebhook(options: {
+  eventId?: string
+  eventType?: string
+  subscriptionId?: string
+  organizationPublicId?: string
+  productId?: string
+  status?: string
+  createdAt?: string
+  currentPeriodEnd?: string
+  cancelAtPeriodEnd?: boolean
+}): Record<string, any> {
+  return {
+    id: options.eventId ?? `evt_${Math.random().toString(36).slice(2, 10)}`,
+    eventType: options.eventType ?? 'subscription.active',
+    created_at: options.createdAt ?? new Date().toISOString(),
+    object: {
+      id: options.subscriptionId ?? 'sub_test_1',
+      status: options.status ?? 'active',
+      customer: { id: 'cus_test_1' },
+      product: { id: options.productId ?? 'prod_test_pro' },
+      current_period_start_date: new Date().toISOString(),
+      current_period_end_date:
+        options.currentPeriodEnd ?? new Date(Date.now() + 30 * 86_400_000).toISOString(),
+      cancel_at_period_end: options.cancelAtPeriodEnd ?? false,
+      metadata: options.organizationPublicId
+        ? { organization_public_id: options.organizationPublicId }
+        : {},
+    },
+  }
 }

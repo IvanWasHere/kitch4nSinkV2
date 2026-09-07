@@ -429,6 +429,137 @@ test.group('Tenant isolation', (group) => {
     assert.equal(usageA.pendingInvitations, 0, "B's invitation does not count against A")
   })
 
+  /**
+   * Billing (M4). The screen takes no identifier at all — the session is the
+   * scope — so the isolation risks here are a workspace reading another's
+   * money, and a webhook attributing a subscription to the wrong tenant.
+   */
+  test('billing shows a workspace only its own subscription and payments', async ({
+    assert,
+    client,
+  }) => {
+    const { a, b } = await twoWorkspaces()
+    const { DateTime } = await import('luxon')
+    const { default: Payment } = await import('#models/payment')
+    const { default: Subscription } = await import('#models/subscription')
+
+    const subscription = await Subscription.create({
+      organizationId: b.organization.id,
+      provider: 'creem',
+      providerSubscriptionId: 'sub_b',
+      providerCustomerId: 'cus_b',
+      planKey: 'pro',
+      status: 'active',
+      currentPeriodStart: DateTime.utc(),
+      currentPeriodEnd: DateTime.utc().plus({ months: 1 }),
+      cancelAtPeriodEnd: false,
+    })
+
+    await Payment.create({
+      organizationId: b.organization.id,
+      subscriptionId: subscription.id,
+      provider: 'creem',
+      providerOrderId: 'ord_b',
+      amountCents: 2900,
+      currency: 'USD',
+      status: 'succeeded',
+      refundedAmountCents: 0,
+      description: "B's private invoice",
+      occurredAt: DateTime.utc(),
+    })
+
+    const response = await client.get('/billing').loginAs(a.user)
+
+    response.assertStatus(200)
+    response.assertTextIncludes('Current plan: Free')
+    assert.notInclude(response.text(), "B's private invoice")
+    assert.notInclude(response.text(), 'pay_')
+
+    const { default: billing } = await import('#billing/billing_service')
+    assert.isNull(await billing.activeSubscription(a.organization))
+    assert.isEmpty(await billing.payments(a.organization))
+  })
+
+  /**
+   * The obvious cross-tenant injection point in billing: a webhook whose
+   * metadata names another workspace's public id must move *that* workspace,
+   * and only from a signed delivery. Here the attribution is checked
+   * directly — A's id in the metadata must never touch B.
+   */
+  test('a webhook applies to the workspace named in its own metadata and no other', async ({
+    assert,
+  }) => {
+    const { a, b } = await twoWorkspaces()
+    const { default: webhooks } = await import('#billing/webhook_handler')
+    const { paymentProvider } = await import('#billing/provider')
+    const { subscriptionWebhook } = await import('#tests/helpers')
+
+    const body = subscriptionWebhook({ organizationPublicId: a.organization.publicId })
+    await webhooks.apply(paymentProvider().parseWebhook(Buffer.from(JSON.stringify(body))))
+
+    await a.organization.refresh()
+    await b.organization.refresh()
+
+    assert.equal(a.organization.planKey, 'pro')
+    assert.equal(b.organization.planKey, 'free', "B was not upgraded by A's webhook")
+  })
+
+  /**
+   * A second event for the same provider subscription must follow the row it
+   * already created, not whatever public id the payload now claims — the
+   * subscription's own history is more trustworthy than metadata that can be
+   * replayed with an edit.
+   */
+  test('a follow-up event cannot move a subscription to another workspace', async ({ assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const { default: Subscription } = await import('#models/subscription')
+    const { default: webhooks } = await import('#billing/webhook_handler')
+    const { paymentProvider } = await import('#billing/provider')
+    const { subscriptionWebhook } = await import('#tests/helpers')
+
+    const parse = (body: Record<string, any>) =>
+      paymentProvider().parseWebhook(Buffer.from(JSON.stringify(body)))
+
+    await webhooks.apply(
+      parse(subscriptionWebhook({ organizationPublicId: a.organization.publicId }))
+    )
+
+    await webhooks.apply(
+      parse(
+        subscriptionWebhook({
+          eventId: 'evt_hijack',
+          eventType: 'subscription.update',
+          organizationPublicId: b.organization.publicId,
+        })
+      )
+    )
+
+    const subscriptions = await Subscription.all()
+    assert.lengthOf(subscriptions, 1)
+    assert.equal(subscriptions[0].organizationId, a.organization.id)
+
+    await b.organization.refresh()
+    assert.equal(b.organization.planKey, 'free')
+  })
+
+  /**
+   * Quotas are counted per workspace. A shared counter would let one tenant's
+   * usage block another's create.
+   */
+  test('plan usage is counted per workspace', async ({ assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const { default: plans } = await import('#billing/plan_service')
+
+    await createList(b.organization, b.user, 'B one')
+    await createList(b.organization, b.user, 'B two')
+
+    const usageA = await plans.usage(a.organization)
+    assert.equal(usageA.lists.current, 0, "B's lists do not count against A")
+
+    const usageB = await plans.usage(b.organization)
+    assert.equal(usageB.lists.current, 2)
+  })
+
   test('every organisation-scoped table carries its own rows only', async ({ assert }) => {
     const { a, b } = await twoWorkspaces()
 

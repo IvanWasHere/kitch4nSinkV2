@@ -13,6 +13,7 @@ import router from '@adonisjs/core/services/router'
 
 import '#start/routes/auth'
 import '#start/routes/web'
+import '#start/routes/billing'
 import '#start/routes/admin'
 
 router.on('/').render('pages/home').as('home')

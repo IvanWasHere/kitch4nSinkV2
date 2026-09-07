@@ -9,7 +9,8 @@
   Slots:
     main      — the page
     actions   — optional buttons rendered on the right of the topbar
-    banner    — optional account-state banner (past_due, impersonation)
+    banner    — optional extra banner (impersonation, M7). The billing-state
+                banner is rendered by this layout and needs no slot.
 --}}
 @component('layouts/base', { title: $props.get('title') })
   <div class="dash-layout" x-data="sidebar">
@@ -47,6 +48,15 @@
     <div class="sidebar-overlay" :class="open && 'open'" @click="close" x-cloak></div>
 
     <div class="dash-main">
+      {{--
+        Billing state, on every screen (plan §7.5). In the layout rather than
+        passed down per page, because a banner a page can forget to render is
+        a banner that is missing on the page where it matters.
+      --}}
+      @if(organization)
+        @include('partials/account_banner')
+      @end
+
       @if($slots.banner)
         {{{ await $slots.banner() }}}
       @end

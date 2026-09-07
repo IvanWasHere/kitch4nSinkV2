@@ -1,0 +1,21 @@
+@component('emails/layout', {
+  title: 'Subscription ended',
+  footer: 'You are receiving this because you own this workspace.',
+})
+  <p style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+    {{ organization.name }} is back on the Free plan
+  </p>
+  <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #4b5563;">
+    @if(endedAt)
+      The subscription ended on {{ endedAt.toFormat('d LLLL yyyy') }}.
+    @end
+    <strong>Nothing has been deleted.</strong> Every list, todo and team member is still there and
+    still editable — only creating something new beyond the free limits is blocked. Resubscribing
+    lifts the caps again immediately, with nothing to restore.
+  </p>
+  <p style="margin: 0 0 24px;">
+    <a href="{{ url }}" style="display: inline-block; background: #3b82f6; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 8px;">
+      Choose a plan
+    </a>
+  </p>
+@end

@@ -53,6 +53,12 @@ export type ScannedRoutes = {
     'settings.security.two_factor.confirm': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.recovery_codes': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.disable': { paramsTuple?: []; params?: {} }
+    'billing.index': { paramsTuple?: []; params?: {} }
+    'billing.checkout': { paramsTuple?: []; params?: {} }
+    'billing.return': { paramsTuple?: []; params?: {} }
+    'billing.status': { paramsTuple?: []; params?: {} }
+    'billing.portal': { paramsTuple?: []; params?: {} }
+    'webhooks.creem': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.session.store': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
@@ -84,6 +90,9 @@ export type ScannedRoutes = {
     'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'members.index': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
+    'billing.index': { paramsTuple?: []; params?: {} }
+    'billing.return': { paramsTuple?: []; params?: {} }
+    'billing.status': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
@@ -110,6 +119,9 @@ export type ScannedRoutes = {
     'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'members.index': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
+    'billing.index': { paramsTuple?: []; params?: {} }
+    'billing.return': { paramsTuple?: []; params?: {} }
+    'billing.status': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
@@ -149,6 +161,9 @@ export type ScannedRoutes = {
     'settings.security.two_factor.confirm': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.recovery_codes': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.disable': { paramsTuple?: []; params?: {} }
+    'billing.checkout': { paramsTuple?: []; params?: {} }
+    'billing.portal': { paramsTuple?: []; params?: {} }
+    'webhooks.creem': { paramsTuple?: []; params?: {} }
     'admin.session.store': { paramsTuple?: []; params?: {} }
     'admin.two_factor.store': { paramsTuple?: []; params?: {} }
     'admin.session.destroy': { paramsTuple?: []; params?: {} }

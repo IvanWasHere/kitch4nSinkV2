@@ -31,10 +31,11 @@ export default class ScheduleRun extends BaseCommand {
     const { default: overdueDigestJob } = await import('#queue/jobs/overdue_digest_job')
     const { default: reconcileCountersJob } = await import('#queue/jobs/reconcile_counters_job')
     const { default: normalizePositionsJob } = await import('#queue/jobs/normalize_positions_job')
+    const { default: syncBillingJob } = await import('#queue/jobs/sync_billing_job')
 
     /**
-     * Milestones add rows here: SyncBillingJob in M4, PurgeDeletedFilesJob in
-     * M5, RollupApiUsageJob in M6, PruneAuditLogsJob in M7 (plan §9).
+     * Milestones add rows here: PurgeDeletedFilesJob in M5,
+     * RollupApiUsageJob in M6, PruneAuditLogsJob in M7 (plan §9).
      */
     const schedules: Record<
       string,
@@ -47,6 +48,7 @@ export default class ScheduleRun extends BaseCommand {
         { name: 'overdue digests', handler: overdueDigestJob },
         { name: 'reconcile todo counters', handler: reconcileCountersJob },
         { name: 'normalize list positions', handler: normalizePositionsJob },
+        { name: 'reconcile billing', handler: syncBillingJob },
       ],
     }
 

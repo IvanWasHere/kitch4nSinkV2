@@ -1,3 +1,5 @@
+import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
+
 import type Job from '#models/job'
 
 /**
@@ -48,6 +50,14 @@ export interface JobContext {
 export interface DispatchOptions {
   queue?: string
   maxAttempts?: number
+
+  /**
+   * Enqueue inside an existing transaction, so the job and the rows it is
+   * about commit or roll back together. Without this a caller that writes a
+   * row and then dispatches can end up with the row and no job — or, worse,
+   * a worker that picks the job up before the row it needs is visible.
+   */
+  client?: TransactionClientContract
 
   /**
    * Hold the job back until a moment in the future. Used by the scheduler and

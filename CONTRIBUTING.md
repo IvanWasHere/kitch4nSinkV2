@@ -40,8 +40,10 @@ enforced at the migration layer, and these rules are checked in review.
    layer plus a plain unique index.
 6. **No raw SQL in application code.** The single sanctioned exception is the queue reservation
    query (plan §9), which is dialect-switched in exactly one place inside `QueueService`.
-7. **Booleans** via `table.boolean()`, always read back through Lucid — SQLite hands back 0/1 and
-   Lucid normalises it.
+7. **Booleans** via `table.boolean()`, and declared as `boolean` in `database/schema_rules.ts` so
+   the generated column carries `booleanColumn()`. Lucid does **not** normalise these for you:
+   SQLite hands back `0`/`1` and Postgres real booleans, so without the cast `row.flag === true`
+   fails on one engine while `if (row.flag)` quietly agrees on both.
 8. **Money** as integer minor units (`amount_cents`). Never float, never decimal.
 
 CI runs the full suite against **both** engines on every push. A rule that is only exercised on
@@ -92,6 +94,15 @@ list; `createdByUserId` is provenance for the UI and must never appear in an acc
 2. **Do not compare a timestamp column against a bound value in SQL.** SQLite stores
    `YYYY-MM-DD HH:MM:SS` and compares it as text; Postgres compares it as a timestamp. Where a row
    count is small, decide it from the model's own getter instead — see `seatUsage`.
+3. **Do not compare two `DateTime`s by `toISO()`.** One read back from the database carries a zone
+   offset (`…+00:00`) and one parsed from an API payload carries `Z`, so the same instant compares
+   unequal. Use `toMillis()`, and render `toUTC().toISO()` only for humans — see
+   `ReconciliationService`, where this bug would have reported drift on every subscription every
+   night for ever.
+4. **A row lock that is a no-op on SQLite still has to be there.** `forUpdate()` does nothing on
+   SQLite, which is correct — better-sqlite3 serialises writes anyway — so a *missing* lock also
+   passes the whole suite on SQLite and lets two parallel requests both take the last slot on
+   Postgres. Concurrency tests only mean something on the Postgres leg of the matrix.
 
 ## Adding a table
 
@@ -135,6 +146,135 @@ committed by the HTTP server, which never starts in a command, so `urlFor` in a 
 otherwise fails — quietly, because `MailerService` logs a render failure rather than crashing. A
 job that sends in bulk should therefore check what `send()` returned and fail if anything did not
 queue; `OverdueDigestJob` is the worked example.
+
+## Billing and plan limits
+
+Entitlements are a **pure function of `organizations.plan_key`** — no network call, no database
+read — so `PlanService.can()` is free to call in a loop or in a template. `config/plans.ts` is the
+whole catalogue: changing what a plan allows is a typed change with a diff and a test, never a
+migration.
+
+Two magic values, and the difference matters. `null` means **unlimited**; `0` means **not on this
+plan at all**, so the feature's screen is hidden rather than shown empty.
+
+### One source for usage
+
+The nav counter (`Lists 3/3`), the meter on the dashboard, the disabled *New list* button, the
+inline upsell, the `402` and the row-locked check inside the create transaction all read the same
+`PlanService` numbers. **Never compute a usage figure a second way.** Two calculations of "how many
+lists are you using" will eventually disagree, and the day they do a customer is either blocked
+below their limit or billed for a plan they are exceeding.
+
+`require_organization` shares `usage` with every rendered page, which is what the sidebar and the
+`withinLimit()` Edge global read.
+
+### Enforcing a count limit
+
+Three limits are counts, and a plain `count() → compare → insert` is a race. Each is guarded in
+exactly one place, **inside the transaction that does the insert, behind a row lock**:
+
+| Limit | Where | Locks |
+|---|---|---|
+| `lists` | `ListService.create` | the `organizations` row, via `PlanService.lockAndAssertLimit` |
+| `todosPerList` | `TodoService.create` | the `todo_lists` row (whose `todos_count` is the counter) |
+| `seats` | `InvitationService.invite` and `.accept` | the `organizations` row |
+
+`forUpdate()` is a real lock on Postgres and a no-op on SQLite, which is correct: better-sqlite3 is
+synchronous and serialises writes at the connection, so the interleaving cannot occur there. **This
+is why the concurrency tests must run on both engines** — a missing lock passes on SQLite and lets
+two parallel requests both take the last slot on Postgres. That exact regression has already
+happened here once.
+
+`assertWithinLimit(org, limit, desired)` takes the count **after** the create, so callers pass
+`current + 1`.
+
+### Soft-lock: a downgrade never costs a customer anything
+
+Over-limit organisations keep every row, **readable and editable**. Only creation is blocked. A
+cancelled subscription sets `plan_key = 'free'` and does nothing else — no data job, no archiving,
+nothing hidden — so a failed card costs a customer nothing and re-upgrading needs no restore job.
+The next create attempt is what surfaces the new ceiling.
+
+Two consequences the UI has to say out loud, because they otherwise read as bugs:
+
+- **Archived lists still count.** Archiving hides a list; deleting one frees the slot.
+- **Completed todos still count.** A fully ticked-off list at its cap is still full.
+
+A blocked create is never a dead end. `PlanLimitExceededException` renders as `402
+{ error: { code: 'plan_limit_exceeded', limit, allowed, current, upgradeUrl } }` for JSON and as a
+flash plus the inline `.plan-card` upsell for HTML — the same numbers in both, from one place.
+
+### Webhooks are the only source of truth
+
+Entitlements move when the provider says money moved, and never one step earlier. `/billing/return`
+is optimistic UI that grants nothing — a user can type that URL — so it polls `billing.status`
+until the webhook has actually landed.
+
+The endpoint does four things and stops (`WebhookController`):
+
+1. Verify the HMAC over the **raw** body. Re-serialising parsed JSON reorders keys and changes the
+   digest, so `request.raw()` is what gets signed — never `request.body()`.
+2. Insert the `webhook_events` row. A unique violation means we have seen this event before, which
+   is not an error: Creem retries five times. Answer 200 and stop.
+3. Dispatch `ProcessWebhookJob` and answer 200 inside ~50ms. A provider that times out waiting for
+   us retries, and a retry storm during a slow database is how billing state gets applied twice.
+4. The worker applies it, where a failure backs off on our terms rather than the provider's.
+
+`config/shield.ts` exempts `/webhooks/*` from CSRF through a **predicate**, not the array form —
+the array is an exact match on `route.pattern`, so `'/webhooks/*'` there matches nothing and the
+failure looks like a provider signing its requests wrong.
+
+Three rules hold `WebhookHandler` together:
+
+- **Idempotent.** Every write is an upsert keyed on the provider's own id.
+- **Ordered by watermark, not arrival.** An event describing a state older than what the
+  subscription row already knows is ignored, so a late `past_due` cannot undo the `active` that
+  superseded it.
+- **The provider is the truth.** On ambiguity, re-fetch rather than guess from the payload.
+
+A tenant is resolved from the subscription we already recorded, or from the
+`organizationPublicId` we put into the checkout metadata ourselves. **Nothing else** — never a
+customer email, which is something the payer controls. An event that cannot be attributed is parked
+for a human, not guessed at.
+
+### Working on billing without a Creem account
+
+`node ace dev:seed` creates one workspace per tier with a subscription and three charges behind it,
+so every billing screen has content:
+
+```
+jane@example.com              free, at its 3-list cap
+owner-pro@example.com         pro, with transaction history
+owner-business@example.com    business, unlimited lists
+```
+
+For real deliveries, Creem test mode plus a tunnel (`cloudflared tunnel --url
+http://localhost:3333`). Then:
+
+```bash
+node ace billing:replay 42        # re-apply one stored webhook, no network
+node ace billing:replay --failed  # everything that never applied
+node ace billing:sync --dry-run   # diff local subscriptions against the provider
+```
+
+`billing:replay` parses the stored payload through the provider exactly as the worker does, so a
+replay proves something about the live path. It is safe to run twice.
+
+`SyncBillingJob` runs the same reconciliation nightly. It **reports** every difference and corrects
+only a status that disagrees — that one costs money in both directions. Everything else is logged
+and left alone, for the same reason `ReconcileCountersJob` alerts rather than repairs.
+
+### Adding a payment provider
+
+One class in `app/billing/providers/` implementing `PaymentProvider`, plus an entry in
+`config/payments.ts` and a case in `app/billing/provider.ts`. **Nothing outside
+`app/billing/providers/` may import a provider SDK or speak a provider's wire format** — that rule
+is what keeps the swap from becoming a rewrite. Map the provider's events onto the nine normalized
+ones in `app/billing/contracts.ts`; an unmapped event must throw rather than be dropped, because a
+silently ignored billing event is indistinguishable from one that never arrived.
+
+Secrets declared with `Env.schema.secret()` come back as a `Secret` wrapper, not a string. Call
+`.release()` before handing one to `createHmac` or a fetch header.
 
 ## Local email
 

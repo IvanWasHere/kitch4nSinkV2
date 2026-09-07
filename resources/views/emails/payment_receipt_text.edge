@@ -1,0 +1,9 @@
+Payment received
+
+We have taken {{ amount }} for {{ organization.name }}. Nothing else is needed from you.
+
+Amount:    {{ amount }}
+Date:      {{ paidAt.toFormat('d LLLL yyyy') }}
+Reference: {{ payment.publicId }}
+
+{{ payment.receiptUrl ?? url }}

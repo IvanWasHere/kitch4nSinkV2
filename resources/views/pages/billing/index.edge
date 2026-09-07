@@ -1,0 +1,212 @@
+{{--
+  The Billing screen (plan §13.5): current plan, the plan grid, usage meters
+  and transaction history — the mockup's Billing tab, with the fake Visa
+  details replaced by what we actually know.
+
+  Owner-only; the route group enforces that, so nothing here re-checks it.
+--}}
+@component('layouts/app', { title: 'Billing' })
+  @slot('actions')
+    @if(subscription && subscription.isEntitling)
+      @form({ route: 'billing.portal', method: 'POST', id: 'portal-form' })
+        @!button({ text: 'Manage payment', variant: 'outline', size: 'sm', type: 'submit' })
+      @end
+    @end
+  @end
+
+  {{-- Current plan --}}
+  <div class="billing-current">
+    <div class="billing-current-info">
+      <span class="stat-icon stat-icon-blue">
+        @!icon({ name: 'creditCard' })
+      </span>
+      <div>
+        <div class="billing-current-plan">Current plan: {{ usage.plan.name }}</div>
+        <div class="billing-current-meta">
+          @if(!subscription || !subscription.isEntitling)
+            No subscription — you are on the free tier.
+          @else
+            ${{ (usage.plan.priceCents / 100).toFixed(2) }}/{{ usage.plan.interval ?? 'month' }}
+            @if(subscription.isOnTrial && subscription.trialEndsAt)
+              &middot; trial ends
+              {{ subscription.trialEndsAt.setZone(organization.timezone).toFormat('d LLL yyyy') }}
+            @elseif(subscription.isEndingSoon && subscription.currentPeriodEnd)
+              &middot; ends
+              {{ subscription.currentPeriodEnd.setZone(organization.timezone).toFormat('d LLL yyyy') }}
+            @elseif(subscription.currentPeriodEnd)
+              &middot; renews
+              {{ subscription.currentPeriodEnd.setZone(organization.timezone).toFormat('d LLL yyyy') }}
+            @end
+          @end
+        </div>
+      </div>
+    </div>
+
+    @if(subscription && subscription.status === 'past_due')
+      @!badge({ text: 'Payment failed', tone: 'warning' })
+    @elseif(subscription && subscription.isEndingSoon)
+      @!badge({ text: 'Ending', tone: 'warning' })
+    @end
+  </div>
+
+  {{--
+    Usage against the plan. The same numbers enforcement uses (plan §7.4) —
+    a meter that disagreed with the block would be worse than no meter.
+  --}}
+  @panel.root({ title: 'Usage on this plan' })
+    <div class="usage-grid">
+      @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
+      @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
+    </div>
+    <p class="field-hint" style="margin-top: 12px">
+      Archived lists still count — archiving hides a list, it does not free a slot. Deleting one
+      does.
+    </p>
+  @end
+
+  <div style="margin: 28px 0 8px">
+    <h2 class="section-title">Choose a plan</h2>
+    <p class="section-desc">
+      Change or cancel at any time. Nothing is ever deleted when a plan ends — only creating
+      something new beyond the free limits is blocked.
+    </p>
+  </div>
+
+  <div class="plan-grid">
+    @each(entry in plans)
+      @let(isCurrent = entry.key === usage.planKey)
+      <div class="plan-card {{ isCurrent ? 'current' : '' }}">
+        @if(isCurrent)
+          <span class="plan-badge">Current</span>
+        @end
+        <div class="plan-name">{{ entry.plan.name }}</div>
+        <div class="plan-desc">
+          {{ entry.plan.priceCents === 0
+            ? 'Everything you need to try it with a couple of people.'
+            : entry.plan.limits.lists === null
+              ? 'For teams that have stopped counting.'
+              : 'For a team that has outgrown the free caps.' }}
+        </div>
+        <div class="plan-price">
+          <span class="plan-amount">${{ (entry.plan.priceCents / 100).toFixed(0) }}</span>
+          <span class="plan-period">/mo</span>
+        </div>
+        <ul class="plan-features">
+          <li>
+            <span class="plan-check">&check;</span>
+            {{ entry.plan.limits.seats === null ? 'Unlimited' : entry.plan.limits.seats }} seats
+          </li>
+          <li>
+            <span class="plan-check">&check;</span>
+            {{ entry.plan.limits.lists === null ? 'Unlimited' : entry.plan.limits.lists }} lists
+          </li>
+          <li>
+            <span class="plan-check">&check;</span>
+            {{ entry.plan.limits.todosPerList === null
+              ? 'Unlimited'
+              : entry.plan.limits.todosPerList }} todos per list
+          </li>
+          <li>
+            <span class="plan-check {{ entry.plan.features.includes('api') ? '' : 'plan-empty' }}">
+              {{ entry.plan.features.includes('api') ? '✓' : '–' }}
+            </span>
+            API access
+          </li>
+          <li>
+            <span class="plan-check {{ entry.plan.features.includes('sso') ? '' : 'plan-empty' }}">
+              {{ entry.plan.features.includes('sso') ? '✓' : '–' }}
+            </span>
+            Single sign-on
+          </li>
+        </ul>
+
+        @if(isCurrent)
+          @!button({ text: 'Current plan', variant: 'outline', size: 'sm', class: 'plan-btn', disabled: true })
+        @elseif(entry.plan.priceCents === 0)
+          {{--
+            Downgrading is a cancellation through the provider's portal, so
+            that it decides when the paid period actually ends rather than us
+            cutting a customer off early (plan §7.5).
+          --}}
+          @if(subscription && subscription.isEntitling)
+            @form({ route: 'billing.portal', method: 'POST', id: `downgrade-${entry.key}` })
+              @!button({
+                text: 'Cancel subscription',
+                variant: 'outline',
+                size: 'sm',
+                class: 'plan-btn',
+                type: 'submit',
+              })
+            @end
+          @end
+        @else
+          @form({ route: 'billing.checkout', method: 'POST', id: `checkout-${entry.key}` })
+            <input type="hidden" name="plan" value="{{ entry.key }}" />
+            @!button({
+              text: `Switch to ${entry.plan.name}`,
+              size: 'sm',
+              class: 'plan-btn',
+              type: 'submit',
+            })
+          @end
+        @end
+      </div>
+    @end
+  </div>
+
+  <div style="margin: 32px 0 8px">
+    <h2 class="section-title">Transaction history</h2>
+    <p class="section-desc">Every charge and refund we have a record of.</p>
+  </div>
+
+  @panel.root({ flush: true })
+    @if(payments.length)
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(payment in payments)
+              <tr>
+                <td><span class="tx-id">{{ payment.publicId }}</span></td>
+                <td>{{ payment.description ?? 'Subscription' }}</td>
+                <td style="white-space: nowrap">
+                  {{ payment.occurredAt.setZone(organization.timezone).toFormat('d LLL yyyy') }}
+                </td>
+                <td>
+                  <span class="tx-amount {{ payment.isRefunded ? 'refund' : '' }}">
+                    {{ payment.formattedAmount }}
+                  </span>
+                </td>
+                <td>
+                  @if(payment.status === 'refunded')
+                    @!badge({ text: 'Refunded', tone: 'refunded' })
+                  @elseif(payment.status === 'partially_refunded')
+                    @!badge({ text: 'Part refunded', tone: 'warning' })
+                  @elseif(payment.status === 'disputed')
+                    @!badge({ text: 'Disputed', tone: 'danger' })
+                  @else
+                    @!badge({ text: 'Paid', tone: 'success' })
+                  @end
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({
+        icon: 'creditCard',
+        title: 'No transactions yet',
+        description: 'Charges and refunds appear here as soon as your payment provider confirms them.',
+      })
+    @end
+  @end
+@end

@@ -1,0 +1,38 @@
+{{--
+  The account-state banner (plan §7.5, §13.5).
+
+  Rendered by the app layout on every screen, above the topbar, when the
+  workspace's billing needs attention. Two states and no more, because a
+  banner that appears for everything is a banner nobody reads:
+
+    past_due  — a charge failed. Nothing has been taken away; the point of the
+                banner is that the customer finds out before the period ends.
+    at a cap  — the plan is full. Only shown to the owner, who is the only
+                person who can do anything about it.
+--}}
+@if(organization.status === 'past_due')
+  <div class="account-banner account-banner-danger" role="status">
+    <span>
+      <strong>We could not take payment.</strong>
+      Nothing has been taken away — your team, lists and todos are exactly where they were.
+      Update your card to keep the plan.
+    </span>
+    @if(isOwner && hasRoute('billing.index'))
+      <a href="{{ urlFor('billing.index') }}">Update payment method</a>
+    @end
+  </div>
+@elseif(isOwner && usage && (usage.lists.isFull || usage.seats.isFull) && hasRoute('billing.index'))
+  <div class="account-banner" role="status">
+    <span>
+      <strong>
+        {{ usage.lists.isFull && usage.seats.isFull
+          ? 'You are out of lists and seats.'
+          : usage.lists.isFull
+            ? `You are using all ${usage.lists.limit} of your lists.`
+            : `You are using all ${usage.seats.limit} of your seats.` }}
+      </strong>
+      Everything you have keeps working — only creating something new is blocked.
+    </span>
+    <a href="{{ urlFor('billing.index') }}">See plans</a>
+  </div>
+@end

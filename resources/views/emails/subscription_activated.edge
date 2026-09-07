@@ -1,0 +1,38 @@
+@component('emails/layout', {
+  title: 'Subscription active',
+  footer: 'You are receiving this because you own this workspace.',
+})
+  <p style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+    {{ organization.name }} is on {{ plan.name }}
+  </p>
+  <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #4b5563;">
+    Everything on the plan is available now — no restart, no re-invite.
+    @if(renewsAt)
+      It renews on {{ renewsAt.toFormat('d LLLL yyyy') }}, and you can change or cancel it at any
+      time from the billing screen.
+    @else
+      You can change or cancel it at any time from the billing screen.
+    @end
+  </p>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; margin: 0 0 24px; border: 1px solid #dbeafe; border-radius: 8px; background: #eff6ff;">
+    <tr>
+      <td style="padding: 14px 16px; font-size: 13px; color: #1f2937;">
+        <strong>{{ plan.name }}</strong>
+        @if(plan.priceCents > 0)
+          &middot; ${{ (plan.priceCents / 100).toFixed(2) }} per {{ plan.interval ?? 'month' }}
+        @end
+        <br />
+        <span style="color: #6b7280;">
+          {{ plan.limits.seats === null ? 'Unlimited' : plan.limits.seats }} seats &middot;
+          {{ plan.limits.lists === null ? 'unlimited' : plan.limits.lists }} lists &middot;
+          {{ plan.limits.todosPerList === null ? 'unlimited' : plan.limits.todosPerList }} todos per list
+        </span>
+      </td>
+    </tr>
+  </table>
+  <p style="margin: 0 0 24px;">
+    <a href="{{ url }}" style="display: inline-block; background: #3b82f6; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 8px;">
+      View billing
+    </a>
+  </p>
+@end

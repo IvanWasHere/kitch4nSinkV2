@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
+import plans from '#billing/plan_service'
 import lists, { ListError } from '#todos/list_service'
 import todos from '#todos/todo_service'
 import { createListValidator } from '#validators/todo'
@@ -19,6 +20,12 @@ export default class ListController {
     return view.render('pages/lists/index', {
       lists: await lists.forOrganization(organization, { includeArchived }),
       includeArchived,
+      /**
+       * The per-list cap, so each card's count pill can turn amber near it
+       * and red at it (plan §13.6.2). One number rather than a usage object
+       * per card — the count itself is already on the row.
+       */
+      todoLimit: plans.limit(organization, 'todosPerList'),
     })
   }
 
@@ -43,6 +50,12 @@ export default class ListController {
       todos: await todos.forList(list, filter),
       members: await memberships.members(organization),
       filter,
+      /**
+       * Whether another todo would fit. Read from the denormalised counter,
+       * the same number the create guard checks under a lock (plan §7.4), so
+       * the disabled button and the block agree.
+       */
+      todoUsage: plans.todoUsage(organization, list),
     })
   }
 

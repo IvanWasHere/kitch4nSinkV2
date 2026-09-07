@@ -4,11 +4,51 @@
 --}}
 @component('layouts/app', { title: 'Lists' })
   @slot('actions')
-    @!button({
-      text: 'New list',
-      size: 'sm',
-      onclick: "document.getElementById('new-list').showModal()",
-    })
+    {{--
+      Disabled at the cap, with the reason in the tooltip: the ceiling has to
+      be visible *before* the click, not discovered by losing a filled-in form
+      to a redirect (plan §7.4).
+    --}}
+    @if(withinLimit('lists'))
+      @!button({
+        text: 'New list',
+        size: 'sm',
+        onclick: "document.getElementById('new-list').showModal()",
+      })
+    @else
+      @!button({
+        text: 'New list',
+        size: 'sm',
+        disabled: true,
+        title: `Your plan allows ${usage.lists.limit} lists. Delete one, or upgrade for more.`,
+      })
+    @end
+  @end
+
+  {{--
+    The inline upsell (plan §7.4). Shown when the workspace is at its ceiling
+    — and *also* when a blocked create redirected here, where `planLimit`
+    carries the same numbers the API returns as a 402.
+  --}}
+  @if(usage.lists.isFull || flashMessages.has('planLimit'))
+    <div class="info-box info-box-warning" style="margin-bottom: 18px">
+      <p>
+        <strong>
+          {{ flashMessages.get('planLimit')
+            ? flashMessages.get('planLimit').message
+            : `You are using all ${usage.lists.limit} lists on the ${usage.plan.name} plan.` }}
+        </strong>
+      </p>
+      <p>
+        Nothing is locked — every list here stays readable and editable. Deleting a list frees a
+        slot; archiving one does not.
+        @if(isOwner && hasRoute('billing.index'))
+          <a href="{{ urlFor('billing.index') }}">See plans</a>.
+        @else
+          Ask the workspace owner to upgrade for more.
+        @end
+      </p>
+    </div>
   @end
 
   @if(lists.length)
@@ -31,11 +71,14 @@
                 {{ list.createdBy ? list.createdBy.displayName : 'Someone' }}
               </span>
               {{--
-                Amber and red arrive with the todosPerList cap in M4; until
-                then a count has nothing to be near.
+                The mockup's stock pill, re-cut as a todo count (plan §13.6.2):
+                amber from 80% of the per-list cap, red at it. An unlimited
+                plan has nothing to be near, so it stays green.
               --}}
-              <span class="count-pill count-ok">
-                {{ list.todosCount }} {{ list.todosCount === 1 ? 'todo' : 'todos' }}
+              @let(cardRatio = todoLimit ? list.todosCount / todoLimit : 0)
+              <span class="count-pill {{ cardRatio >= 1 ? 'count-full' : cardRatio >= 0.8 ? 'count-near' : 'count-ok' }}">
+                {{ todoLimit ? `${list.todosCount} / ${todoLimit}` : list.todosCount }}
+                {{ list.todosCount === 1 && !todoLimit ? 'todo' : 'todos' }}
               </span>
             </div>
           </div>
@@ -49,13 +92,15 @@
         title: includeArchived ? 'Nothing here' : 'No lists yet',
         description: 'Lists belong to the workspace, so everyone on your team sees them and can add to them.',
       })
-      <div class="btn-row" style="justify-content: center">
-        @!button({
-          text: 'Create the first list',
-          size: 'sm',
-          onclick: "document.getElementById('new-list').showModal()",
-        })
-      </div>
+      @if(withinLimit('lists'))
+        <div class="btn-row" style="justify-content: center">
+          @!button({
+            text: 'Create the first list',
+            size: 'sm',
+            onclick: "document.getElementById('new-list').showModal()",
+          })
+        </div>
+      @end
     @end
   @end
 

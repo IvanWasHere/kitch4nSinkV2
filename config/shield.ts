@@ -43,9 +43,20 @@ const shieldConfig = defineConfig({
 
     /**
      * Routes that should be excluded from CSRF protection.
-     * Useful for webhooks or API endpoints that use other auth methods.
+     *
+     * Payment webhooks have no session and no form: their authentication is
+     * an HMAC signature over the raw body, checked in the controller
+     * (plan §7.5). A CSRF token would be meaningless to the provider and
+     * would reject every delivery.
+     *
+     * A predicate rather than a list of patterns, because the array form is
+     * an **exact** match on `route.pattern` — `'/webhooks/*'` there silently
+     * matches nothing, and the failure looks like a provider signing its
+     * requests wrong rather than a config typo. This also means a second
+     * provider's endpoint is exempt the moment it is added under the same
+     * prefix.
      */
-    exceptRoutes: [],
+    exceptRoutes: (ctx) => Boolean(ctx.route?.pattern.startsWith('/webhooks/')),
 
     /**
      * Enable XSRF-TOKEN cookie for JavaScript frameworks.

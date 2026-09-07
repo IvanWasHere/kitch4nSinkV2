@@ -18,6 +18,10 @@ export const controllers = {
     SocialAuth: () => import('#controllers/auth/social_auth_controller'),
     TwoFactorChallenge: () => import('#controllers/auth/two_factor_challenge_controller'),
   },
+  billing: {
+    Billing: () => import('#controllers/billing/billing_controller'),
+    Webhook: () => import('#controllers/billing/webhook_controller'),
+  },
   Dashboard: () => import('#controllers/dashboard_controller'),
   organizations: {
     Invitation: () => import('#controllers/organizations/invitation_controller'),

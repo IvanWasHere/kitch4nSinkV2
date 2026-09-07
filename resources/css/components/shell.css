@@ -313,3 +313,40 @@
   background: var(--overlay);
   z-index: 45;
 }
+
+/*
+| The account-state banner (plan §13.5).
+|
+| Sits above the topbar rather than inside the content, so it is the first
+| thing on the page on every screen and does not scroll away — a `past_due`
+| workspace that never notices is a workspace that churns without meaning to.
+*/
+.account-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 24px;
+  font-size: 13px;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--border);
+  background: var(--orange-50);
+  color: var(--orange-600);
+}
+
+.account-banner-danger {
+  background: var(--red-50);
+  color: var(--red-700);
+}
+
+.account-banner strong {
+  font-weight: 700;
+}
+
+.account-banner a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  white-space: nowrap;
+}

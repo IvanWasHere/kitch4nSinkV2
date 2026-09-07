@@ -6,6 +6,7 @@ import Todo from '#models/todo'
 import User from '#models/user'
 import TodoList from '#models/todo_list'
 import type Organization from '#models/organization'
+import plans from '#billing/plan_service'
 import { nextPosition, positionBetween } from '#todos/position'
 
 export type Priority = 'low' | 'normal' | 'high'
@@ -56,16 +57,19 @@ export class TodoService {
   }
 
   /**
-   * Create a todo and keep the list's counter honest in the same breath.
+   * Create a todo, if the list has room, and keep its counter honest in the
+   * same breath.
    *
    * `todos_count` is denormalised because the per-list cap is checked on
    * every create (plan §5.5), and it is only ever mutated inside the same
    * transaction as the insert — never as a follow-up write that a crash could
    * skip.
    *
-   * M4 adds the `todosPerList` guard here: it locks the list row, re-checks
-   * the count, then inserts. The transaction and the row lock are already in
-   * place for exactly that.
+   * The `todosPerList` guard reads that counter under the list's own row lock
+   * and re-checks before inserting (plan §7.4). **Completed todos still
+   * count**: a fully ticked-off list at its cap is still full, and the way out
+   * is to delete or move them. The UI has to say so, because it otherwise
+   * reads as a bug.
    */
   async create(
     organization: Organization,
@@ -75,15 +79,17 @@ export class TodoService {
   ): Promise<Todo> {
     return db.transaction(async (trx) => {
       /**
-       * Locked so two simultaneous creates cannot read the same count. Nothing
-       * enforces a limit yet, but the counter increment below is already a
-       * read-modify-write that would drift without it.
+       * Locked so two simultaneous creates cannot read the same count — both
+       * the cap below and the counter increment are read-modify-writes over
+       * this row.
        */
       const locked = await TodoList.query({ client: trx })
         .forUpdate()
         .where('id', list.id)
         .where('organization_id', organization.id)
         .firstOrFail()
+
+      plans.assertWithinLimit(organization, 'todosPerList', locked.todosCount + 1)
 
       const assignedToUserId = await this.resolveAssignee(
         organization,

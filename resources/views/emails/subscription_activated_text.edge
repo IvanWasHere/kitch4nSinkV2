@@ -1,0 +1,11 @@
+{{ organization.name }} is on {{ plan.name }}
+
+Everything on the plan is available now — no restart, no re-invite.
+@if(renewsAt)
+It renews on {{ renewsAt.toFormat('d LLLL yyyy') }}.
+@end
+
+{{ plan.name }}@if(plan.priceCents > 0) — ${{ (plan.priceCents / 100).toFixed(2) }} per {{ plan.interval ?? 'month' }}@end
+{{ plan.limits.seats === null ? 'Unlimited' : plan.limits.seats }} seats, {{ plan.limits.lists === null ? 'unlimited' : plan.limits.lists }} lists, {{ plan.limits.todosPerList === null ? 'unlimited' : plan.limits.todosPerList }} todos per list.
+
+Change or cancel at any time: {{ url }}

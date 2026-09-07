@@ -57,6 +57,9 @@ export class QueueService {
    * The payload is stored as JSON, so it must be plain data. Passing a model
    * means the worker would act on a snapshot taken at dispatch time; pass an
    * id and let the handler re-read it.
+   *
+   * Pass `options.client` to enqueue inside a transaction — a job that refers
+   * to a row should not exist until that row is committed.
    */
   async dispatch(
     handler: Pick<JobHandler, 'name' | 'queue' | 'maxAttempts'>,
@@ -65,14 +68,17 @@ export class QueueService {
   ): Promise<Job> {
     const delaySeconds = options.delaySeconds ?? 0
 
-    return Job.create({
-      queue: options.queue ?? handler.queue ?? DEFAULT_QUEUE,
-      name: handler.name,
-      payload,
-      attempts: 0,
-      maxAttempts: options.maxAttempts ?? handler.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
-      availableAt: DateTime.utc().plus({ seconds: delaySeconds }),
-    })
+    return Job.create(
+      {
+        queue: options.queue ?? handler.queue ?? DEFAULT_QUEUE,
+        name: handler.name,
+        payload,
+        attempts: 0,
+        maxAttempts: options.maxAttempts ?? handler.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
+        availableAt: DateTime.utc().plus({ seconds: delaySeconds }),
+      },
+      options.client ? { client: options.client } : {}
+    )
   }
 
   /**

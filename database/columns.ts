@@ -80,3 +80,18 @@ export function bigIntColumn() {
     consume: (value: unknown) => (value === null || value === undefined ? 0 : Number(value)),
   })
 }
+
+/**
+ * A boolean column, normalised across engines.
+ *
+ * SQLite has no boolean type and hands back `0`/`1`; Postgres returns real
+ * booleans. Without this, `assert.isTrue(row.flag)` passes on one engine and
+ * fails on the other, and — worse — `if (row.flag)` quietly agrees while
+ * `row.flag === true` does not (portability rule 7).
+ */
+export function booleanColumn() {
+  return column({
+    prepare: (value: unknown) => (value === null || value === undefined ? value : Boolean(value)),
+    consume: (value: unknown) => (value === null || value === undefined ? value : Boolean(value)),
+  })
+}

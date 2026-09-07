@@ -1,0 +1,11 @@
+We could not take payment
+
+The last charge for {{ organization.name }} was declined. Nothing has been taken away — your team, your lists and your todos are exactly where they were, and everyone can keep working.
+
+@if(graceEndsAt)
+Updating your card before {{ graceEndsAt.toFormat('d LLLL') }} keeps everything as it is. After that the workspace moves to the Free plan — still nothing deleted, but new lists and new team members will be capped.
+@else
+Updating your card keeps everything as it is.
+@end
+
+Update payment method: {{ url }}

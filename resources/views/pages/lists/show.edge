@@ -51,8 +51,40 @@
     </div>
   </div>
 
-  @if(!list.isArchived)
+  {{--
+    The per-list cap (plan §7.4). At the ceiling the form is replaced by the
+    upsell rather than left there to fail on submit — and it says the thing
+    that otherwise reads as a bug: **completed todos still count**. A fully
+    ticked-off list at its cap is still full, and the way out is to delete or
+    move them, not to tick more.
+  --}}
+  @if(todoUsage.isFull)
+    <div class="info-box info-box-warning">
+      <p>
+        <strong>
+          This list holds all {{ todoUsage.limit }} todos your plan allows in one list.
+        </strong>
+      </p>
+      <p>
+        Completed todos still count — ticking one off does not free a slot. Delete the ones you are
+        done with, move some into another list,
+        @if(isOwner && hasRoute('billing.index'))
+          or <a href="{{ urlFor('billing.index') }}">upgrade for a higher cap</a>.
+        @else
+          or ask the workspace owner to upgrade.
+        @end
+      </p>
+    </div>
+  @end
+
+  @if(!list.isArchived && !todoUsage.isFull)
     <div class="settings-card">
+      @if(todoUsage.isNearLimit)
+        <p class="field-hint" style="margin-bottom: 12px">
+          {{ todoUsage.current }} of {{ todoUsage.limit }} todos used in this list. Completed ones
+          still count.
+        </p>
+      @end
       @form({ route: 'todos.store', routeParams: { listId: list.publicId }, method: 'POST' })
         <div class="field-row" style="grid-template-columns: 2fr 1fr 1fr 1fr">
           @field.root({ name: 'title' })

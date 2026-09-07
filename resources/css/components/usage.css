@@ -217,3 +217,14 @@
   height: 100%;
   object-fit: cover;
 }
+
+/*
+| Two or three meters side by side — the usage block on the billing screen
+| and the dashboard. Collapses to one column on narrow screens through the
+| same `auto-fit` rule rather than a media query.
+*/
+.usage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
