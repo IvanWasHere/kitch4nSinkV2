@@ -50,6 +50,7 @@ export type ScannedRoutes = {
     'files.store': { paramsTuple?: []; params?: {} }
     'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'files.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'notifications.index': { paramsTuple?: []; params?: {} }
     'members.index': { paramsTuple?: []; params?: {} }
     'members.invite': { paramsTuple?: []; params?: {} }
     'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -110,6 +111,10 @@ export type ScannedRoutes = {
     'admin.webhooks.index': { paramsTuple?: []; params?: {} }
     'admin.webhooks.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.webhooks.replay': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.notifications.index': { paramsTuple?: []; params?: {} }
+    'admin.notifications.store': { paramsTuple?: []; params?: {} }
+    'admin.notifications.publish': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.notifications.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.audit_logs.index': { paramsTuple?: []; params?: {} }
     'admin.staff.index': { paramsTuple?: []; params?: {} }
     'admin.staff.store': { paramsTuple?: []; params?: {} }
@@ -141,6 +146,7 @@ export type ScannedRoutes = {
     'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'files.index': { paramsTuple?: []; params?: {} }
     'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'notifications.index': { paramsTuple?: []; params?: {} }
     'members.index': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'billing.index': { paramsTuple?: []; params?: {} }
@@ -164,6 +170,7 @@ export type ScannedRoutes = {
     'admin.subscriptions.reconciliation': { paramsTuple?: []; params?: {} }
     'admin.webhooks.index': { paramsTuple?: []; params?: {} }
     'admin.webhooks.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.notifications.index': { paramsTuple?: []; params?: {} }
     'admin.audit_logs.index': { paramsTuple?: []; params?: {} }
     'admin.staff.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
@@ -192,6 +199,7 @@ export type ScannedRoutes = {
     'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'files.index': { paramsTuple?: []; params?: {} }
     'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'notifications.index': { paramsTuple?: []; params?: {} }
     'members.index': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'billing.index': { paramsTuple?: []; params?: {} }
@@ -215,6 +223,7 @@ export type ScannedRoutes = {
     'admin.subscriptions.reconciliation': { paramsTuple?: []; params?: {} }
     'admin.webhooks.index': { paramsTuple?: []; params?: {} }
     'admin.webhooks.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.notifications.index': { paramsTuple?: []; params?: {} }
     'admin.audit_logs.index': { paramsTuple?: []; params?: {} }
     'admin.staff.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
@@ -282,6 +291,9 @@ export type ScannedRoutes = {
     'admin.subscriptions.sync': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.subscriptions.cancel': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.webhooks.replay': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.notifications.store': { paramsTuple?: []; params?: {} }
+    'admin.notifications.publish': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.notifications.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.staff.store': { paramsTuple?: []; params?: {} }
     'admin.staff.toggle': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'impersonation.destroy': { paramsTuple?: []; params?: {} }

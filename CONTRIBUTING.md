@@ -126,6 +126,11 @@ list; `createdByUserId` is provenance for the UI and must never appear in an acc
 10. **Bouncer refuses an HTML POST with a redirect, and a GET with a 403.** A test asserting 403 on
    a denied POST fails even though the refusal worked; assert the redirect *and* that nothing
    changed.
+11. **Edge's `@let` takes a single line, and does not scope reliably inside a nested block.** A
+   multi-line expression, or a `@let` inside an `@if` inside a component slot, fails at *render*
+   with "x is not defined" — not at parse. Derive the value in a controller or middleware and share
+   it instead; a shell with no logic of its own cannot get it wrong on one screen and right on
+   another.
 
 ## Adding a table
 
@@ -585,6 +590,63 @@ disables it, which is the right default for a laptop and the wrong one for produ
 It is a **second layer, never the boundary** — the staff guard and mandatory two-factor are, and an
 allowlist is trivially defeated by anything that can spoof a proxy header. The refusal is a **404**
 so that somebody probing for an admin panel learns nothing.
+
+## Notifications
+
+One-way, in-app announcements written by staff (plan §20). Nothing in the application emits one: a
+receipt is an email, a quota block is a 402. That keeps the table at tens of rows a year, which is
+the assumption the rest of the design rests on.
+
+### The one cross-tenant surface
+
+`notifications` has **no `organization_id`**. One row reaches every workspace on the Pro plan —
+crossing tenants *is* the feature — which makes `app/notifications/audience.ts` the only place in
+the application where a decision is made without a tenant filter, and the only place a leak would
+not be caught by the rule in "Tenancy rules" above.
+
+So it is one small pure function: no query, exhaustive over a closed union of audience types, and
+**closed by default** — anything unrecognised reaches nobody. An announcement that reaches nobody is
+a support ticket; one that reaches everybody is an incident.
+
+It has its own exhaustive unit test (`tests/unit/notification_audience.spec.ts`, every type ×
+role × plan) and its own cases in `tests/functional/tenant_isolation.spec.ts`. **Change the
+predicate, extend both.**
+
+`audience_type` decides which fields of the `audience` payload are used, and
+`#notifications/input` drops the rest — an author who picks `users` after filling in plans must not
+leave a `planKeys` list in the row, invisible to the UI and ignored by the predicate until somebody
+widens the rule.
+
+### Unread is one column
+
+`users.notifications_seen_at`. No receipts table, no row per user per announcement. The dot is
+"does anything that applies to me have `published_at` later than this", and reading the column
+**before** stamping it is what gives the page its "new since your last visit" highlight — stamp
+first and nothing is ever new.
+
+Two consequences worth knowing:
+
+- **A one-second blind spot.** Timestamps store to the second, so an announcement published in the
+  same second somebody loads a page gets no dot for them. `>=` would instead leave the dot lit on
+  something they just read, which is a wrong answer a user can see. The message is not lost either
+  way — the feed shows every live announcement regardless of `seen_at`.
+- **It does not scale to per-event notifications.** If notifications ever become one-per-job or
+  one-per-assignment, the candidate set stops being bounded and the in-memory audience filter
+  becomes a table scan on every page load. The upgrade is a `notification_recipients` table written
+  at publish time. Do not start emitting per-event rows into this table instead.
+
+### Authoring
+
+Admin only (`StaffPolicy.manageNotifications`), for the same reason a plan override is: it changes
+what a customer experiences and cannot be taken back. Support can read the list, because "did they
+get told?" is a support question.
+
+The back-office shows the reach of every announcement **from the same predicate the feed uses** — a
+"reaches N people" figure computed a second way would eventually disagree with who actually sees
+it, and only after publishing.
+
+Deleting is soft and takes it off every screen at once; `PruneNotificationsJob` removes the row
+after 30 days. Deleting does not unsend: anybody who read it, read it, and the flash says so.
 
 ## Local email
 

@@ -49,18 +49,41 @@
 
       <div class="dash-sidebar-footer">
         @if(auth.user)
+          {{--
+            The profile block doubles as the notifications entry point
+            (plan §20.5): unread announcements put a red dot on the avatar and
+            the row leads to the feed instead of the profile. The dot changing
+            where the row goes is what makes it worth looking at.
+
+            `unreadNotifications` and `notificationsUrl` are both shared by
+            `require_organization` — derived there rather than with `@let`
+            here, so the shell has no logic of its own to get wrong.
+          --}}
           <a
-            href="{{ hasRoute('settings.profile') ? urlFor('settings.profile') : '#' }}"
+            href="{{ notificationsUrl ?? (hasRoute('settings.profile') ? urlFor('settings.profile') : '#') }}"
             class="sidebar-user"
           >
-            @!avatar({
-              initials: auth.user.initials,
-              src: await publicFileUrl(auth.user.avatarKey),
-              alt: auth.user.fullName ?? auth.user.email,
-            })
+            <span class="sidebar-user-avatar">
+              @!avatar({
+                initials: auth.user.initials,
+                src: await publicFileUrl(auth.user.avatarKey),
+                alt: auth.user.fullName ?? auth.user.email,
+              })
+              @if(unreadNotifications)
+                <span class="notif-dot" aria-hidden="true"></span>
+              @end
+            </span>
+
             <span class="sidebar-user-info">
               <span class="sidebar-user-name">{{ auth.user.fullName ?? auth.user.email }}</span>
-              <span class="sidebar-user-email">{{ auth.user.email }}</span>
+              <span class="sidebar-user-email">
+                @if(unreadNotifications)
+                  {{ unreadNotifications }} new
+                  {{ unreadNotifications === 1 ? 'announcement' : 'announcements' }}
+                @else
+                  {{ auth.user.email }}
+                @end
+              </span>
             </span>
           </a>
         @end

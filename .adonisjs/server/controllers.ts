@@ -9,6 +9,7 @@ export const controllers = {
     Dashboard: () => import('#controllers/admin/dashboard_controller'),
     Impersonation: () => import('#controllers/admin/impersonation_controller'),
     Job: () => import('#controllers/admin/job_controller'),
+    Notification: () => import('#controllers/admin/notification_controller'),
     Organization: () => import('#controllers/admin/organization_controller'),
     Session: () => import('#controllers/admin/session_controller'),
     Staff: () => import('#controllers/admin/staff_controller'),
@@ -45,6 +46,9 @@ export const controllers = {
   },
   files: {
     File: () => import('#controllers/files/file_controller'),
+  },
+  notifications: {
+    Notification: () => import('#controllers/notifications/notification_controller'),
   },
   organizations: {
     Invitation: () => import('#controllers/organizations/invitation_controller'),

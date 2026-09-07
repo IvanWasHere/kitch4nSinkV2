@@ -40,6 +40,7 @@ export const PUBLIC_ID_PREFIXES = {
   invitation: 'inv',
   payment: 'pay',
   apiKey: 'key',
+  notification: 'ntf',
   file: 'fil',
   todoList: 'lst',
   todo: 'tdo',

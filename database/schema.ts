@@ -226,6 +226,41 @@ export class JobSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class NotificationSchema extends BaseModel {
+  static $columns = ['actionLabel', 'actionUrl', 'audience', 'audienceType', 'body', 'createdAt', 'createdByStaffId', 'deletedAt', 'expiresAt', 'id', 'level', 'publicId', 'publishedAt', 'title', 'updatedAt'] as const
+  $columns = NotificationSchema.$columns
+  @column()
+  declare actionLabel: string | null
+  @column()
+  declare actionUrl: string | null
+  @jsonColumn()
+  declare audience: { planKeys?: string[]; userIds?: number[] } | null
+  @column()
+  declare audienceType: 'all' | 'plan' | 'owners' | 'users'
+  @column()
+  declare body: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare createdByStaffId: number | null
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column.dateTime()
+  declare expiresAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare level: 'info' | 'success' | 'warning' | 'error'
+  @column()
+  declare publicId: string
+  @column.dateTime()
+  declare publishedAt: DateTime | null
+  @column()
+  declare title: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class OrganizationSchema extends BaseModel {
   static $columns = ['createdAt', 'deletedAt', 'id', 'limitOverrides', 'logoKey', 'name', 'ownerId', 'planKey', 'publicId', 'slug', 'status', 'storageUsedBytes', 'timezone', 'trialEndsAt', 'updatedAt'] as const
   $columns = OrganizationSchema.$columns
@@ -461,7 +496,7 @@ export class TodoSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['avatarKey', 'createdAt', 'deletedAt', 'email', 'emailVerifiedAt', 'fullName', 'id', 'lastLoginAt', 'organizationId', 'password', 'publicId', 'role', 'twoFactorConfirmedAt', 'twoFactorRecoveryCodes', 'twoFactorSecret', 'updatedAt'] as const
+  static $columns = ['avatarKey', 'createdAt', 'deletedAt', 'email', 'emailVerifiedAt', 'fullName', 'id', 'lastLoginAt', 'notificationsSeenAt', 'organizationId', 'password', 'publicId', 'role', 'twoFactorConfirmedAt', 'twoFactorRecoveryCodes', 'twoFactorSecret', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column()
   declare avatarKey: string | null
@@ -479,6 +514,8 @@ export class UserSchema extends BaseModel {
   declare id: number
   @column.dateTime()
   declare lastLoginAt: DateTime | null
+  @column.dateTime()
+  declare notificationsSeenAt: DateTime | null
   @column()
   declare organizationId: number
   @column({ serializeAs: null })

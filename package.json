@@ -38,6 +38,7 @@
     "#auth/*": "./app/auth/*.js",
     "#api/*": "./app/api/*.js",
     "#audit/*": "./app/audit/*.js",
+    "#notifications/*": "./app/notifications/*.js",
     "#admin/*": "./app/admin/*.js",
     "#billing/*": "./app/billing/*.js",
     "#mail/*": "./app/mail/*.js",

@@ -75,6 +75,18 @@ export default class StaffPolicy extends BasePolicy {
   }
 
   /**
+   * Writing an announcement that reaches customers (plan §20.6).
+   *
+   * Admin only, for the same reason a plan override is: it changes what a
+   * customer experiences, and it cannot be taken back once read. Support can
+   * *see* the list — it needs to answer "did they get told?" — through
+   * `view` above.
+   */
+  manageNotifications(staff: StaffUser): AuthorizerResponse {
+    return !staff.isDisabled && staff.isAdmin
+  }
+
+  /**
    * Admin only, and the reason: anyone who can create a staff account can
    * grant themselves everything above.
    */

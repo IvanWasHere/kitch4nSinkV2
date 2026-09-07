@@ -837,6 +837,85 @@ test.group('Tenant isolation', (group) => {
     return { keyed, other }
   }
 
+  /**
+   * Announcements (M9) are the **one** feature that crosses tenants on
+   * purpose (plan §20.3) — one row reaches every workspace on a plan. Which
+   * makes the audience predicate the only place in the application where a
+   * leak would not be caught by a missing `organization_id` filter, and these
+   * the cases that catch it.
+   */
+  test('an announcement for named people is invisible to everyone else', async ({ assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const { createNotification } = await import('#tests/helpers')
+    const { default: notifications } = await import('#notifications/notification_service')
+
+    await createNotification({
+      title: 'For B only',
+      audienceType: 'users',
+      userIds: [b.user.id],
+    })
+
+    assert.lengthOf(await notifications.feedFor(b.user, b.organization), 1)
+    assert.isEmpty(
+      await notifications.feedFor(a.user, a.organization),
+      "A cannot see an announcement addressed to B's owner"
+    )
+    assert.isEmpty(
+      await notifications.feedFor(a.member, a.organization),
+      'nor can anybody else in A'
+    )
+  })
+
+  test('a plan announcement is invisible to a workspace on another plan', async ({ assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const { createNotification } = await import('#tests/helpers')
+    const { default: notifications } = await import('#notifications/notification_service')
+
+    b.organization.planKey = 'pro'
+    await b.organization.save()
+
+    await createNotification({ title: 'Pro only', audienceType: 'plan', planKeys: ['pro'] })
+
+    assert.lengthOf(await notifications.feedFor(b.user, b.organization), 1)
+    assert.isEmpty(await notifications.feedFor(a.user, a.organization))
+  })
+
+  test('an owners announcement is invisible to members of every workspace', async ({ assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const { createNotification } = await import('#tests/helpers')
+    const { default: notifications } = await import('#notifications/notification_service')
+
+    await createNotification({ title: 'Owners', audienceType: 'owners' })
+
+    assert.lengthOf(await notifications.feedFor(a.user, a.organization), 1, 'A’s owner')
+    assert.lengthOf(await notifications.feedFor(b.user, b.organization), 1, 'B’s owner')
+    assert.isEmpty(await notifications.feedFor(a.member, a.organization), 'not A’s member')
+    assert.isEmpty(await notifications.feedFor(b.member, b.organization), 'not B’s member')
+  })
+
+  /**
+   * And the dot follows the feed: a workspace must not be told there is
+   * something to read that it then cannot see.
+   */
+  test('the unread count never disagrees with the feed', async ({ assert }) => {
+    const { a, b } = await twoWorkspaces()
+    const { createNotification } = await import('#tests/helpers')
+    const { default: notifications } = await import('#notifications/notification_service')
+
+    await createNotification({ audienceType: 'users', userIds: [b.user.id] })
+
+    for (const [user, organization] of [
+      [a.user, a.organization],
+      [a.member, a.organization],
+      [b.user, b.organization],
+    ] as const) {
+      const feed = await notifications.feedFor(user, organization)
+      const unread = await notifications.unreadCountFor(user, organization)
+
+      assert.equal(unread, feed.length, `${user.email}`)
+    }
+  })
+
   test('every organisation-scoped table carries its own rows only', async ({ assert }) => {
     const { a, b } = await twoWorkspaces()
 

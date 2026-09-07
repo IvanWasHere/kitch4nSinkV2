@@ -25,7 +25,7 @@
     enforcement, which is the only reason a meter is worth showing: a gauge
     that disagrees with the block is worse than no gauge.
   --}}
-  @panel.root({ title: `Usage on the ${usage.plan.name} plan` })
+  @panel.root({ title: `Usage on the ${usage.plan.name} plan`, style: 'margin-bottom: 20px' })
     @slot('actions')
       @if(isOwner && hasRoute('billing.index'))
         @!link({ route: 'billing.index', text: 'Billing', class: 'btn-ghost' })

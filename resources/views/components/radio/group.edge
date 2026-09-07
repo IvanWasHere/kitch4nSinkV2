@@ -1,10 +1,25 @@
+{{--
+  A set of radios that submit under one field, e.g. an audience choice.
+
+  Mirrors `checkbox.group`: the group owns the field name and the old-value
+  lookup, and each control knows only its own value. That is what lets a
+  control render a stable, unique id — several inputs sharing one id is
+  invalid markup and breaks clicking the label, which is how most people pick
+  an option.
+
+  Props:
+    name — the field name
+--}}
 @let(fieldKey = $props.get('name'))
 @inject({
   name: fieldKey,
-  id: $props.get('id') ?? fieldKey,
-  groupCounter: 0,
-  oldValue: old(fieldKey) || '',
-  errors: flashMessages.get('inputErrorsBag', {})[fieldKey],
-  hasErrors: fieldKey in flashMessages.get('inputErrorsBag', {}),
+  idPrefix: $props.get('id') ?? fieldKey,
+  /**
+   * Repopulated from the last submission, so a validation error does not
+   * silently clear the choice that was made.
+   */
+  oldValue: old(fieldKey) ?? '',
 })
-{{{ await $slots.main() }}}
+<div class="check-group">
+  {{{ await $slots.main() }}}
+</div>

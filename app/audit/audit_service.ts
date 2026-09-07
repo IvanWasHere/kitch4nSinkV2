@@ -31,6 +31,10 @@ export const AUDIT_ACTIONS = {
 
   webhookReplayed: 'webhook.replayed',
 
+  notificationCreated: 'notification.created',
+  notificationPublished: 'notification.published',
+  notificationDeleted: 'notification.deleted',
+
   userVerificationResent: 'user.verification_resent',
   userVerified: 'user.verified_by_staff',
   userTwoFactorReset: 'user.two_factor_reset',

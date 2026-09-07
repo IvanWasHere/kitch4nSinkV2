@@ -79,6 +79,15 @@ router
     router.get('/files/:id', [controllers.files.File, 'show']).as('files.show')
     router.post('/files/:id/delete', [controllers.files.File, 'destroy']).as('files.destroy')
 
+    /**
+     * Announcements (plan §20). Open to every member — there is nothing
+     * owner-only about being told something — and what each person sees is
+     * decided by the audience predicate rather than by a policy.
+     */
+    router
+      .get('/notifications', [controllers.notifications.Notification, 'index'])
+      .as('notifications.index')
+
     router.get('/members', [controllers.organizations.Member, 'index']).as('members.index')
     router
       .post('/members/invite', [controllers.organizations.Member, 'invite'])

@@ -55,6 +55,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  margin: 3px 0;
   padding: 9px 10px;
   border-radius: var(--radius-sm);
   font-size: 13px;

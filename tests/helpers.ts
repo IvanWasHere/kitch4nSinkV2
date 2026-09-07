@@ -494,3 +494,43 @@ export async function createStaff(
 
   return staff
 }
+
+/**
+ * A published announcement, through the real service so the audience payload
+ * is normalised the way authoring normalises it.
+ */
+export async function createNotification(
+  overrides: {
+    title?: string
+    body?: string
+    audienceType?: 'all' | 'plan' | 'owners' | 'users'
+    planKeys?: string[]
+    userIds?: number[]
+    publishNow?: boolean
+    publishedAt?: DateTime | null
+    expiresAt?: DateTime | null
+  } = {}
+) {
+  const { default: notifications } = await import('#notifications/notification_service')
+  const staff = await createStaff()
+
+  const notification = await notifications.create(staff, {
+    title: overrides.title ?? 'Something changed',
+    body: overrides.body ?? 'The body of the announcement.',
+    audienceType: overrides.audienceType ?? 'all',
+    audience: { planKeys: overrides.planKeys, userIds: overrides.userIds },
+    publishNow: overrides.publishNow,
+    expiresAt: overrides.expiresAt ?? null,
+  })
+
+  /**
+   * Backdating is how a test says "this was published before you last
+   * looked", which is the whole of the unread rule.
+   */
+  if (overrides.publishedAt !== undefined) {
+    notification.publishedAt = overrides.publishedAt
+    await notification.save()
+  }
+
+  return notification
+}

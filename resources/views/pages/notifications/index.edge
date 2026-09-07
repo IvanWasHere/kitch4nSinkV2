@@ -1,0 +1,68 @@
+{{--
+  The announcement feed (plan §20.5).
+
+  Uses the mockup's `.notif-item` / `.notif-icon-wrap` unchanged — they have
+  been ported and unused since M0, which is what §13.6.5 called dead UI.
+
+  One-way by design: there is nothing to reply to and nothing to dismiss.
+  Visiting this page is what clears the dot.
+--}}
+@component('layouts/app', { title: 'Announcements' })
+  @if(feed.length)
+    @panel.root({ flush: true })
+      @each(entry in feed)
+        <div class="notif-item{{ entry.isNew ? ' is-new' : '' }}">
+          <span class="notif-icon-wrap {{ entry.notification.level === 'warning' ? 'alert' : entry.notification.level }}">
+            @!icon({
+              name: entry.notification.level === 'success'
+                ? 'check'
+                : entry.notification.level === 'info' ? 'layers' : 'alert',
+              width: 14,
+              height: 14,
+            })
+          </span>
+
+          <div class="notif-content">
+            <p class="notif-title">
+              {{ entry.notification.title }}
+              @if(entry.isNew)
+                @!badge({ text: 'New', tone: 'info' })
+              @end
+            </p>
+            <p class="notif-desc">{{ entry.notification.body }}</p>
+
+            {{--
+              `action_url` is written by staff and may point anywhere,
+              including off-site, so it is rendered as a plain link rather
+              than through `urlFor` — and only when both halves are set.
+            --}}
+            @if(entry.notification.hasAction)
+              <p>
+                <a class="btn btn-outline btn-xs" href="{{ entry.notification.actionUrl }}">
+                  {{ entry.notification.actionLabel }}
+                </a>
+              </p>
+            @end
+
+            <span class="notif-time">
+              {{ entry.notification.publishedAt.setZone(organization.timezone).toFormat('d LLL yyyy, HH:mm') }}
+            </span>
+          </div>
+        </div>
+      @end
+    @end
+
+    <p class="field-hint">
+      Announcements from the {{ appName }} team. They are one-way — nothing here expects a reply,
+      and support is the place for a conversation.
+    </p>
+  @else
+    @panel.root()
+      @!emptyState({
+        icon: 'layers',
+        title: 'Nothing to read',
+        description: 'Announcements from the team show up here. You will see a dot next to your name when there is something new.',
+      })
+    @end
+  @end
+@end

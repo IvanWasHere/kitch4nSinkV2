@@ -1,0 +1,190 @@
+{{--
+  Announcements in the back-office (plan §20.5).
+
+  Support reads this; only an admin sees the form. The reach figure comes from
+  the same predicate the tenant feed uses, so what it says here is what will
+  actually happen.
+--}}
+@component('layouts/admin', { title: 'Announcements' })
+  @if(canManage)
+    <div class="settings-card">
+      <h2 class="section-title">New announcement</h2>
+      <p class="section-desc">
+        One-way and in-app. It does not send email, and nobody can reply to it — support is the
+        place for a conversation.
+      </p>
+
+      @form({ route: 'admin.notifications.store', method: 'POST' })
+        @field.root({ name: 'title' })
+          @!field.label({ text: 'Title' })
+          @!input.control({ placeholder: 'We are raising the Pro list limit' })
+          @!field.error()
+        @end
+
+        @field.root({ name: 'body' })
+          @!field.label({ text: 'Message' })
+          @!textarea.control({ rows: 4, placeholder: 'What changed, and what it means for them.' })
+          @!field.error()
+        @end
+
+        <div class="field-row" style="grid-template-columns: 1fr 1fr">
+          @field.root({ name: 'level' })
+            @!field.label({ text: 'Tone' })
+            @!select.control({
+              options: [
+                { value: 'info', name: 'Info — something changed' },
+                { value: 'success', name: 'Success — something good happened' },
+                { value: 'warning', name: 'Warning — they may need to act' },
+                { value: 'error', name: 'Problem — something is wrong' },
+              ],
+            })
+          @end
+
+          @field.root({ name: 'expiresAt' })
+            @!field.label({ text: 'Stop showing after' })
+            @!input.control({ type: 'date' })
+            <p class="field-hint">
+              Optional. Without it the announcement stays up for ever, which is how last March's
+              maintenance notice ends up on the screen in June.
+            </p>
+          @end
+        </div>
+
+        {{--
+          The four audiences of plan §20.3. Radios rather than a select so all
+          four are readable at once — picking the wrong audience is the
+          expensive mistake here, not picking slowly.
+        --}}
+        @field.root({ name: 'audienceType' })
+          @!field.label({ text: 'Who sees it' })
+          @radio.group({ name: 'audienceType' })
+            @!radio.control({ value: 'all', label: 'Everyone' })
+            @!radio.control({ value: 'plan', label: 'Everyone on a specific plan' })
+            @!radio.control({ value: 'owners', label: 'Workspace owners only' })
+            @!radio.control({ value: 'users', label: 'Named people only' })
+          @end
+          @!field.error()
+        @end
+
+        <div class="field-row" style="grid-template-columns: 1fr 1fr">
+          @field.root({ name: 'planKeys' })
+            @!field.label({ text: 'Plans' })
+            @checkbox.group({ name: 'planKeys' })
+              @each(key in planKeys)
+                @!checkbox.control({ value: key, label: key })
+              @end
+            @end
+            <p class="field-hint">
+              Used by “on a specific plan”, and optional for “owners only” — no plans there means
+              owners on every plan.
+            </p>
+          @end
+
+          @field.root({ name: 'userIds' })
+            @!field.label({ text: 'Named people' })
+            @!input.control({ placeholder: 'internal user ids, comma separated' })
+            <p class="field-hint">
+              Used by “named people only”. Find ids on the
+              @if(hasRoute('admin.users.index'))
+                <a href="{{ urlFor('admin.users.index') }}">Users</a> screen.
+              @else
+                Users screen.
+              @end
+            </p>
+          @end
+        </div>
+
+        <div class="field-row" style="grid-template-columns: 1fr 2fr">
+          @field.root({ name: 'actionLabel' })
+            @!field.label({ text: 'Button label' })
+            @!input.control({ placeholder: 'See plans' })
+            @!field.error()
+          @end
+
+          @field.root({ name: 'actionUrl' })
+            @!field.label({ text: 'Button link' })
+            @!input.control({ placeholder: 'https://…' })
+            <p class="field-hint">Both or neither — a label with no link is a button that does nothing.</p>
+            @!field.error()
+          @end
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" name="saveAsDraft" value="1" id="save-as-draft" />
+          <label for="save-as-draft">
+            Save as a draft — it reaches nobody until you publish it
+          </label>
+        </div>
+
+        <div class="btn-row">
+          @!button({ text: 'Publish announcement', type: 'submit', size: 'sm' })
+        </div>
+      @end
+    </div>
+  @end
+
+  @panel.root({ title: 'Published and drafts', flush: true })
+    @if(notifications.length)
+      <div class="table-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr><th>Title</th><th>Audience</th><th>Reaches</th><th>State</th><th>Published</th><th></th></tr>
+          </thead>
+          <tbody>
+            @each(notification in notifications)
+              <tr>
+                <td>
+                  {{ notification.title }}
+                  <div class="field-hint">{{ notification.publicId }}</div>
+                </td>
+                <td>{{ describeAudience(notification) }}</td>
+                <td>{{ reach.get(notification.id) ?? 0 }}</td>
+                <td>
+                  @if(notification.isDraft)
+                    @!badge({ text: 'Draft', tone: 'neutral' })
+                  @elseif(notification.isExpired)
+                    @!badge({ text: 'Expired', tone: 'neutral' })
+                  @else
+                    @!badge({ text: 'Live', tone: 'success' })
+                  @end
+                </td>
+                <td style="white-space: nowrap">
+                  @if(notification.publishedAt)
+                    {{ notification.publishedAt.toFormat('d LLL yyyy') }}
+                  @else
+                    <span class="field-hint">—</span>
+                  @end
+                </td>
+                <td>
+                  @if(canManage)
+                    <div class="btn-row" style="margin-top: 0">
+                      @if(notification.isDraft)
+                        @form({ route: 'admin.notifications.publish', routeParams: { id: notification.publicId }, method: 'POST' })
+                          @!button({ text: 'Publish', variant: 'outline', size: 'xs', type: 'submit' })
+                        @end
+                      @end
+                      @form({ route: 'admin.notifications.destroy', routeParams: { id: notification.publicId }, method: 'POST' })
+                        @!button({ text: 'Delete', variant: 'danger', size: 'xs', type: 'submit' })
+                      @end
+                    </div>
+                  @end
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({
+        icon: 'alert',
+        title: 'No announcements yet',
+        description: 'Anything published here shows up as a dot next to a customer’s name, and on their announcements page.',
+      })
+    @end
+  @end
+
+  <p class="field-hint">
+    Deleting takes an announcement off every screen and is recoverable for 30 days — but anybody who
+    already read it still read it. There is no unsending.
+  </p>
+@end

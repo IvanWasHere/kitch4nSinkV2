@@ -144,6 +144,22 @@ export default {
       },
     },
 
+    notifications: {
+      columns: {
+        /**
+         * The four `.notif-icon-wrap` variants ported from the mockup.
+         */
+        level: union('info', 'success', 'warning', 'error'),
+
+        /**
+         * Plan §20.3. A type not in this union is a compile error at the one
+         * place that matters — the audience predicate's exhaustive switch.
+         */
+        audience_type: union('all', 'plan', 'owners', 'users'),
+        audience: json('{ planKeys?: string[]; userIds?: number[] }'),
+      },
+    },
+
     audit_logs: {
       columns: {
         actor_type: union('user', 'staff', 'api_key', 'system'),

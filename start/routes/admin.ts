@@ -104,6 +104,23 @@ router
       .post('/webhooks/:id/replay', [controllers.admin.Webhook, 'replay'])
       .as('admin.webhooks.replay')
 
+    /**
+     * Announcements (plan §20). Support can read the list; only an admin may
+     * write one, decided by `StaffPolicy` inside the controller.
+     */
+    router
+      .get('/notifications', [controllers.admin.Notification, 'index'])
+      .as('admin.notifications.index')
+    router
+      .post('/notifications', [controllers.admin.Notification, 'store'])
+      .as('admin.notifications.store')
+    router
+      .post('/notifications/:id/publish', [controllers.admin.Notification, 'publish'])
+      .as('admin.notifications.publish')
+    router
+      .post('/notifications/:id/delete', [controllers.admin.Notification, 'destroy'])
+      .as('admin.notifications.destroy')
+
     router.get('/audit', [controllers.admin.AuditLog, 'index']).as('admin.audit_logs.index')
 
     router.get('/staff', [controllers.admin.Staff, 'index']).as('admin.staff.index')

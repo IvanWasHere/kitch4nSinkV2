@@ -1,13 +1,16 @@
+import router from '@adonisjs/core/services/router'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
 import plans from '#billing/plan_service'
 import Organization from '#models/organization'
+import notifications from '#notifications/notification_service'
 
 /**
  * Loads the signed-in user's organisation onto the context and shares it with
- * Edge, so the shell can render the workspace name, the owner-only nav items
- * and the plan usage meters without every controller fetching it.
+ * Edge, so the shell can render the workspace name, the owner-only nav items,
+ * the plan usage meters and the unread notification dot without every
+ * controller fetching them.
  *
  * Every user belongs to exactly one organisation (D1). A missing one means
  * the row was deleted underneath the session, which is a sign-out, not a 500.
@@ -43,10 +46,35 @@ export default class RequireOrganizationMiddleware {
        * controller is also what guarantees the nav counter, the meter and the
        * disabled *Add list* button are the same numbers as enforcement.
        */
+      const [usage, unreadNotifications] = await Promise.all([
+        plans.usage(organization),
+        /**
+         * The red dot, on every screen (plan §20.5). Narrowed by the user's
+         * `notifications_seen_at` first, so for somebody who looks regularly
+         * this is an empty result and the audience filter never runs.
+         */
+        notifications.unreadCountFor(user, organization),
+      ])
+
       ctx.view.share({
         organization,
         isOwner: user.isOwner,
-        usage: await plans.usage(organization),
+        usage,
+        unreadNotifications,
+
+        /**
+         * Where the profile row in the sidebar leads: the feed when there is
+         * something new, the profile otherwise.
+         *
+         * Derived here rather than in the template because Edge's `@let` does
+         * not scope reliably inside a nested block, and because a shell with
+         * no logic of its own is a shell that cannot get this wrong on one
+         * screen and right on another.
+         */
+        notificationsUrl:
+          unreadNotifications > 0 && router.find('notifications.index')
+            ? router.makeUrl('notifications.index')
+            : null,
       })
     }
 

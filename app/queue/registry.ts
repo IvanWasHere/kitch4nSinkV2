@@ -10,6 +10,7 @@ import syncBillingJob from '#queue/jobs/sync_billing_job'
 import purgeDeletedFilesJob from '#queue/jobs/purge_deleted_files_job'
 import rollupApiUsageJob from '#queue/jobs/rollup_api_usage_job'
 import pruneAuditLogsJob from '#queue/jobs/prune_audit_logs_job'
+import pruneNotificationsJob from '#queue/jobs/prune_notifications_job'
 
 /**
  * Every handler the worker knows how to run, keyed by the name stored in
@@ -33,6 +34,7 @@ export const jobHandlers: Record<string, JobHandler<any>> = {
   [purgeDeletedFilesJob.name]: purgeDeletedFilesJob,
   [rollupApiUsageJob.name]: rollupApiUsageJob,
   [pruneAuditLogsJob.name]: pruneAuditLogsJob,
+  [pruneNotificationsJob.name]: pruneNotificationsJob,
 }
 
 export function handlerFor(name: string): JobHandler<any> | null {

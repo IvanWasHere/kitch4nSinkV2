@@ -35,6 +35,7 @@ export default class ScheduleRun extends BaseCommand {
     const { default: purgeDeletedFilesJob } = await import('#queue/jobs/purge_deleted_files_job')
     const { default: rollupApiUsageJob } = await import('#queue/jobs/rollup_api_usage_job')
     const { default: pruneAuditLogsJob } = await import('#queue/jobs/prune_audit_logs_job')
+    const { default: pruneNotificationsJob } = await import('#queue/jobs/prune_notifications_job')
 
     /**
      * Every recurring job the application has.
@@ -54,6 +55,7 @@ export default class ScheduleRun extends BaseCommand {
         { name: 'purge deleted files', handler: purgeDeletedFilesJob },
         { name: 'roll up API usage', handler: rollupApiUsageJob },
         { name: 'prune audit logs', handler: pruneAuditLogsJob },
+        { name: 'prune deleted announcements', handler: pruneNotificationsJob },
       ],
     }
 

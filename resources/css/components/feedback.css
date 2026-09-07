@@ -258,3 +258,52 @@
   color: var(--white);
   text-decoration: underline;
 }
+
+/*
+| The unread dot (plan §20.5).
+|
+| Specified by the mockup for the topbar bell and reused here on the sidebar
+| avatar, which is where the feature actually lives. The white ring is what
+| keeps it legible against a photo rather than against the flat initials
+| background it was drawn on.
+*/
+.notif-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  background: var(--red-500);
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+}
+
+/*
+| Wraps the avatar so the dot has something to be positioned against. The
+| avatar component itself is shared with screens that have no dot, so the
+| anchor belongs out here rather than in it.
+*/
+.sidebar-user-avatar {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+/*
+| An announcement published since the reader last looked (plan §20.4).
+|
+| A left edge rather than a background tint: the `.notif-item` hover state
+| already owns the background, and two overlapping tints read as a bug.
+*/
+.notif-item.is-new {
+  border-left: 3px solid var(--blue-500);
+  padding-left: 13px;
+}
+
+/*
+| On its own page the items are a list rather than a dropdown, so they need a
+| divider the menu got from its container.
+*/
+.panel .notif-item + .notif-item {
+  border-top: 1px solid var(--border);
+}

@@ -892,8 +892,10 @@ the difference back.
 4. **Settings is one page with three cards in the mockup**; ours splits into `/settings/profile`
    (self), `/settings/organization` (owner) and `/settings/security` (self) so permissions map onto
    routes rather than onto sections of a page.
-5. **The notification dropdown is fully designed but has no backend in this plan.** Either drop it
-   from v1 or add a `notifications` table — decide at M2, don't leave it as dead UI.
+5. **The notification dropdown is fully designed but has no backend in this plan.** Decided:
+   **build it** — see §20. The `notifications` table lands in M9, the dot goes on the sidebar
+   avatar rather than the topbar bell (that is where the request put it), and the dropdown itself
+   stays unbuilt so there is one surface and one unread rule (§20.5).
 6. **Support tickets are mockup-only.** A full ticketing system is out of scope for v1; ship a
    contact form that emails support, and keep the two-pane layout for when it is built.
 
@@ -1066,6 +1068,13 @@ Rate limits on auth routes · security headers/CSP review · OWASP pass · seede
 tier · browser tests · README + deployment guide + "how to add a payment/mail/storage provider"
 guide · Dockerfile + example compose.
 
+**M9 — Notifications** *(§20)*
+`notifications` + `users.notifications_seen_at` · the audience predicate and its exhaustive tests
+(the one cross-tenant surface in the schema) · unread dot on the sidebar avatar · `/notifications` ·
+admin-only authoring in the back-office · `PruneNotificationsJob`.
+*Ordered after M8 because it is new product surface, not hardening — and because §20.3's predicate
+wants the OWASP pass already done around it.*
+
 ---
 
 ## 18. Risks
@@ -1093,9 +1102,172 @@ guide · Dockerfile + example compose.
 3. Are the limit numbers in §7.3 (Free 3 lists / 50 todos / 2 seats · Pro 25 / 500 / 10 ·
    Business ∞ / ∞ / 50) the ones you want, or placeholders to tune once the UI exists?
 4. Does the marketing site (landing/pricing/legal) live in this app, or separately?
-5. The mockup's **notification dropdown** is fully designed but has no backend here — drop it from
-   v1, or add a `notifications` table? (§13.6.5 — decide at M2, don't ship dead UI.)
+5. ~~The mockup's **notification dropdown** is fully designed but has no backend here — drop it
+   from v1, or add a `notifications` table?~~ **Answered: build it.** Staff-authored one-way
+   announcements, audience by plan / owners / named users, in M9 — see §20. Its own open questions
+   are listed there (§20.9).
 6. The mockup's **support ticketing** is a full two-pane messaging UI. Confirm v1 ships only a
    contact form that emails support. (§13.6.6)
 
+---
 
+## 20. Notifications (M9)
+
+Closes §19 Q5 with **build it**. The mockup's notification UI has been dead CSS since M0
+(`.notif-menu`, `.notif-item`, `.notif-icon-wrap`, the `dropdown` Alpine component); this gives it
+a backend.
+
+### 20.1 What this is, and what it is not
+
+**Is:** one-way, in-app announcements written by staff and shown to a chosen slice of tenant users.
+"We are raising the Pro list limit." "Maintenance on Sunday." "Your workspace has been given extra
+seats."
+
+**Is not:**
+
+- **Not transactional.** Nothing in the application emits one. A payment receipt is an email
+  (§8); a quota block is a 402 and an inline upsell (§7.4). If a *feature* wants to tell one user
+  something, that is a different mechanism, and mixing the two is how an announcements table
+  becomes an event log with a million rows.
+- **Not two-way.** No replies, no read-and-respond. Support conversations are §13.6.6.
+- **Not email.** In-app only. Adding email later means `MailerService` plus a job and an
+  unsubscribe preference — a decision with its own consequences, deliberately not bundled here.
+
+That volume assumption — **tens of rows a year, not millions** — is what makes the design below
+correct. §20.4 says where it stops being correct.
+
+### 20.2 Data model
+
+**`notifications`** — staff-authored, and the one table in the schema that is deliberately **not**
+tenant-owned.
+
+`id`, `public_id` (`ntf_…`), `title`, `body`, `level` (`info|success|warning|error`),
+`audience_type` (`all|plan|owners|users`), `audience` (json, nullable),
+`action_label` / `action_url` (nullable — an optional single CTA),
+`published_at` (nullable — null is a draft), `expires_at` (nullable — null is forever),
+`created_by_staff_id`, timestamps, `deleted_at`
+
+- `level` maps onto the four `.notif-icon-wrap` variants already ported. No new CSS.
+- **No `organization_id`.** A notification crosses tenants by design, which is exactly why §20.3
+  exists.
+- Deletion is soft, like files and lists: it vanishes from users immediately and is recoverable.
+
+**`users.notifications_seen_at`** (timestamp, nullable) — one added column, and the whole of the
+unread mechanism. See §20.4.
+
+### 20.3 Audience — the one cross-tenant surface
+
+`audience_type` + an `audience` json payload, rather than five booleans:
+
+| `audience_type` | `audience` | Means |
+|---|---|---|
+| `all` | — | every tenant user |
+| `plan` | `{ planKeys: ['pro','business'] }` | users whose organisation is on one of these plans |
+| `owners` | `{ planKeys?: [...] }` | owners only, optionally narrowed by plan |
+| `users` | `{ userIds: [12, 44] }` | one user, or a named group |
+
+The whole rule is **one pure predicate**, `appliesTo(notification, user, organization)`, over values
+already on the context — `user.role`, `user.id` and `organization.planKey`, which
+`require_organization` has loaded anyway. No query, no network, the same shape as
+`PlanService.can()`.
+
+> **This is the only place in the application where a query does not filter on
+> `organization_id`.** Every other table is tenant-owned and §5.4's rule holds; here, crossing
+> tenants *is* the feature. A bug in that predicate shows one customer another customer's
+> announcement, and a `users`-targeted notification is the sharpest edge — so it gets exhaustive
+> unit tests and its own cases in `tests/functional/tenant_isolation.spec.ts` (§20.7).
+
+`userIds` holds internal ids, not public ids: they never leave the process, and the admin screen
+resolves people through the existing user search (§12).
+
+### 20.4 Unread state: one column, not a join table
+
+**`users.notifications_seen_at`**, not a `notification_reads` table.
+
+The dot is: *does any notification that applies to me have `published_at` later than my
+`notifications_seen_at`?* Opening the page stamps the column. One integer column, no join, no row
+per user per notification.
+
+Reading `notifications_seen_at` **before** stamping it also gives "new since your last visit"
+highlighting on the page for free.
+
+The predicate cannot be pushed into SQL — matching `planKeys` or `userIds` needs JSON operators,
+which portability rule 5 forbids. So the query fetches candidates (published, unexpired, newer
+than `seen_at`, `LIMIT 50`) and filters them in memory. For an active user that is **0–3 rows**;
+for somebody who has never looked it is every announcement ever published, which the volume
+assumption keeps to tens.
+
+**When this design stops being right.** If notifications ever become per-event — one per completed
+job, one per assigned todo — the candidate set is no longer bounded and the in-memory filter
+becomes a table scan on every page load. The upgrade is then a `notification_recipients` table
+written at publish time, which trades a fan-out write for an indexed unread count. Do not make
+that change until the volume forces it, and do not quietly start emitting per-event rows into this
+table instead.
+
+Per-item dismiss, or "which users read which announcement", also needs the receipts table. Neither
+is in v1.
+
+### 20.5 Screens
+
+**Tenant — the dot.** On the sidebar avatar (`.sidebar-user`), not the mockup's topbar bell: the
+request is that the dot lives on the user's profile and leads to a page. `.notif-dot` is the only
+new CSS (six lines, and the mockup already specifies it). The whole footer becomes a link to
+`/notifications`. Rendered from what `require_organization` already shares, so no controller has
+to remember to fetch it.
+
+**Tenant — `/notifications`.** A list, newest first, using `.notif-item` / `.notif-icon-wrap`
+unchanged. Items published since the previous `seen_at` are marked new. Visiting stamps the column,
+which clears the dot. Every member sees it; there is nothing owner-only about being told something.
+
+**Back-office — `/admin/notifications`.** Index (draft / published / expired), a create form with
+a live "this will reach N people" count, and delete. The audience picker is four radio options
+matching §20.3, with a plan multi-select and — for `users` — the existing admin user search.
+
+The mockup's **dropdown** is left unbuilt. Its CSS stays ported and the page is the single surface;
+adding the dropdown later is a partial that reuses the same query. Two surfaces for one feature is
+two places for the unread rule to disagree.
+
+### 20.6 Authorisation
+
+Creating a notification is a broadcast to customers, so it sits with the actions that change what a
+customer experiences: **admin only**, via `StaffPolicy.manageNotifications`. Support can read the
+list — it needs to answer "did they get told?" — but cannot write one. That is the same
+support/admin line §6 draws for plan overrides.
+
+On the tenant side there is no policy: a notification is either in your audience or it does not
+exist for you, and that is the predicate's job, not a policy's.
+
+### 20.7 Tests
+
+- **Unit — the predicate, exhaustively.** Every `audience_type` × owner/member × each plan ×
+  targeted/not-targeted. This is the file that stops a cross-tenant leak, so it enumerates rather
+  than spot-checks (the shape `tests/unit/plan_service.spec.ts` already uses).
+- **Unit — unread.** A draft never counts. An expired one never counts. One published before
+  `seen_at` never counts. A soft-deleted one never counts.
+- **Functional — the flow.** Dot appears → page lists it → dot clears → a second notification
+  brings it back. Visiting stamps once, and "new" highlighting uses the *previous* value.
+- **Tenant isolation** — new cases: a `users`-targeted notification is invisible to everyone else;
+  a `plan`-targeted one is invisible to an organisation on another plan; an owners-only one is
+  invisible to members.
+- **Functional — back-office.** Support can list but not create or delete; admin can do both;
+  every create and delete writes an audit entry (§12).
+
+### 20.8 Build order
+
+1. Migration for `notifications`, migration adding `users.notifications_seen_at`, `schema_rules`
+   entries, models, `ntf_` prefix in `public_id.ts`.
+2. `app/notifications/audience.ts` — the predicate, and its unit tests. **Before any UI.**
+3. `app/notifications/notification_service.ts` — unread count, feed, stamp, create, delete.
+4. Share the count in `require_organization`; `.notif-dot` on the sidebar; `/notifications`.
+5. Back-office screens, `StaffPolicy.manageNotifications`, audit actions.
+6. `PruneNotificationsJob` — hard-deletes soft-deleted rows past 30 days, matching
+   `PurgeDeletedFilesJob`.
+7. Update §13.6.5 and §19 Q5; add the feature to `CONTRIBUTING.md`.
+
+### 20.9 Deliberately not in v1
+
+- **Organisation-targeted notifications** (`audience_type: 'organization'`). Obviously useful for
+  support — "tell this one customer" — and a one-line addition to §20.3 whenever it is wanted.
+  Left out only because it was not asked for.
+- Email delivery, per-item dismiss, read analytics, scheduling beyond `published_at`, and the
+  dropdown surface. Each is listed above with what it would cost.
