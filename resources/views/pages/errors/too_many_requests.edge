@@ -1,0 +1,10 @@
+@component('layouts/auth', { title: 'Too many requests' })
+  <div class="status-page">
+    <p class="status-code">429</p>
+    <h1 class="auth-title">Slow down for a moment</h1>
+    <p class="auth-subtitle">
+      {{ error.message ?? 'Too many requests from here. Try again shortly.' }}
+    </p>
+    @!link({ route: 'home', text: 'Back to safety', class: 'btn btn-primary btn-block' })
+  </div>
+@end

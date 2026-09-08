@@ -6,7 +6,6 @@
     block   — stretch to the container width
 --}}
 @let(buttonTextFromSlot = await $slots.main())
-@let(buttonText = buttonTextFromSlot.trim() ? buttonTextFromSlot : ($props.get('text') ?? ''))
 @let(variant = $props.get('variant') ?? 'primary')
 @let(classes = [
   'btn',
@@ -21,5 +20,10 @@
     .merge({ class: classes, type: 'button' })
     .toAttrs()
 }}>
-  {{{ buttonText }}}
+  {{-- Slot markup is printed as-is; a `text` prop is a value, so it is escaped. --}}
+  @if(buttonTextFromSlot.trim())
+    {{{ buttonTextFromSlot }}}
+  @else
+    {{ $props.get('text') ?? '' }}
+  @end
 </button>

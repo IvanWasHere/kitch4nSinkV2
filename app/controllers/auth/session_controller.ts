@@ -3,6 +3,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 
 import User from '#models/user'
 import { loginValidator } from '#validators/auth'
+import { flashInputSafely } from '#auth/flash_input'
 import { enabledSocialProviders } from '#config/ally'
 import { startTwoFactorChallenge } from '#auth/two_factor_challenge'
 
@@ -19,7 +20,7 @@ export default class SessionController {
       user = await User.verifyActiveCredentials(email, password)
     } catch (error) {
       if (error instanceof authErrors.E_INVALID_CREDENTIALS) {
-        session.flashAll()
+        flashInputSafely(session)
         session.flash('error', 'Those credentials do not match our records.')
         return response.redirect().toRoute('auth.session.create')
       }

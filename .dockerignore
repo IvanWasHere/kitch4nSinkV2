@@ -1,0 +1,19 @@
+# Everything the build does not need, or must never be baked into an image.
+node_modules
+build
+.git
+.github
+tmp
+storage
+public/assets
+
+# Secrets. The image takes its configuration from the environment at run time;
+# a .env copied into it is a credential that ships to whoever can pull it.
+.env
+.env.*
+!.env.example
+
+docs
+*.md
+!README.md
+.DS_Store

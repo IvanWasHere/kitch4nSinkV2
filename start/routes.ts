@@ -21,6 +21,14 @@ import '#start/routes/admin'
 router.on('/').render('pages/home').as('home')
 
 /**
+ * Liveness and readiness (plan §16). Unauthenticated by necessity — the
+ * thing polling them is a load balancer with no session — and deliberately
+ * uninformative to anybody who is not one.
+ */
+router.get('/health', [controllers.Health, 'live']).as('health.live')
+router.get('/ready', [controllers.Health, 'ready']).as('health.ready')
+
+/**
  * API documentation (plan §11). Public on purpose: somebody deciding whether
  * to build against this needs to read it before they have a key.
  */

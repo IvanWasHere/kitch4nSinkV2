@@ -1,0 +1,111 @@
+# ==============================================================================
+# An example stack: web, worker, Postgres, and a mail catcher (plan §16).
+#
+# This is here to be read and copied, not to be deployed as-is. It runs the
+# application the way it is meant to run — two processes off one image, against
+# Postgres rather than SQLite — so that "works on my laptop" and "works on the
+# platform" differ in credentials rather than in shape.
+#
+#   docker compose up --build
+#   docker compose run --rm web node ace migration:run --force
+#
+# Then the application is on http://localhost:3333 and the mail it sends is at
+# http://localhost:8025.
+#
+# For day-to-day development you do not need any of this: `npm run dev` against
+# SQLite is faster and is what CONTRIBUTING.md describes. Reach for it when you
+# want to check something engine-specific, or the built image itself.
+# ==============================================================================
+
+name: saas-starter
+
+services:
+  # The web process. Serves HTTP; runs no jobs.
+  web:
+    build:
+      context: .
+    ports:
+      - '3333:3333'
+    environment: &app_env
+      NODE_ENV: production
+      PORT: 3333
+      HOST: 0.0.0.0
+      LOG_LEVEL: info
+
+      # Generate one with `node ace generate:key`. The placeholder is here so
+      # the stack starts; an application that keeps it cannot keep a secret,
+      # because every session cookie and signed URL is derived from this.
+      APP_KEY: ${APP_KEY:?set APP_KEY - run "node ace generate:key"}
+      APP_URL: http://localhost:3333
+      APP_NAME: Acme
+
+      SESSION_DRIVER: cookie
+
+      DB_CONNECTION: postgres
+      DATABASE_URL: postgres://app:app@postgres:5432/app
+
+      # Mailpit speaks SMTP and delivers nowhere, which is what you want in
+      # front of a database full of test addresses.
+      MAIL_MAILER: smtp
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      MAIL_FROM_ADDRESS: hello@example.com
+      MAIL_FROM_NAME: Acme
+
+      # Uploads on the container filesystem. Deployed, this is `r2` and the
+      # volume below stops existing (§10).
+      DRIVE_DISK: fs
+
+      # The container sits behind whatever you put in front of it. Left off
+      # here because nothing is in front of it in this file — turning it on
+      # without a proxy lets a client choose its own address, and every rate
+      # limit is counted against that address (config/app.ts).
+      TRUST_PROXY: 'false'
+    volumes:
+      - uploads:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  # The worker. Same image, same environment, different command — mail,
+  # webhooks and the scheduled jobs are all processed here (§9).
+  worker:
+    build:
+      context: .
+    command: ['node', 'ace', 'queue:work']
+    environment: *app_env
+    volumes:
+      - uploads:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      # The web and worker containers wait on this, so a migration run
+      # immediately after `up` does not race the database's first boot.
+      test: ['CMD-SHELL', 'pg_isready -U app -d app']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # the inbox, in a browser
+
+volumes:
+  postgres:
+  uploads:

@@ -58,12 +58,16 @@ changing anything.
 | 📧 | **Transactional email** | Resend in production, Mailpit locally, every send through the durable queue |
 | 🔌 | **Organisation API** | `/api/v1`, bearer keys, scopes, cursor pagination, OpenAPI + `/docs` |
 | ⏱️ | **Rate limiting** | Per-key burst + per-workspace monthly quota, headers on every response |
+| 🛡️ | **Hardened front door** | Throttled sign-in, signup, reset and 2FA, keyed so nobody can lock out a stranger |
+| 🔒 | **Security headers** | Nonce-based CSP, HSTS, frame denial, referrer and permissions policy |
 | 🧑‍💼 | **Back-office** | Org/user search, subscription sync, webhook ledger, job queue, audit log |
 | 🕵️ | **Impersonation** | Time-boxed, banner on every screen, read-only for support, fully audited |
 | 📣 | **Announcements** | One-way in-app notices targeted by plan, owners, or named people |
 | 📜 | **Audit trail** | Append-only, two-year retention, filterable, both ids under impersonation |
 | 🎨 | **UI kit** | Edge + Alpine + custom CSS — no Tailwind, no component framework |
-| 🧪 | **Tests** | 599 tests, run against SQLite **and** PostgreSQL in CI |
+| 🐳 | **Ships as an image** | Multi-stage Dockerfile, non-root, plus a compose stack of web + worker + Postgres |
+| 🩺 | **Health checks** | `/health` for restarts, `/ready` for the load balancer — they answer different questions |
+| 🧪 | **Tests** | 628 tests, including a real-browser suite, run against SQLite **and** PostgreSQL in CI |
 
 ---
 
@@ -192,6 +196,8 @@ Leave blank and the app runs on the Free plan; billing screens render and refuse
 | `QUEUE_POLL_INTERVAL_MS` | `1000` | |
 | `ADMIN_IP_ALLOWLIST` | — | 🚧 Comma-separated. Gates all of `/admin` including its login. Empty disables it. A second layer, **never** the boundary |
 | `SESSION_DRIVER` | `cookie` | |
+| `TRUST_PROXY` | `false` | ⚠️ Believe `X-Forwarded-For`. On behind a proxy you control; off otherwise — it decides what every rate limit counts against and what the audit trail records |
+| `CSP_REPORT_ONLY` | `false` | Report policy violations without blocking, while tightening a directive on a live site |
 | `LOG_LEVEL` | `info` | |
 | `DEV_TWO_FACTOR_CODE` | `123456` | ⚠️ Accepted in place of a real code, and **only** while `NODE_ENV=development`. Unset it anywhere that is not a laptop |
 
@@ -290,7 +296,7 @@ so nobody is offered a screen that would refuse them.
 npm run dev            # 🔥 dev server with HMR
 npm start              # 🚀 production server
 npm run build          # 📦 compile
-npm test               # 🧪 599 tests
+npm test               # 🧪 628 tests (unit, functional, browser)
 npm run lint           # 🧹 eslint
 npm run typecheck      # 🟦 tsc --noEmit
 npm run format         # ✨ prettier
@@ -323,6 +329,13 @@ node ace staff:create --role=admin   # 🛡️ create a back-office account
 node ace dev:totp admin@example.com  # 🔢 a real TOTP code for a seeded account
 ```
 
+### 🧪 Browser tests
+
+```bash
+npx playwright install chromium   # once
+node ace test browser             # 🌐 signup, 2FA, invitations, checkout, upload
+```
+
 ---
 
 ## 🧭 How it is organised
@@ -342,26 +355,37 @@ config/           plans.ts · payments.ts · drive.ts · limiter.ts · database.
 database/         migrations · seeders · generated schema types
 resources/views/  layouts · components · pages · emails
 start/routes/     web · auth · api · billing · admin
-tests/            unit · functional (incl. the tenant-isolation suite)
+tests/            unit · functional (incl. tenant isolation and hardening) · browser
+docs/             deployment.md · security.md
 ```
 
 ---
 
 ## 🚢 Deployment
 
-Two processes, and the worker is not optional:
+Two processes, and the worker is not optional — every email, webhook and scheduled job goes through
+the queue, so an application without a worker accepts work it will never do:
 
 ```bash
-node bin/server.js     # web
-node ace queue:work    # worker
+node ace migration:run --force   # release phase
+node bin/server.js               # web
+node ace queue:work              # worker
 ```
 
-Release phase: `node ace migration:run --force`. Set `DB_CONNECTION=postgres`, point
-`DATABASE_URL` at your database, `DRIVE_DISK=r2`, `MAIL_MAILER=resend`, and register the Creem
-webhook against `https://your-app/webhooks/creem`.
+Or the whole stack, the way it runs deployed:
 
-✅ CI runs lint, typecheck, and the full suite against **both** SQLite and PostgreSQL on every
-push. A migration that only works on one engine fails the build.
+```bash
+docker compose up --build
+docker compose run --rm web node ace migration:run --force
+```
+
+📘 [`docs/deployment.md`](./docs/deployment.md) — the image, the processes, health checks, proxies,
+backups, what to alert on, and a checklist for the first deploy.
+🔐 [`docs/security.md`](./docs/security.md) — what this does about each of the OWASP Top 10, what it
+deliberately does not, and what is left to whoever deploys it.
+
+✅ CI runs lint, typecheck, the full suite against **both** SQLite and PostgreSQL, and a build of
+the image on every push. A migration that only works on one engine fails the build.
 
 ---
 

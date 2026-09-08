@@ -60,6 +60,13 @@ jobs:
           cache: npm
       - run: npm ci
 
+      # The browser suite drives a real Chromium (plan §15). `--with-deps`
+      # installs the shared libraries a headless browser needs on a runner
+      # that has none of them; without it the suite fails at launch rather
+      # than on an assertion.
+      - name: Install the browser the browser tests drive
+        run: npx playwright install --with-deps chromium
+
       - name: Run migrations
         run: node ace migration:run --force
         env:
@@ -73,3 +80,21 @@ jobs:
           DB_CONNECTION: ${{ matrix.database }}
           DB_SQLITE_PATH: ./tmp/db.sqlite3
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/app_test
+
+  image:
+    name: Build the image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # The Dockerfile is part of the deliverable (plan §16), and it breaks
+      # the same way any other build does — a dependency that needs a
+      # toolchain, a file that stopped being copied. Built here, never
+      # pushed: this job's product is the knowledge that it still builds.
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

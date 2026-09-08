@@ -1,5 +1,6 @@
 import { assert } from '@japa/assert'
 import app from '@adonisjs/core/services/app'
+import limiter from '@adonisjs/limiter/services/main'
 import type { Config } from '@japa/runner/types'
 import { apiClient } from '@japa/api-client'
 import { browserClient } from '@japa/browser-client'
@@ -62,7 +63,22 @@ export const configureSuite: Config['configureSuite'] = (suite) => {
     /**
      * Every test starts from an empty database. Truncating keeps the schema,
      * so it is considerably faster than re-migrating between tests.
+     *
+     * `truncate()` hands back the cleanup that does the work, so this hook
+     * must *return* it rather than await it — swallow the return value and
+     * the tables are never emptied, which surfaces later as a unique
+     * constraint in whichever test happened to run second.
      */
-    suite.onGroup((group) => group.each.setup(() => testUtils.db().truncate()))
+    suite.onGroup((group) => {
+      /**
+       * The rate limiter is emptied for the same reason the tables are.
+       * Tests share a process and, from the limiter's point of view, share
+       * an address: without this the eleventh test to sign in is refused by
+       * a limit the ten before it earned (`start/limiter.ts`), and the
+       * failure lands nowhere near the change that caused it.
+       */
+      group.each.setup(() => limiter.clear())
+      group.each.setup(() => testUtils.db().truncate())
+    })
   }
 }

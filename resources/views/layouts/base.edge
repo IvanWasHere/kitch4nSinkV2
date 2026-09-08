@@ -14,7 +14,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ $props.get('title') ? `${$props.get('title')} · ${appName}` : appName }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{--
+      The nonce is what the Content-Security-Policy accepts (config/shield.ts).
+      It matters in development, where Vite serves its client and HMR
+      preamble inline; in production these are plain files and the attribute
+      is harmless. Drop it and the page loads with no styles and no Alpine,
+      with the reason only in the browser console.
+    --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'], { nonce: cspNonce })
     @stack('head')
     @stack('dumper')
   </head>

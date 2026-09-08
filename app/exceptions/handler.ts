@@ -1,9 +1,11 @@
 import app from '@adonisjs/core/services/app'
 import logger from '@adonisjs/core/services/logger'
 import { errors as vineErrors } from '@vinejs/vine'
+import { errors as limiterErrors } from '@adonisjs/limiter'
 import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
 
+import { flashInputSafely } from '#auth/flash_input'
 import { ApiException, apiErrorBody, type ApiErrorCode } from '#api/errors'
 import UpgradeRequiredException from '#exceptions/upgrade_required_exception'
 import PlanLimitExceededException from '#exceptions/plan_limit_exceeded_exception'
@@ -30,6 +32,9 @@ export default class HttpExceptionHandler extends ExceptionHandler {
     '404': (error, { view }) => {
       return view.render('pages/errors/not_found', { error })
     },
+    '429': (error, { view }) => {
+      return view.render('pages/errors/too_many_requests', { error })
+    },
     '500..599': (error, { view }) => {
       return view.render('pages/errors/server_error', { error })
     },
@@ -51,7 +56,55 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       return this.handleApiError(error, ctx)
     }
 
+    /**
+     * A throttled **form** goes back to the form (M8).
+     *
+     * The limiter's own response is `text/plain` with a 429, which for the
+     * organisation API is exactly right and for a person half way through
+     * signing in is a dead end: no page, no navigation, and their typing
+     * gone. Flashing the message and redirecting back puts it in the same
+     * place as "those credentials do not match our records", which is where
+     * they are already looking.
+     *
+     * Only for form submissions. A throttled GET keeps the plain 429 and its
+     * status page, because there is no form behind it to return to.
+     */
+    if (error instanceof limiterErrors.E_TOO_MANY_REQUESTS && this.isFormSubmission(ctx)) {
+      ctx.response.header('retry-after', String(error.response.availableIn))
+      flashInputSafely(ctx.session)
+      ctx.session.flash('error', error.getResponseMessage(ctx))
+
+      return ctx.response.redirect().withQs().back()
+    }
+
     return super.handle(error, ctx)
+  }
+
+  /**
+   * A rejected form, re-rendered with what the person typed — minus the
+   * fields that are credentials (M8).
+   *
+   * The framework's version of this flashes the whole body back into the
+   * session, withholding `password` and `password_confirmation`. This
+   * application's confirmation field is `passwordConfirmation` and its
+   * two-factor field is `code`, neither of which that list knows about, so a
+   * mistyped signup would park a password — and a live authenticator code —
+   * in the session store until the next request. The errors are flashed
+   * without input, and the input is flashed separately by the rule that
+   * knows this application's field names.
+   */
+  async renderValidationErrorAsHTML(
+    error: InstanceType<typeof vineErrors.E_VALIDATION_ERROR>,
+    ctx: HttpContext
+  ) {
+    if (!ctx.session) {
+      return super.renderValidationErrorAsHTML(error, ctx)
+    }
+
+    ctx.session.flashValidationErrors(error, false)
+    flashInputSafely(ctx.session)
+
+    return ctx.response.redirect('back', true)
   }
 
   /**
@@ -66,6 +119,21 @@ export default class HttpExceptionHandler extends ExceptionHandler {
 
   private isApiRequest(ctx: HttpContext): boolean {
     return ctx.request.url().startsWith('/api/')
+  }
+
+  /**
+   * A browser posting a form, as opposed to a script posting JSON.
+   *
+   * `accepts()` is asked rather than assumed from the method: an XHR against
+   * a session-authenticated route is still a POST, and answering it with a
+   * redirect to an HTML page would be worse than the 429 it expected.
+   */
+  private isFormSubmission(ctx: HttpContext): boolean {
+    if (ctx.request.method() === 'GET' || ctx.request.method() === 'HEAD') {
+      return false
+    }
+
+    return ctx.request.accepts(['html', 'json']) === 'html'
   }
 
   /**

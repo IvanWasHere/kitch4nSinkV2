@@ -1,5 +1,12 @@
 @let(classes = ['field-input'])
 
+{{--
+  The value is escaped, and printed on the same line as the tag. A textarea's
+  content is text, never markup — printed raw, old input containing
+  `</textarea>` closes the element early — and a newline between the tag and
+  the value is swallowed by the HTML parser, quietly eating a leading blank
+  line of whatever was typed.
+--}}
 <textarea {{
   $props
     .except(['value'])
@@ -12,4 +19,4 @@
       'aria-describedby': $context.hasErrors ? `${$context.id}-error` : '',
     })
     .toAttrs()
-}}>{{{ $context.oldValue || $props.get('value') || '' }}}</textarea>
+}}>{{ $context.oldValue || $props.get('value') || '' }}</textarea>

@@ -20,11 +20,15 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
+import { adminLoginThrottle, twoFactorThrottle } from '#start/limiter'
 
 router
   .group(() => {
     router.get('/login', [controllers.admin.Session, 'create']).as('admin.session.create')
-    router.post('/login', [controllers.admin.Session, 'store']).as('admin.session.store')
+    router
+      .post('/login', [controllers.admin.Session, 'store'])
+      .as('admin.session.store')
+      .use(adminLoginThrottle)
 
     router
       .get('/two-factor', [controllers.auth.TwoFactorChallenge, 'create'])
@@ -32,6 +36,7 @@ router
     router
       .post('/two-factor', [controllers.auth.TwoFactorChallenge, 'store'])
       .as('admin.two_factor.store')
+      .use(twoFactorThrottle)
   })
   .prefix('/admin')
   .use([middleware.adminIpAllowlist(), middleware.staffGuest()])

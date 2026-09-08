@@ -6,9 +6,17 @@
     text — label (or use the slot)
 --}}
 @let(badgeTextFromSlot = await $slots.main())
-@let(badgeText = badgeTextFromSlot.trim() ? badgeTextFromSlot : ($props.get('text') ?? ''))
 @let(tone = $props.get('tone') ?? 'neutral')
 
+{{--
+  The slot is markup a template wrote and is printed as-is; `text` is a value
+  a caller passed and is escaped. Printing both raw — which this did — turns
+  any label built from user input (a file name, a list title) into HTML.
+--}}
 <span {{ $props.except(['text', 'tone']).merge({ class: ['badge', `badge-${tone}`] }).toAttrs() }}>
-  {{{ badgeText }}}
+  @if(badgeTextFromSlot.trim())
+    {{{ badgeTextFromSlot }}}
+  @else
+    {{ $props.get('text') ?? '' }}
+  @end
 </span>

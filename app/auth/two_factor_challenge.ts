@@ -46,3 +46,17 @@ export function pendingTwoFactorChallenge(
 export function clearTwoFactorChallenge(session: Session) {
   session.forget(SESSION_KEY)
 }
+
+/**
+ * A stable name for whoever is halfway through signing in, or `null` when
+ * nobody is.
+ *
+ * Exists so the rate limiter can count attempts against the *challenge*
+ * rather than against the network address, without another file needing to
+ * know the session key or the shape behind it (`start/limiter.ts`).
+ */
+export function twoFactorChallengeSubject(session: Session): string | null {
+  const pending = session.get(SESSION_KEY) as PendingChallenge | undefined
+
+  return pending ? `${pending.guard}:${pending.userId}` : null
+}

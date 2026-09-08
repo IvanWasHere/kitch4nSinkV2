@@ -1,5 +1,5 @@
 @let(titleFromSlot = await $slots.main())
-@let(title = titleFromSlot.trim() ? titleFromSlot : $props.get('text'))
 @let(classes = ['toast-title'])
 
-<h2 {{ $props.except(['text']).merge({ class: classes }).toAttrs() }}>{{{ title }}}</h2>
+{{-- Slot markup is printed as-is; a `text` prop is escaped (see badge.edge). --}}
+<h2 {{ $props.except(['text']).merge({ class: classes }).toAttrs() }}>@if(titleFromSlot.trim()){{{ titleFromSlot }}}@else{{ $props.get('text') ?? '' }}@end</h2>

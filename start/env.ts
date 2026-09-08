@@ -138,6 +138,26 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   /*
   |--------------------------------------------------------------------------
+  | Security headers — §16, wired up in M8
+  |--------------------------------------------------------------------------
+  |
+  | Sends the Content-Security-Policy as `Report-Only` instead of enforcing
+  | it. For the hour after you tighten a directive on a live site: violations
+  | are reported to the browser console and nothing is blocked. Leave it
+  | unset — a policy nobody enforces protects nobody.
+  |
+  */
+  CSP_REPORT_ONLY: Env.schema.boolean.optional(),
+
+  /**
+   * Believe `X-Forwarded-For`. Set it only when a proxy you control sits in
+   * front of this process — it decides what every rate limit, audit-log entry
+   * and IP allowlist sees as the client. See `config/app.ts`.
+   */
+  TRUST_PROXY: Env.schema.boolean.optional(),
+
+  /*
+  |--------------------------------------------------------------------------
   | Queue — §9, wired up in M3
   |--------------------------------------------------------------------------
   */

@@ -33,6 +33,38 @@ export const http = defineConfig({
   useAsyncLocalStorage: false,
 
   /**
+   * Whether `X-Forwarded-For` is believed (plan §16, M8).
+   *
+   * This one setting decides what `request.ip()` returns, and therefore what
+   * every rate limit in `start/limiter.ts` counts against, what the audit log
+   * records as the address an action came from, and which addresses
+   * `ADMIN_IP_ALLOWLIST` compares. Both ways of getting it wrong are quiet:
+   *
+   * - **Off, behind a proxy**: every request appears to come from the load
+   *   balancer. All of your customers share one rate-limit bucket, the audit
+   *   trail records one address forever, and the allowlist matches either
+   *   everybody or nobody.
+   * - **On, with nothing in front**: the header is whatever the client typed.
+   *   Rate limits are evaded by changing it on every request, and the audit
+   *   trail records fiction.
+   *
+   * So it is off unless you say otherwise, and you should say otherwise
+   * exactly when something you control sits in front of this process.
+   *
+   * Turned on, it trusts **one** hop: the peer that connected to us, and
+   * therefore the last address that peer recorded. That is the safe reading
+   * of a header a client can also send — extra entries a client appends sit
+   * further along the chain and are ignored, so this holds whether your proxy
+   * overwrites `X-Forwarded-For` or appends to it.
+   *
+   * With two proxies in front — a CDN in front of a load balancer — that is
+   * one hop short and `request.ip()` becomes the load balancer's address.
+   * `distance <= 1` is the change, and it must match your topology exactly:
+   * every hop you trust beyond the real ones is a hop a client can forge.
+   */
+  trustProxy: (_address, distance) => env.get('TRUST_PROXY', false) && distance === 0,
+
+  /**
    * Redirect configuration controls the behavior of
    * response.redirect().back() and query string forwarding.
    */

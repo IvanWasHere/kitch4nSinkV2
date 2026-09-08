@@ -47,6 +47,7 @@ export const controllers = {
   files: {
     File: () => import('#controllers/files/file_controller'),
   },
+  Health: () => import('#controllers/health_controller'),
   notifications: {
     Notification: () => import('#controllers/notifications/notification_controller'),
   },

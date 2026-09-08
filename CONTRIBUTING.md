@@ -304,6 +304,52 @@ silently ignored billing event is indistinguishable from one that never arrived.
 Secrets declared with `Env.schema.secret()` come back as a `Secret` wrapper, not a string. Call
 `.release()` before handing one to `createHmac` or a fetch header.
 
+### Adding a mail provider
+
+There is no interface to implement: `@adonisjs/mail` already is the abstraction, and
+`config/mail.ts` is the whole seam. Add a transport to the `mailers` object, add its credentials to
+`start/env.ts` as `Env.schema.secret.optional()`, and add the name to the `MAIL_MAILER` enum. No
+application code changes, because nothing outside that file knows which mailer is active —
+everything sends through `MailerService`.
+
+Two things to know before you send anything real:
+
+- **Delivery is queued, never inline** (§8). `MailerService.send()` renders the Edge templates,
+  hands the compiled message to the queue, and returns. So a new transport is exercised by
+  `SendMailJob`, and a provider outage becomes a retry rather than a failed signup. If your
+  transport throws for a *permanent* reason — a rejected recipient, a disabled account — it will
+  still be retried; there is no permanent-failure signal in the mail interface, and adding one is
+  a change to `app/queue/jobs/send_mail_job.ts`, not to the transport.
+- **The from-address is decided in one place.** `sendCompiled` sends exactly what it is given, so
+  `MailerService` fills in the sender itself. A transport that overrides it will surprise you.
+
+Locally, point `MAIL_MAILER=smtp` at Mailpit and read the mail in a browser rather than trusting a
+provider's dashboard — see [Local email](#local-email).
+
+### Adding a storage provider
+
+Also config-only, and for the same reason: `config/drive.ts` chooses what backs a disk, and
+application code only ever names a *purpose* — `private` or `public`. Add a service to the `disks`
+object, add its variables to `start/env.ts`, and extend the `DRIVE_DISK` enum.
+
+What a new backend has to provide, because `FileService` depends on all four:
+
+1. **Signed URLs with an expiry.** Private files are handed to a browser as a short-lived signed
+   URL rather than streamed through this application (§10). A backend without signing has to be
+   fronted by a controller that streams, and that is a different design.
+2. **`exists()` cheaply.** The readiness probe calls it on every check
+   (`app/controllers/health_controller.ts`).
+3. **A public URL builder**, if you want avatars and logos to be served straight from a CDN.
+   Without one, the public disk has no `getUrl()` and those images break — which is why the R2
+   service only installs a builder when `R2_PUBLIC_URL` is set.
+4. **Keys exactly as given.** `buildObjectKey()` puts the tenant first
+   (`orgs/{public_id}/{yyyy}/{mm}/{uuid}.{ext}`) and that prefix is what makes per-tenant policies,
+   exports and deletions expressible. A backend that rewrites or normalises keys breaks all three.
+
+Add the new origin to `img-src` in `config/shield.ts` at the same time — both the public domain and
+the signing endpoint. Miss it and every avatar disappears with an explanation only in the browser
+console.
+
 ## Files and storage
 
 `config/drive.ts` chooses two things separately, and keeping them separate is the whole design:
@@ -591,6 +637,94 @@ It is a **second layer, never the boundary** — the staff guard and mandatory t
 allowlist is trivially defeated by anything that can spoof a proxy header. The refusal is a **404**
 so that somebody probing for an admin panel learns nothing.
 
+## Hardening
+
+Everything in this section is M8, and all of it is the kind of thing that breaks quietly. Each
+piece has a test in `tests/functional/hardening/` for exactly that reason.
+
+### Rate limits on the way in
+
+`start/limiter.ts` defines the limits and the route files attach them; the organisation API has its
+own, older set in `app/middleware/api_rate_limit.ts` (§11). Four keys, and which key a limit uses is
+the interesting part:
+
+| Limit | Keyed by | Why that key |
+|---|---|---|
+| The signed-out surface | address | Blunt cover for anything a script points at `/login`, `/signup`, a reset link or an invitation URL. |
+| Sign-in, back-office sign-in | address **and** account | Keyed on the account alone, anyone could lock a known address out of their own login from somewhere else. Keyed on the address alone, a guesser gets a fresh allowance per account they try. |
+| Password reset, verification resend | account | What is being protected is somebody's inbox, and our sender's reputation. |
+| Second factor | the pending challenge | Six digits is a million guesses; unthrottled, that is minutes of scripting. |
+
+Two behaviours worth knowing before you tune a number:
+
+- **It counts requests, not failures.** A successful login spends a point exactly as a wrong
+  password does, so every window is sized for a person having a bad morning behind an office NAT.
+  Counting only failures means consuming from the controller instead of the middleware — one call
+  to `limiter.use()` on the failure branch — and giving up the property that the limit applies
+  before any of your code runs.
+- **A throttled form goes back to the form.** The limiter's own response is a `text/plain` 429,
+  which is right for the API and a dead end for somebody signing in, so `HttpExceptionHandler`
+  turns it into a flash message and a redirect back. A throttled `GET` keeps the plain 429.
+
+Tests share a process and an address, so `tests/bootstrap.ts` clears the limiter between tests. Any
+suite that signs in more than ten times without it will fail somewhere unrelated to its own change.
+
+### `TRUST_PROXY`, and why it matters more than it looks
+
+`request.ip()` is what every limit above counts against, what the audit log records, and what
+`ADMIN_IP_ALLOWLIST` compares. `config/app.ts` decides whether `X-Forwarded-For` is believed, and
+both ways of getting it wrong are silent: off behind a load balancer, every customer shares one
+bucket and the audit trail records one address forever; on with nothing in front, the header is
+whatever the client typed and the limits are evaded by changing it.
+
+Set it when — and only when — something you control sits in front of the process. Turned on it
+trusts one hop, which is right for a single load balancer and one short for a CDN in front of one;
+`config/app.ts` says what to change and why the number has to match your topology exactly.
+
+### The content security policy
+
+`config/shield.ts`, enabled and enforced. The load-bearing part is `script-src 'self' '@nonce'`:
+an injected `<script>` carries no nonce, so it does not run, which is the failure mode this exists
+to survive. Three deliberate compromises are in there with their reasons — `'unsafe-eval'` for
+Alpine's expression compiler, `'unsafe-inline'` for styles, and `form-action` allowing any HTTPS
+target because checkout is a form POST that redirects off-site.
+
+Things that will bite you:
+
+- **An inline `<script>` needs `nonce="{{ cspNonce }}"`.** Without it the browser drops the script
+  and says so only in the console. The `@vite` tag is given the nonce in `layouts/base.edge`.
+- **A new external origin needs a directive.** A CDN font, an analytics script, an object-storage
+  domain: each is one line, and the symptom of forgetting is a missing asset with no server-side
+  error.
+- **Alpine expressions cost `'unsafe-eval'`.** If you ever need to drop it, that means
+  `@alpinejs/csp` and rewriting every `x-show="a && b"` as a getter on an `Alpine.data` component.
+- While tightening a directive on a live site, `CSP_REPORT_ONLY=true` reports violations without
+  blocking anything.
+
+`app/middleware/security_headers.ts` adds the four headers Shield has no setting for
+(`Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`,
+`X-Permitted-Cross-Domain-Policies`). It is on the **server** stack, so a 404 gets them too.
+
+### Escaping
+
+Edge escapes `{{ }}` and does not escape `{{{ }}}`. In a component, slot output is already-rendered
+markup and must be raw; a `text` prop is a *value* and must not be. Several flash messages are
+built from something a person typed — a file name, a list name — so this is not theoretical, and
+`tests/functional/hardening/output_escaping.spec.ts` pins it.
+
+A textarea is the sharp edge: its content is text, `</textarea>` in old input closes the element
+early, and the value must sit on the same line as the tag or the parser eats a leading newline.
+
+### Browser tests
+
+`tests/browser/` drives a real Chromium through the five flows that a functional test cannot fully
+stand in for: signup, sign-in with a second factor, invitation acceptance, the checkout handoff and
+a file upload. `npx playwright install chromium` once, then `node ace test browser`.
+
+No asset build is needed — outside production the assets come from Vite. They are the only tests
+that see a Content-Security-Policy violation, an Alpine component that never booted, or a form that
+posts fields the controller does not read, which is exactly why the list is short and stays short.
+
 ## Notifications
 
 One-way, in-app announcements written by staff (plan §20). Nothing in the application emits one: a
@@ -742,7 +876,9 @@ node ace dev:seed
 
 Creates one workspace with an owner, a member and a pending invitation, and prints the invitation
 link — only the hash of an invitation token is stored, so that print is the one chance to see it.
-Development only. Seeders covering every plan tier arrive in M8.
+It also creates one workspace per paid tier, each with a live subscription and a few payments, so
+the billing screens have something to render without a Creem account. Development only: the command
+refuses to run unless `NODE_ENV=development`.
 
 ## Frontend
 

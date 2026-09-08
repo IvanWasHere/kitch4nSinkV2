@@ -1,5 +1,4 @@
 @let(labelTextFromSlot = await $slots.main())
-@let(labelText = labelTextFromSlot.trim() ? labelTextFromSlot : $props.get('text'))
 @let(classes = ['field-label'])
 
 <label {{
@@ -12,5 +11,10 @@
     })
     .toAttrs()
 }}>
-  {{{ labelText }}}
+  {{-- Slot markup is printed as-is; a `text` prop is escaped (see badge.edge). --}}
+  @if(labelTextFromSlot.trim())
+    {{{ labelTextFromSlot }}}
+  @else
+    {{ $props.get('text') ?? '' }}
+  @end
 </label>
