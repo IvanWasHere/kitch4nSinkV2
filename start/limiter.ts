@@ -191,6 +191,38 @@ export const twoFactorThrottle = limiter.define('two_factor', (ctx) => {
  * people who legitimately sign in here is small, known, and never in a hurry.
  * Two-factor is mandatory on this surface, so this is the outer of two locks.
  */
+/**
+ * Opening support tickets, by **account**.
+ *
+ * A contact surface without a limiter is a spam target with a database
+ * behind it (plan §21.8). Five an hour is more tickets than anybody opens in
+ * good faith, and the sixth is a script or somebody who should be replying to
+ * the ticket they already have.
+ */
+export const supportTicketThrottle = limiter.define('support_ticket', (ctx) => {
+  return limiter
+    .allowRequests(5)
+    .every('1 hour')
+    .usingKey(accountKey(ctx.auth?.user?.email ?? addressKey(ctx)))
+    .limitExceeded((error) => {
+      error.setMessage('You have opened several tickets already. Reply to one of those instead.')
+    })
+})
+
+/**
+ * Replying, by account. Looser than opening, because a conversation is
+ * supposed to go back and forth.
+ */
+export const supportMessageThrottle = limiter.define('support_message', (ctx) => {
+  return limiter
+    .allowRequests(30)
+    .every('1 hour')
+    .usingKey(accountKey(ctx.auth?.user?.email ?? addressKey(ctx)))
+    .limitExceeded((error) => {
+      error.setMessage('That is a lot of replies in one hour. Try again shortly.')
+    })
+})
+
 export const adminLoginThrottle = limiter.define('admin_login', (ctx) => {
   return limiter
     .allowRequests(5)

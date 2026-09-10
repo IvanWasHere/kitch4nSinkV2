@@ -135,7 +135,7 @@ export class FileSchema extends BaseModel {
   @column()
   declare attachableId: number | null
   @column()
-  declare attachableType: 'User' | 'Organization' | null
+  declare attachableType: 'User' | 'Organization' | 'SupportMessage' | null
   @column()
   declare checksum: string | null
   @column.dateTime({ autoCreate: true })
@@ -423,6 +423,60 @@ export class SubscriptionSchema extends BaseModel {
   declare status: 'trialing' | 'active' | 'past_due' | 'paused' | 'canceled' | 'expired'
   @column.dateTime()
   declare trialEndsAt: DateTime | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class SupportMessageSchema extends BaseModel {
+  static $columns = ['authorStaffId', 'authorType', 'authorUserId', 'body', 'createdAt', 'id', 'publicId', 'supportTicketId', 'updatedAt'] as const
+  $columns = SupportMessageSchema.$columns
+  @column()
+  declare authorStaffId: number | null
+  @column()
+  declare authorType: 'user' | 'staff'
+  @column()
+  declare authorUserId: number | null
+  @column()
+  declare body: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare publicId: string
+  @column()
+  declare supportTicketId: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class SupportTicketSchema extends BaseModel {
+  static $columns = ['assignedStaffId', 'createdAt', 'createdByUserId', 'deletedAt', 'firstRespondedAt', 'id', 'lastMessageAt', 'organizationId', 'publicId', 'resolvedAt', 'status', 'subject', 'updatedAt'] as const
+  $columns = SupportTicketSchema.$columns
+  @column()
+  declare assignedStaffId: number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare createdByUserId: number | null
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column.dateTime()
+  declare firstRespondedAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare lastMessageAt: DateTime
+  @column()
+  declare organizationId: number
+  @column()
+  declare publicId: string
+  @column.dateTime()
+  declare resolvedAt: DateTime | null
+  @column()
+  declare status: 'open' | 'answered' | 'resolved'
+  @column()
+  declare subject: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

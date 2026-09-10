@@ -1,0 +1,12 @@
+@component('emails/layout', {
+  title: 'Someone answered your support ticket',
+  footer: 'You are receiving this because you opened a support ticket. Replies to this address are not read — use the link above.',
+})
+  <p style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+    Re: {{ ticket.subject }}
+  </p>
+  <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #4b5563; white-space: pre-line;">{{ body }}</p>
+  <p style="margin: 0;">
+    <a href="{{ url }}" style="color: #2563eb;">Read and reply</a>
+  </p>
+@end

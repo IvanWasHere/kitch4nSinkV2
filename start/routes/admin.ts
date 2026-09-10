@@ -51,6 +51,27 @@ router
     router.post('/jobs/:id/discard', [controllers.admin.Job, 'destroy']).as('admin.jobs.destroy')
 
     /**
+     * Support (plan §21.5). The queue is cross-tenant — that is the job —
+     * and it is the one back-office write surface open to support as well as
+     * admin, because answering customers is the support role's reason to
+     * exist (§21.6).
+     */
+    router.get('/support', [controllers.admin.Support, 'index']).as('admin.support.index')
+    router.get('/support/:id', [controllers.admin.Support, 'show']).as('admin.support.show')
+    router
+      .post('/support/:id/replies', [controllers.admin.Support, 'reply'])
+      .as('admin.support.reply')
+    router
+      .post('/support/:id/resolve', [controllers.admin.Support, 'resolve'])
+      .as('admin.support.resolve')
+    router
+      .post('/support/:id/assign', [controllers.admin.Support, 'assign'])
+      .as('admin.support.assign')
+    router
+      .get('/support/:id/attachments/:fileId', [controllers.admin.Support, 'attachment'])
+      .as('admin.support.attachment')
+
+    /**
      * Organisations — the screen a ticket starts on.
      */
     router

@@ -5,6 +5,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import plans from '#billing/plan_service'
 import Organization from '#models/organization'
 import notifications from '#notifications/notification_service'
+import support from '#support/support_service'
 
 /**
  * Loads the signed-in user's organisation onto the context and shares it with
@@ -46,7 +47,7 @@ export default class RequireOrganizationMiddleware {
        * controller is also what guarantees the nav counter, the meter and the
        * disabled *Add list* button are the same numbers as enforcement.
        */
-      const [usage, unreadNotifications] = await Promise.all([
+      const [usage, unreadNotifications, awaitingSupportReplies] = await Promise.all([
         plans.usage(organization),
         /**
          * The red dot, on every screen (plan §20.5). Narrowed by the user's
@@ -54,6 +55,13 @@ export default class RequireOrganizationMiddleware {
          * this is an empty result and the audience filter never runs.
          */
         notifications.unreadCountFor(user, organization),
+        /**
+         * The count beside *Support* in the account menu (plan §21.7): the
+         * user's tickets that staff have answered and they have not come
+         * back to. One indexed count, from the status — there is no
+         * `seen_at` column behind it.
+         */
+        support.awaitingCustomerCount(organization, user),
       ])
 
       ctx.view.share({
@@ -61,6 +69,7 @@ export default class RequireOrganizationMiddleware {
         isOwner: user.isOwner,
         usage,
         unreadNotifications,
+        awaitingSupportReplies,
 
         /**
          * Where the profile row in the sidebar leads: the feed when there is

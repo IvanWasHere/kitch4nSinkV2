@@ -71,9 +71,20 @@ export interface UploadInput {
 
   /**
    * Optional polymorphic owner — an avatar on a user, a logo on an
-   * organisation.
+   * organisation, an image on a support message (plan §21.3).
    */
-  attachTo?: { type: 'User' | 'Organization'; id: number }
+  attachTo?: { type: 'User' | 'Organization' | 'SupportMessage'; id: number }
+
+  /**
+   * Record the bytes against the workspace but do not refuse the upload for
+   * being over the storage cap.
+   *
+   * Exactly one caller sets this: a support attachment (plan §21.3).
+   * Otherwise a customer at their limit cannot attach a screenshot to the
+   * ticket they are opening *about being at their limit*. The meter still
+   * counts it, so the number stays honest — only the refusal is skipped.
+   */
+  skipQuota?: boolean
 }
 
 export interface ValidatedUpload {

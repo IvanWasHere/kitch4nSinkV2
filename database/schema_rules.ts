@@ -187,7 +187,26 @@ export default {
         disk: union('private', 'public'),
         visibility: union('private', 'public'),
         size_bytes: bigIntCounter,
-        attachable_type: union('User', 'Organization'),
+        attachable_type: union('User', 'Organization', 'SupportMessage'),
+      },
+    },
+
+    support_tickets: {
+      columns: {
+        /**
+         * Plan §21.2. `open` is waiting on us, `answered` is waiting on them.
+         * There is no `closed`: a reply reopens a resolved ticket.
+         */
+        status: union('open', 'answered', 'resolved'),
+      },
+    },
+
+    support_messages: {
+      columns: {
+        /**
+         * Which of the two nullable author columns is the populated one.
+         */
+        author_type: union('user', 'staff'),
       },
     },
 

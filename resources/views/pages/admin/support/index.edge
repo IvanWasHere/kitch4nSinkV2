@@ -1,0 +1,162 @@
+{{--
+  The support queue (plan §21.5).
+
+  The mockup's two-pane layout, finally used for what it was drawn for: the
+  queue on the left, one conversation on the right. Cross-tenant on purpose —
+  every row says which workspace it came from and links there.
+--}}
+@component('layouts/admin', { title: 'Support' })
+  <div class="pillset" style="margin-bottom: 16px">
+    @each(one in statuses)
+      <a
+        class="pill {{ status === one ? 'active' : '' }}"
+        href="{{ urlFor('admin.support.index') }}?status={{ one }}"
+      >
+        {{ one === 'open' ? 'Waiting on us' : one === 'answered' ? 'Waiting on them' : 'Resolved' }}
+        <span class="pill-count">{{ counts[one] }}</span>
+      </a>
+    @end
+  </div>
+
+  <div class="support-layout">
+    <div class="ticket-list">
+      <div class="ticket-list-header">
+        <h3>{{ tickets.length }} {{ tickets.length === 1 ? 'ticket' : 'tickets' }}</h3>
+      </div>
+
+      <div class="ticket-list-body">
+        @if(!tickets.length)
+          @!emptyState({
+            icon: 'check',
+            title: 'Nothing in this queue',
+            description: 'Everything here has been answered.',
+          })
+        @end
+
+        @each(one in tickets)
+          <a
+            class="ticket-item {{ ticket && ticket.id === one.id ? 'active' : '' }}"
+            href="{{ urlFor('admin.support.show', { id: one.publicId }) }}?status={{ status }}"
+          >
+            <div class="ticket-item-top">
+              <span class="ticket-item-subject">{{ one.subject }}</span>
+              @if(one.assignedStaff)
+                @!badge({ text: one.assignedStaff.initials, tone: 'admin' })
+              @end
+            </div>
+
+            <div class="ticket-item-meta">
+              <span>{{ one.organization ? one.organization.name : 'Unknown workspace' }}</span>
+              <span class="ticket-item-date">
+                {{ one.lastMessageAt.toFormat('d LLL, HH:mm') }}
+              </span>
+            </div>
+          </a>
+        @end
+      </div>
+    </div>
+
+    @if(ticket)
+      <div class="conversation-panel">
+        <div class="conversation-header">
+          <div>
+            <p class="conv-subject">{{ ticket.subject }}</p>
+            <p class="conv-meta">
+              {{ ticket.publicId }} ·
+              @if(ticket.organization)
+                <a href="{{ urlFor('admin.organizations.show', { id: ticket.organization.publicId }) }}">
+                  {{ ticket.organization.name }}
+                </a>
+              @end
+              @if(ticket.createdBy)
+                · {{ ticket.createdBy.email }}
+              @end
+              @if(ticket.firstRespondedAt)
+                · first answered {{ ticket.firstRespondedAt.toFormat('d LLL, HH:mm') }}
+              @end
+            </p>
+          </div>
+
+          <div class="btn-row" style="margin-top: 0">
+            @form({
+              route: 'admin.support.assign',
+              routeParams: { id: ticket.publicId },
+              method: 'POST',
+            })
+              <input type="hidden" name="assign" value="{{ ticket.assignedStaffId ? 'none' : 'me' }}" />
+              @!button({
+                text: ticket.assignedStaffId ? 'Unassign' : 'Assign to me',
+                type: 'submit',
+                variant: 'outline',
+                size: 'xs',
+              })
+            @end
+
+            @if(ticket.status !== 'resolved')
+              @form({
+                route: 'admin.support.resolve',
+                routeParams: { id: ticket.publicId },
+                method: 'POST',
+              })
+                @!button({ text: 'Resolve', type: 'submit', variant: 'outline', size: 'xs' })
+              @end
+            @end
+          </div>
+        </div>
+
+        <div class="conversation-feed">
+          @each(message in messages)
+            <div class="msg {{ message.isFromStaff ? 'user' : 'agent' }}">
+              <span class="msg-avatar">{{ message.authorInitials }}</span>
+
+              <div class="msg-content">
+                <div class="msg-body">{{ message.body }}</div>
+
+                @if(message.attachments.length)
+                  <div class="btn-row" style="margin-top: 8px">
+                    @each(file in message.attachments)
+                      <a
+                        class="btn btn-outline btn-xs"
+                        href="{{ urlFor('admin.support.attachment', { id: ticket.publicId, fileId: file.publicId }) }}"
+                      >
+                        @!icon({ name: 'upload', width: 13, height: 13 })
+                        {{ file.originalName }}
+                      </a>
+                    @end
+                  </div>
+                @end
+
+                <div class="msg-meta">
+                  <span>{{ message.authorName }}</span>
+                  <span>{{ message.createdAt.toFormat('d LLL, HH:mm') }}</span>
+                </div>
+              </div>
+            </div>
+          @end
+        </div>
+
+        <div class="reply-area">
+          @form({
+            route: 'admin.support.reply',
+            routeParams: { id: ticket.publicId },
+            method: 'POST',
+          })
+            @field.root({ name: 'body' })
+              @!textarea.control({ placeholder: 'Reply to the customer', rows: 3 })
+              @!field.error()
+            @end
+            @!button({ text: 'Send reply', type: 'submit', size: 'sm' })
+          @end
+        </div>
+      </div>
+    @else
+      @panel.root()
+        @!emptyState({
+          icon: 'lifebuoy',
+          title: 'Pick a ticket',
+          description: 'The conversation opens here beside the queue.',
+        })
+      @end
+    @end
+  </div>
+@end

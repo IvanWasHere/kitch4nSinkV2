@@ -35,6 +35,11 @@ export const AUDIT_ACTIONS = {
   notificationPublished: 'notification.published',
   notificationDeleted: 'notification.deleted',
 
+  supportTicketOpened: 'support.ticket.opened',
+  supportReplied: 'support.replied',
+  supportResolved: 'support.resolved',
+  supportAssigned: 'support.assigned',
+
   userVerificationResent: 'user.verification_resent',
   userVerified: 'user.verified_by_staff',
   userTwoFactorReset: 'user.two_factor_reset',

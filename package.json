@@ -45,6 +45,7 @@
     "#organizations/*": "./app/organizations/*.js",
     "#queue/*": "./app/queue/*.js",
     "#storage/*": "./app/storage/*.js",
+    "#support/*": "./app/support/*.js",
     "#todos/*": "./app/todos/*.js"
   },
   "devDependencies": {

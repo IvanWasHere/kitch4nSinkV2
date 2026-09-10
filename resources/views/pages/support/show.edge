@@ -1,0 +1,91 @@
+{{--
+  One conversation, from the customer's side (plan §21.5).
+
+  The mockup's `.conversation-panel` / `.msg` / `.reply-area`, ported in M0
+  and unused until now. Staff messages sit left, the customer's right, which
+  is the way round the ported CSS already draws them.
+--}}
+@component('layouts/app', { title: 'Support' })
+  @slot('actions')
+    <a class="btn btn-outline btn-sm" href="{{ urlFor('support.index') }}">All tickets</a>
+  @end
+
+  <div class="conversation-panel">
+    <div class="conversation-header">
+      <div>
+        <p class="conv-subject">{{ ticket.subject }}</p>
+        <p class="conv-meta">
+          {{ ticket.publicId }} · opened {{ ticket.createdAt.toFormat('d LLL yyyy') }}
+        </p>
+      </div>
+
+      @if(ticket.status === 'answered')
+        @!badge({ text: 'Answered', tone: 'info' })
+      @elseif(ticket.status === 'resolved')
+        @!badge({ text: 'Resolved', tone: 'success' })
+      @else
+        @!badge({ text: 'Open', tone: 'neutral' })
+      @end
+    </div>
+
+    <div class="conversation-feed">
+      @each(message in messages)
+        <div class="msg {{ message.isFromStaff ? 'agent' : 'user' }}">
+          <span class="msg-avatar">{{ message.authorInitials }}</span>
+
+          <div class="msg-content">
+            <div class="msg-body">{{ message.body }}</div>
+
+            @if(message.attachments.length)
+              <div class="btn-row" style="margin-top: 8px">
+                @each(file in message.attachments)
+                  <a
+                    class="btn btn-outline btn-xs"
+                    href="{{ urlFor('support.attachment', { id: ticket.publicId, fileId: file.publicId }) }}"
+                  >
+                    @!icon({ name: 'upload', width: 13, height: 13 })
+                    {{ file.originalName }}
+                  </a>
+                @end
+              </div>
+            @end
+
+            <div class="msg-meta">
+              <span>{{ message.authorName }}</span>
+              <span>{{ message.createdAt.toFormat('d LLL, HH:mm') }}</span>
+            </div>
+          </div>
+        </div>
+      @end
+    </div>
+
+    <div class="reply-area">
+      @form({
+        route: 'support.reply',
+        routeParams: { id: ticket.publicId },
+        method: 'POST',
+        enctype: 'multipart/form-data',
+      })
+        @field.root({ name: 'body' })
+          @!textarea.control({
+            placeholder: ticket.status === 'resolved'
+              ? 'Replying reopens this ticket.'
+              : 'Add to this ticket',
+            rows: 3,
+          })
+          @!field.error()
+        @end
+
+        <div class="reply-attachments">
+          <input
+            type="file"
+            name="attachments"
+            multiple
+            accept=".png,.jpg,.jpeg,.gif,.webp,.pdf"
+          />
+          @!button({ text: 'Reply', type: 'submit', size: 'sm' })
+        </div>
+      @end
+    </div>
+  </div>
+@end

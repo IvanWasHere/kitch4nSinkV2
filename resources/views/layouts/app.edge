@@ -120,6 +120,22 @@
                 </a>
               @end
 
+              {{--
+                Support (plan §21.5). The count is tickets staff have replied
+                to and the customer has not answered — derived from the
+                status, so there is no second definition of "unread" to
+                disagree with the announcements dot (§21.7).
+              --}}
+              @if(hasRoute('support.index'))
+                <a class="dropdown-item" href="{{ urlFor('support.index') }}">
+                  @!icon({ name: 'lifebuoy', width: 15, height: 15 })
+                  Support
+                  @if(awaitingSupportReplies)
+                    <span class="dropdown-count">{{ awaitingSupportReplies }}</span>
+                  @end
+                </a>
+              @end
+
               <div class="dropdown-divider"></div>
 
               @form({ route: 'auth.session.destroy', method: 'POST' })

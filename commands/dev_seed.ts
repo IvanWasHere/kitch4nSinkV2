@@ -126,6 +126,7 @@ export default class DevSeed extends BaseCommand {
     await this.seedChurnedWorkspace()
 
     await this.seedAnnouncements()
+    await this.seedSupportTickets()
     await this.seedOperations()
 
     this.logger.success('Seeded Acme (free)')
@@ -140,7 +141,7 @@ export default class DevSeed extends BaseCommand {
     this.logger.success('Seeded the states support screens exist for')
     this.logger.log('  past due:  owner-northwind@example.com (dunning banner, needs attention)')
     this.logger.log('  cancelled: owner-contoso@example.com (churn)')
-    this.logger.log('  plus 3 announcements, a stuck webhook and a failed job')
+    this.logger.log('  plus 3 announcements, 3 support tickets, a stuck webhook and a failed job')
     this.logger.log('')
     /**
      * Only the hash of the token is stored, so this is the one moment the
@@ -701,6 +702,65 @@ export default class DevSeed extends BaseCommand {
       actionLabel: 'See plans',
       actionUrl: 'https://example.com/pricing',
     })
+  }
+
+  /**
+   * Three conversations, one in each state (plan §21.2), so the queue, the
+   * badges and the two-pane layout all have something to show. The one
+   * waiting on the customer is what puts a count beside *Support* in the
+   * account menu.
+   */
+  private async seedSupportTickets() {
+    const { DateTime } = await import('luxon')
+    const { default: StaffUser } = await import('#models/staff_user')
+    const { default: UserModel } = await import('#models/user')
+    const { default: Organization } = await import('#models/organization')
+    const { default: support } = await import('#support/support_service')
+
+    const staff = await StaffUser.findBy('email', 'support@example.com')
+    const jane = await UserModel.findBy('email', 'jane@example.com')
+    const pro = await Organization.findBy('slug', 'pro-widgets')
+    const proOwner = await UserModel.findBy('email', 'owner-pro@example.com')
+
+    if (!staff || !jane || !pro || !proOwner) {
+      return
+    }
+
+    const acme = await Organization.findOrFail(jane.organizationId)
+
+    /* Waiting on us: nobody has answered it yet. */
+    const waiting = await support.open(acme, jane, {
+      subject: 'Uploads over 10 MB time out',
+      body: 'Every file above ten megabytes stops at 90% and then fails. This is on a 40 Mbit connection, and smaller files are fine.',
+    })
+    waiting.ticket.createdAt = DateTime.utc().minus({ hours: 5 })
+    waiting.ticket.lastMessageAt = DateTime.utc().minus({ hours: 5 })
+    await waiting.ticket.save()
+
+    /* Waiting on them: answered, and the count in the account menu. */
+    const answered = await support.open(pro, proOwner, {
+      subject: 'Can we get a second API key for staging?',
+      body: 'We would rather not point the staging import at the live key.',
+    })
+    await support.replyAsStaff(
+      answered.ticket,
+      staff,
+      'You can — the Pro plan allows five keys. Settings → API Keys → New key, and pick the test environment so the prefix says which is which.'
+    )
+
+    /* Resolved: done, until somebody replies to it. */
+    const resolved = await support.open(pro, proOwner, {
+      subject: 'Invoice address is wrong',
+      body: 'Our billing address changed last month.',
+    })
+    await support.replyAsStaff(
+      resolved.ticket,
+      staff,
+      'Updated on the subscription — the next invoice will carry the new address.'
+    )
+    await support.resolve(resolved.ticket)
+    resolved.ticket.createdAt = DateTime.utc().minus({ days: 9 })
+    await resolved.ticket.save()
   }
 
   /**

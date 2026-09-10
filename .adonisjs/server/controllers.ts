@@ -14,6 +14,7 @@ export const controllers = {
     Session: () => import('#controllers/admin/session_controller'),
     Staff: () => import('#controllers/admin/staff_controller'),
     Subscription: () => import('#controllers/admin/subscription_controller'),
+    Support: () => import('#controllers/admin/support_controller'),
     User: () => import('#controllers/admin/user_controller'),
     Webhook: () => import('#controllers/admin/webhook_controller'),
   },
@@ -60,6 +61,9 @@ export const controllers = {
     Organization: () => import('#controllers/settings/organization_controller'),
     Profile: () => import('#controllers/settings/profile_controller'),
     Security: () => import('#controllers/settings/security_controller'),
+  },
+  support: {
+    Support: () => import('#controllers/support/support_controller'),
   },
   todos: {
     List: () => import('#controllers/todos/list_controller'),

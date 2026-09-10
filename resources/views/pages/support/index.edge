@@ -1,0 +1,59 @@
+{{--
+  The customer's tickets (plan §21.5).
+
+  Uses the mockup's `.ticket-list` / `.ticket-item`, ported in M0 and unused
+  until now. A member sees their own; an owner sees the workspace's (§21.4).
+--}}
+@component('layouts/app', { title: 'Support' })
+  @slot('actions')
+    <a class="btn btn-primary btn-sm" href="{{ urlFor('support.create') }}">New ticket</a>
+  @end
+
+  @if(tickets.length)
+    <div class="ticket-list" style="max-height: none">
+      <div class="ticket-list-header">
+        <h3>Your tickets</h3>
+      </div>
+
+      <div class="ticket-list-body">
+        @each(ticket in tickets)
+          <a class="ticket-item" href="{{ urlFor('support.show', { id: ticket.publicId }) }}">
+            <div class="ticket-item-top">
+              <span class="ticket-item-subject">{{ ticket.subject }}</span>
+              @if(ticket.status === 'answered')
+                @!badge({ text: 'Answered', tone: 'info' })
+              @elseif(ticket.status === 'resolved')
+                @!badge({ text: 'Resolved', tone: 'success' })
+              @else
+                @!badge({ text: 'Open', tone: 'neutral' })
+              @end
+            </div>
+
+            <div class="ticket-item-meta">
+              <span class="ticket-item-id">{{ ticket.publicId }}</span>
+              <span class="ticket-item-date">
+                {{ ticket.lastMessageAt.toFormat('d LLL yyyy, HH:mm') }}
+              </span>
+            </div>
+          </a>
+        @end
+      </div>
+    </div>
+
+    <p class="chart-note">
+      A ticket marked <strong>Answered</strong> is one we have replied to. Replying to a resolved
+      ticket opens it again — there is no need to start a new one.
+    </p>
+  @else
+    @panel.root()
+      @!emptyState({
+        icon: 'lifebuoy',
+        title: 'No tickets yet',
+        description: 'Ask us anything about the product, your plan or your data. You can attach a screenshot.',
+      })
+      <div class="btn-row" style="justify-content: center">
+        <a class="btn btn-primary btn-sm" href="{{ urlFor('support.create') }}">Ask a question</a>
+      </div>
+    @end
+  @end
+@end
