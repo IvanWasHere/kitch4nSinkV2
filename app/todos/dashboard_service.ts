@@ -60,11 +60,16 @@ export class DashboardService {
 
   /**
    * The mockup's "recent orders" table becomes recent todos (plan §13.6.2).
+   *
+   * Open ones only. The panel has a *Due* column and sits beside "recently
+   * finished", so a completed todo listed here is both answered twice and
+   * asked about once too often.
    */
   async recentTodos(organization: Organization, limit = 6): Promise<Todo[]> {
     return Todo.query()
       .where('organization_id', organization.id)
       .whereNull('deleted_at')
+      .whereNull('completed_at')
       .preload('todoList')
       .preload('assignedTo')
       .orderBy('created_at', 'desc')

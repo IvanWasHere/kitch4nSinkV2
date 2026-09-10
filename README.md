@@ -106,10 +106,10 @@ a staff address is rejected at `/login` exactly as a stranger would be.
 > 🔢 Staff two-factor is mandatory. In development enter **`123456`** (see `DEV_TWO_FACTOR_CODE`),
 > or run `node ace dev:totp admin@example.com` for a real code.
 
-Want a richer playground with paid plans, subscriptions and payment history?
+Want a richer playground — paid plans, a team, lists and todos, API traffic, payment history?
 
 ```bash
-node ace dev:seed              # 🏭 one workspace per plan tier
+node ace dev:seed              # 🏭 five workspaces, a team, lists, keys, files, payments
 ```
 
 ### 📬 Seeing the email
@@ -205,25 +205,43 @@ Leave blank and the app runs on the Free plan; billing screens render and refuse
 
 ## 📸 Screenshots
 
-Every account type, from the seeded data. Note what each role **cannot** see — the nav is gated,
-so nobody is offered a screen that would refuse them.
+Every one of these is the seeded demo data — `node ace db:seed && node ace dev:seed` — so what is
+on the page is what you get after two commands, not a mock-up.
+
+Start with the four account types. Note what each role **cannot** see: the nav is gated, so nobody
+is offered a screen that would refuse them.
 
 | Account type | What it looks like |
 |---|---|
-| 👑 **Workspace owner** — billing, API keys and usage meters in the nav | <img src="docs/screenshots/owner-dashboard.jpg" alt="Owner dashboard with usage meters" width="420" /> |
+| 👑 **Workspace owner** — usage meters, billing and API keys in the nav | <img src="docs/screenshots/owner-dashboard.jpg" alt="Owner dashboard with usage meters, recent todos and finished work" width="420" /> |
 | 👤 **Workspace member** — no Billing, no API Keys, and a 🔴 dot on the bell for a new announcement | <img src="docs/screenshots/member-dashboard.jpg" alt="Member dashboard with an unread announcement dot on the bell" width="420" /> |
-| 🛡️ **Staff — admin** — gross and net volume over 7/30/90 days, MRR and churn, who registered, started paying, renewed or left, the plan mix, and the full operations nav | <img src="docs/screenshots/staff-admin-dashboard.jpg" alt="Admin back-office dashboard" width="420" /> |
+| 🛡️ **Staff — admin** — volume over 7/30/90 days, MRR and churn, who registered, started paying, renewed or left | <img src="docs/screenshots/staff-admin-dashboard.jpg" alt="Admin back-office dashboard with volume and growth" width="420" /> |
 | 🎧 **Staff — support** — every screen except Staff management, which is admin-only | <img src="docs/screenshots/staff-support-organisations.jpg" alt="Support view of organisation search" width="420" /> |
 
 <details>
-<summary>📂 <b>More screens</b></summary>
+<summary>📂 <b>The tenant application</b></summary>
 
 | Screen | |
 |---|---|
-| 💳 **Billing** — current plan, usage, plan grid, transaction history | <img src="docs/screenshots/owner-billing.jpg" alt="Billing screen" width="420" /> |
-| 🔌 **API keys** — prefixes only, scope badges, 14-day request chart | <img src="docs/screenshots/owner-api-keys.jpg" alt="API keys screen" width="420" /> |
-| 📋 **Lists** — the demo domain, with per-list quota pills | <img src="docs/screenshots/owner-lists.jpg" alt="Lists screen" width="420" /> |
+| ✅ **A list** — filters, priorities, assignees, due dates in red when they have passed, completed items struck through | <img src="docs/screenshots/owner-list.jpg" alt="A todo list with priorities, assignees and due dates" width="420" /> |
+| 📋 **Lists** — colour per list, a quota pill per card, archived hidden until asked for | <img src="docs/screenshots/owner-lists.jpg" alt="Lists screen with per-list quota pills" width="420" /> |
+| 👥 **Members** — seats against the plan, roles, last seen, and a pending invitation | <img src="docs/screenshots/owner-members.jpg" alt="Members screen with seats meter and a pending invitation" width="420" /> |
+| 📎 **Files** — drag and drop, type sniffing, storage counted against the plan | <img src="docs/screenshots/owner-files.jpg" alt="Files screen with uploads and a storage meter" width="420" /> |
+| 🔌 **API keys** — prefixes only, scope badges, and two weeks of requests with errors in red | <img src="docs/screenshots/owner-api-keys.jpg" alt="API keys screen with a request chart" width="420" /> |
+| 💳 **Billing** — current plan, usage, the plan grid, and every charge and refund | <img src="docs/screenshots/owner-billing.jpg" alt="Billing screen with plan grid and transaction history" width="420" /> |
+| 🔐 **Security** — two-factor turned on, recovery codes, and changing a password | <img src="docs/screenshots/owner-security.jpg" alt="Security settings with two-factor enabled" width="420" /> |
 | 📣 **Announcements** — one-way notices, new ones highlighted | <img src="docs/screenshots/member-announcements.jpg" alt="Announcements feed" width="420" /> |
+
+</details>
+
+<details>
+<summary>🛟 <b>When something is wrong</b></summary>
+
+| Screen | |
+|---|---|
+| ⚠️ **Past due** — a charge failed. Nothing is taken away; the banner is on every screen until it is fixed | <img src="docs/screenshots/owner-past-due.jpg" alt="Billing screen for a past-due workspace" width="420" /> |
+| 🔎 **A workspace, from the back office** — usage, members, the subscription mirror, plan and limit overrides, impersonation | <img src="docs/screenshots/staff-admin-organisation.jpg" alt="Back-office view of one workspace" width="420" /> |
+| 🧾 **Subscriptions** — every subscription, filterable by state, with what the provider last told us | <img src="docs/screenshots/staff-admin-subscriptions.jpg" alt="Back-office subscription ledger" width="420" /> |
 
 </details>
 
@@ -308,7 +326,7 @@ npm run format         # ✨ prettier
 node ace migration:run           # apply migrations (regenerates database/schema.ts)
 node ace migration:fresh --seed  # drop, migrate, seed the test accounts
 node ace db:seed                 # seeders only
-node ace dev:seed                # 🏭 demo workspaces, one per plan tier
+node ace dev:seed                # 🏭 the demo dataset the screenshots come from
 ```
 
 ### ⚙️ Queue & schedule

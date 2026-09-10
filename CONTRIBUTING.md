@@ -272,8 +272,10 @@ so every billing screen has content:
 
 ```
 jane@example.com              free, at its 3-list cap
-owner-pro@example.com         pro, with transaction history
+owner-pro@example.com         pro, with transaction history and a part refund
 owner-business@example.com    business, unlimited lists
+owner-northwind@example.com   pro but past due — the dunning banner
+owner-contoso@example.com     cancelled last month — churn that is not zero
 ```
 
 For real deliveries, Creem test mode plus a tunnel (`cloudflared tunnel --url
@@ -874,11 +876,21 @@ existing accounts are left alone.
 node ace dev:seed
 ```
 
-Creates one workspace with an owner, a member and a pending invitation, and prints the invitation
-link — only the hash of an invitation token is stored, so that print is the one chance to see it.
-It also creates one workspace per paid tier, each with a live subscription and a few payments, so
-the billing screens have something to render without a Creem account. Development only: the command
-refuses to run unless `NODE_ENV=development`.
+Enough of everything that no screen is an empty state: five workspaces spread across the last year,
+a team with a pending invitation, lists and todos in every state a todo has (overdue, assigned,
+done), API keys with two weeks of traffic behind them, uploaded files, published announcements, a
+workspace past due and one that cancelled, plus a failed job and a webhook that never applied.
+
+It prints the invitation link too — only the hash of an invitation token is stored, so that print is
+the one chance to see it. Development only: the command refuses to run unless
+`NODE_ENV=development`.
+
+The screenshots in the README are captured from exactly this dataset, which is the point of it: if a
+screen looks empty here, it will look empty for whoever clones the repository.
+
+It wants a fresh database — it registers `jane@example.com` first thing, so a second run stops on
+the unique index rather than half-seeding. `node ace migration:fresh --force && node ace db:seed &&
+node ace dev:seed` is the whole reset.
 
 ## Frontend
 
