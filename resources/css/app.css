@@ -3,15 +3,29 @@
 | Stylesheet entrypoint
 |--------------------------------------------------------------------------
 |
-| The design system is ported from example-ui/index.html — the Mithril
-| prototype that is this application's visual reference (plan §13.1). Its CSS
-| is plain custom properties with no build step, so it transfers verbatim; the
-| Mithril around it does not.
+| The design system is ported from ui-example/index.html — the prototype that
+| is this application's visual reference (plan §13.1). Its CSS is plain custom
+| properties with no build step, so it transfers verbatim; the script around it
+| does not.
 |
-| Order matters: tokens define the vocabulary, base sets the page, components
-| use both, and responsive overrides the lot at the four fixed breakpoints.
+| Order matters: fonts first (a @font-face the page never reaches is a page
+| that renders in Arial), then tokens define the vocabulary, base sets the
+| page, components use both, and responsive overrides the lot at the four
+| fixed breakpoints.
 |
 */
+
+/*
+| The two faces the reference specifies, self-hosted.
+|
+| Vite rewrites these to hashed files under /assets, so they are served from
+| this origin and satisfy the `font-src 'self'` in config/shield.ts without
+| widening it to a font CDN. Only the latin subsets are pulled in — the rest
+| of the family is several hundred KB nobody in this application renders.
+*/
+@import '@fontsource-variable/instrument-sans/wght.css';
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
 
 @import './tokens.css';
 @import './base.css';

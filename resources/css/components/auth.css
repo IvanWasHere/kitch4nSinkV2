@@ -1,7 +1,7 @@
 /*
 | The auth shell: the centred card used by login, signup, password reset,
 | email verification, 2FA and invitation acceptance.
-| Ported from example-ui/index.html (plan §13.4 "Auth shell").
+| Ported from ui-example/index.html (plan §13.4 "Auth shell").
 */
 
 .auth-wrapper {
@@ -10,7 +10,7 @@
   justify-content: center;
   min-height: 100vh;
   padding: 40px 20px;
-  background: var(--surface);
+  background: var(--page);
 }
 
 .auth-card {
@@ -19,33 +19,36 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  padding: 40px 36px;
+  padding: 36px 32px;
   box-shadow: var(--shadow-card);
   animation: pageFadeIn 0.25s ease;
 }
 
 .auth-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 23px;
+  font-weight: 600;
   color: var(--text-strong);
-  margin-bottom: 4px;
-  letter-spacing: -0.3px;
+  margin-bottom: 5px;
+  letter-spacing: -0.015em;
 }
 
 .auth-subtitle {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--text-muted);
-  margin-bottom: 28px;
+  margin-bottom: 26px;
 }
 
 /**
  * Inside the auth card the primary action is the only action, so it fills
- * the width. Elsewhere buttons size to their content.
+ * the width — and it is taller than a toolbar button, because it is the only
+ * thing on the screen worth pressing.
  */
 .auth-card .btn-primary,
 .auth-card .btn-outline,
 .auth-card .btn-danger {
   width: 100%;
+  height: 40px;
+  font-size: 14px;
 }
 
 .auth-card .btn + .btn {
@@ -55,8 +58,8 @@
 .auth-footer {
   margin-top: 24px;
   text-align: center;
-  font-size: 13px;
-  color: var(--gray-600);
+  font-size: 13.5px;
+  color: var(--text-soft);
 }
 
 .logo {
@@ -71,7 +74,8 @@
   width: 32px;
   height: 32px;
   border-radius: var(--radius);
-  background: var(--blue-500);
+  background: var(--accent-500);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,21 +106,22 @@
 }
 
 .logo-text {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-strong);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.02em;
 }
 
 .divider {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 24px 0;
-  font-size: 12px;
+  margin: 22px 0;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.06em;
 }
 
 .divider::before,
@@ -130,7 +135,7 @@
 .back-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   font-size: 13px;
   color: var(--text-muted);
   margin-bottom: 20px;
@@ -142,33 +147,41 @@
 }
 
 .back-link:hover {
-  color: var(--gray-600);
+  color: var(--text-soft);
 }
 
+/*
+| A notice inside a card. The reference sets these as a flat tinted block with
+| no border — an outlined box inside an outlined card reads as two frames —
+| and colours the *text* in the tone rather than the edge.
+*/
 .info-box {
-  background: var(--blue-50);
-  border: 1px solid var(--border);
+  background: var(--page);
+  border: none;
   border-radius: var(--radius);
   padding: 12px 14px;
-  font-size: 13px;
-  color: var(--blue-600);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-soft);
   margin-bottom: 20px;
 }
 
 .info-box-warning {
   background: var(--orange-50);
-  border-color: var(--orange-500);
   color: var(--orange-600);
 }
 
 .info-box-danger {
   background: var(--red-50);
-  border-color: var(--border-danger);
   color: var(--red-700);
 }
 
 .info-box-success {
   background: var(--green-50);
-  border-color: var(--green-100);
   color: var(--green-700);
+}
+
+.info-box-info {
+  background: var(--info-50);
+  color: var(--info-600);
 }

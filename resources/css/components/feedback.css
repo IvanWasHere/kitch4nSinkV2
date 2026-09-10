@@ -1,6 +1,6 @@
 /*
 | Toasts, the notification dropdown, empty states and the account banner.
-| Toasts and the dropdown are ported from example-ui/index.html
+| Toasts and the dropdown are ported from ui-example/index.html
 | (plan §13.4 "Feedback"); empty states and banners are new work in the same
 | language (plan §13.4, "missing from the mockup").
 |
@@ -8,23 +8,37 @@
 | showToast() (plan §13.3).
 */
 
+/*
+| Bottom-left, as in the reference. Top-right is where the header now keeps
+| the bell and the account menu, and a toast that lands on the control you
+| were reaching for is worse than no toast.
+*/
 .toast-stack {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  left: 20px;
+  bottom: 20px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
+/*
+| The reference's toast is a dark pill with an accent glyph — one style, no
+| tones, because a prototype has nothing to report. A server flash does, so
+| the tone is kept and the reference's shape borrowed: a lifted, softly
+| rounded block with the tone in the text rather than in an outline.
+*/
 .toast {
-  padding: 12px 20px;
-  border-radius: var(--radius);
-  font-size: 13px;
+  padding: 11px 16px;
+  border-radius: 9px;
+  font-size: 13.5px;
   font-weight: 500;
-  box-shadow: var(--shadow-toast);
-  animation: toastIn 0.3s ease;
+  line-height: 1.5;
+  max-width: 380px;
+  box-shadow: var(--shadow-menu);
+  animation: toastIn 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  cursor: pointer;
 }
 
 .toast-dismissing {
@@ -44,9 +58,9 @@
 }
 
 .toast-info {
-  background: var(--blue-50);
-  color: var(--blue-600);
-  border: 1px solid var(--border);
+  background: var(--info-50);
+  color: var(--info-500);
+  border: 1px solid var(--info-100);
 }
 
 .notif-menu {
@@ -55,7 +69,7 @@
   right: 0;
   width: 340px;
   background: var(--surface);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-menu);
   z-index: 100;
@@ -66,26 +80,24 @@
 }
 
 .notif-menu-header {
-  padding: 12px 16px 8px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--gray-100);
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  border-bottom: 1px solid var(--border-soft);
   margin-bottom: 4px;
 }
 
 .notif-menu-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-soft);
   text-align: center;
 }
 
 .notif-item {
-  padding: 12px 16px;
+  padding: 11px 16px;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: start;
   cursor: pointer;
   transition: background var(--transition);
@@ -93,13 +105,13 @@
 }
 
 .notif-item:hover {
-  background: var(--gray-50);
+  background: var(--page);
 }
 
 .notif-icon-wrap {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -123,8 +135,8 @@
 }
 
 .notif-icon-wrap.info {
-  background: var(--blue-50);
-  color: var(--blue-500);
+  background: var(--info-50);
+  color: var(--info-500);
 }
 
 .notif-content {
@@ -133,40 +145,40 @@
 }
 
 .notif-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 500;
   color: var(--text-strong);
   margin-bottom: 2px;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 .notif-desc {
-  font-size: 12px;
-  color: var(--gray-500);
-  line-height: 1.4;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.45;
   margin-bottom: 4px;
 }
 
 .notif-time {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .notif-menu-btn {
   width: 100%;
-  background: var(--blue-500);
+  background: var(--accent-500);
   color: var(--white);
   border: none;
   padding: 8px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 500;
   cursor: pointer;
   transition: background var(--transition);
 }
 
 .notif-menu-btn:hover {
-  background: var(--blue-600);
+  background: var(--accent-600);
 }
 
 /*
@@ -175,24 +187,28 @@
 */
 .empty-state {
   text-align: center;
-  padding: 48px 24px;
+  padding: 64px 20px;
 }
 
+/*
+| A neutral ring, not a tinted one: an empty state's job is to point at the
+| button underneath it, and an accent-coloured disc up top competes with it.
+*/
 .empty-state-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-xl);
-  background: var(--blue-50);
-  color: var(--blue-500);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--page);
+  color: var(--text-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .empty-state-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -202,16 +218,17 @@
 
 .empty-state-title {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-strong);
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .empty-state-desc {
-  font-size: 13px;
+  font-size: 13.5px;
+  line-height: 1.5;
   color: var(--text-muted);
   max-width: 380px;
-  margin: 0 auto 18px;
+  margin: 0 auto 16px;
 }
 
 /*
@@ -224,22 +241,23 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 28px;
+  padding: 10px 32px;
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.5;
   flex-wrap: wrap;
 }
 
 .banner-warning {
   background: var(--orange-50);
   color: var(--orange-600);
-  border-bottom: 1px solid var(--orange-500);
+  border-bottom: 1px solid var(--orange-100);
 }
 
 .banner-danger {
   background: var(--red-50);
   color: var(--red-700);
-  border-bottom: 1px solid var(--red-400);
+  border-bottom: 1px solid var(--red-100);
 }
 
 /**
@@ -260,43 +278,13 @@
 }
 
 /*
-| The unread dot (plan §20.5).
-|
-| Specified by the mockup for the topbar bell and reused here on the sidebar
-| avatar, which is where the feature actually lives. The white ring is what
-| keeps it legible against a photo rather than against the flat initials
-| background it was drawn on.
-*/
-.notif-dot {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  width: 10px;
-  height: 10px;
-  background: var(--red-500);
-  border-radius: 50%;
-  border: 2px solid var(--surface);
-}
-
-/*
-| Wraps the avatar so the dot has something to be positioned against. The
-| avatar component itself is shared with screens that have no dot, so the
-| anchor belongs out here rather than in it.
-*/
-.sidebar-user-avatar {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-}
-
-/*
 | An announcement published since the reader last looked (plan §20.4).
 |
 | A left edge rather than a background tint: the `.notif-item` hover state
 | already owns the background, and two overlapping tints read as a bug.
 */
 .notif-item.is-new {
-  border-left: 3px solid var(--blue-500);
+  border-left: 3px solid var(--accent-500);
   padding-left: 13px;
 }
 
@@ -305,5 +293,5 @@
 | divider the menu got from its container.
 */
 .panel .notif-item + .notif-item {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-soft);
 }

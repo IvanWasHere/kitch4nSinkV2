@@ -5,23 +5,23 @@
   linked, bookmarked and permission-gated on its own — /settings/organization
   is owner-only from M2.
 --}}
-<nav class="btn-row" style="margin-bottom: 20px" aria-label="Settings">
+<nav class="pillset" style="margin-bottom: 20px" aria-label="Settings">
   <a
     href="{{ urlFor('settings.profile') }}"
-    class="btn btn-sm {{ request.url() === urlFor('settings.profile') ? 'btn-primary' : 'btn-outline' }}"
+    class="pill {{ request.url() === urlFor('settings.profile') ? 'active' : '' }}"
   >
     Profile
   </a>
   <a
     href="{{ urlFor('settings.security') }}"
-    class="btn btn-sm {{ request.url() === urlFor('settings.security') ? 'btn-primary' : 'btn-outline' }}"
+    class="pill {{ request.url() === urlFor('settings.security') ? 'active' : '' }}"
   >
     Security
   </a>
   @if(hasRoute('settings.organization'))
     <a
       href="{{ urlFor('settings.organization') }}"
-      class="btn btn-sm {{ request.url() === urlFor('settings.organization') ? 'btn-primary' : 'btn-outline' }}"
+      class="pill {{ request.url() === urlFor('settings.organization') ? 'active' : '' }}"
     >
       Workspace
     </a>

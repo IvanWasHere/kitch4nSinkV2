@@ -145,7 +145,15 @@ test.group('Accepting an invitation', () => {
 
     await page.waitForURL('**/dashboard')
 
+    /**
+     * They are signed in as themselves, in that workspace. The name lives in
+     * the header's account menu rather than on the page, so this opens it —
+     * which also proves the menu the sign-out button lives in actually works.
+     */
+    await page.assertTextContains('body', organization.name)
+
     const member = await User.findByOrFail('email', 'sam@example.com')
-    await page.assertTextContains('body', member.displayName)
+    await page.click('[aria-label="Account menu"]')
+    await page.assertTextContains('.dropdown-menu', member.displayName)
   })
 })

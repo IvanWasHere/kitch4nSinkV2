@@ -27,24 +27,17 @@ Alpine.data('sidebar', () => ({
 }))
 
 /**
- * Any menu that drops from the topbar, including the notification menu.
- * Replaces `state.notifMenuOpen` plus its outside-click handler.
+ * Any menu that drops from the header — the account menu, the notification
+ * menu. The element is a <details>, so the disclosure itself is the browser's
+ * and the menu still opens with JavaScript off; that is what keeps *Sign out*
+ * reachable without a bundle (plan §13.3).
+ *
+ * Alpine adds only the two things <details> does not do on its own: close on
+ * a click elsewhere, and close on Escape.
  */
-Alpine.data('dropdown', () => ({
-  open: false,
-  toggle() {
-    this.open = !this.open
-  },
+Alpine.data('menu', () => ({
   close() {
-    this.open = false
-  },
-  trigger: {
-    ['@click']() {
-      this.toggle()
-    },
-    [':aria-expanded']() {
-      return this.open ? 'true' : 'false'
-    },
+    this.$el.open = false
   },
 }))
 

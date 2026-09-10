@@ -35,17 +35,17 @@
         {{ list.description || 'Everyone in this workspace can see and edit these.' }}
       </p>
     </div>
-    <div class="btn-row" style="margin-top: 0">
+    <div class="pillset">
       <a
-        class="btn btn-sm {{ filter === 'all' ? 'btn-primary' : 'btn-outline' }}"
+        class="pill {{ filter === 'all' ? 'active' : '' }}"
         href="{{ urlFor('lists.show', { id: list.publicId }) }}"
       >All</a>
       <a
-        class="btn btn-sm {{ filter === 'open' ? 'btn-primary' : 'btn-outline' }}"
+        class="pill {{ filter === 'open' ? 'active' : '' }}"
         href="{{ urlFor('lists.show', { id: list.publicId }) }}?filter=open"
       >Open</a>
       <a
-        class="btn btn-sm {{ filter === 'done' ? 'btn-primary' : 'btn-outline' }}"
+        class="pill {{ filter === 'done' ? 'active' : '' }}"
         href="{{ urlFor('lists.show', { id: list.publicId }) }}?filter=done"
       >Done</a>
     </div>
@@ -155,7 +155,7 @@
                   @end
                 </td>
                 <td>
-                  <span style="{{ todo.isComplete ? 'text-decoration: line-through; color: var(--gray-400)' : '' }}">
+                  <span style="{{ todo.isComplete ? 'text-decoration: line-through; color: var(--slate-400)' : '' }}">
                     {{ todo.title }}
                   </span>
                   @if(todo.notes)

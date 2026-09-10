@@ -1,11 +1,11 @@
 /*
 | Buttons — primary / outline / ghost / danger, in three heights.
-| Ported from example-ui/index.html (plan §13.4 "Buttons").
+| Ported from ui-example/index.html (plan §13.4 "Buttons").
 |
-| The mockup's `.btn-primary` and `.btn-outline` are full-width because they
-| only ever appear in the auth card. Here width is opt-in via `.btn-block`,
-| and the auth card sets it for its own buttons — otherwise every toolbar
-| button in the app would stretch.
+| The reference has one button height (34px) because it is a dashboard and
+| every button lives in a toolbar. The two smaller steps below are for table
+| rows, and `.btn-block` is opt-in width — the auth card sets it for its own
+| buttons, otherwise every toolbar button in the app would stretch.
 |
 | `:disabled` is new: the at-cap upsell (plan §7.4) disables *Add list* rather
 | than letting the click fail, so a disabled style is load-bearing.
@@ -15,23 +15,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 42px;
-  padding: 0 20px;
-  font-size: 14px;
-  font-weight: 600;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13.5px;
+  font-weight: 500;
   font-family: inherit;
   border: 1px solid transparent;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: all var(--transition);
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
   outline: none;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .btn:focus-visible {
-  box-shadow: var(--ring-focus);
+  outline: 2px solid var(--accent-500);
+  outline-offset: 2px;
 }
 
 .btn:disabled,
@@ -46,74 +50,166 @@
 }
 
 .btn-primary {
-  background: var(--blue-500);
+  background: var(--accent-500);
   color: var(--white);
-  border-color: var(--blue-500);
+  border-color: var(--accent-500);
 }
 
 .btn-primary:hover {
-  background: var(--blue-600);
-  border-color: var(--blue-600);
+  background: var(--accent-600);
+  border-color: var(--accent-600);
 }
 
+/*
+| The secondary button is a white card with an edge, not a tinted or outlined
+| accent shape. It carries the same one-pixel shadow as everything else that
+| sits on the page background, which is what makes a row of buttons read as
+| controls rather than as links.
+*/
 .btn-outline {
   background: var(--surface);
-  color: var(--blue-500);
-  border-color: var(--border-strong);
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: var(--shadow-card);
 }
 
 .btn-outline:hover {
-  background: var(--blue-50);
-  border-color: var(--blue-300);
+  background: var(--page);
+  border-color: var(--border-strong);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--blue-500);
+  color: var(--accent-500);
   border: none;
   padding: 0;
   height: auto;
   font-weight: 500;
-  font-size: 13px;
+  font-size: 13.5px;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: none;
 }
 
 .btn-ghost:hover {
-  color: var(--blue-600);
+  color: var(--accent-600);
   text-decoration: underline;
 }
 
+/*
+| Destructive actions are white until you are over them. A permanently red
+| button in a toolbar pulls the eye to the one thing nobody should click by
+| accident.
+*/
 .btn-danger {
   background: var(--surface);
-  color: var(--red-500);
-  border-color: var(--red-400);
+  color: var(--red-600);
+  border-color: var(--border);
+  box-shadow: var(--shadow-card);
 }
 
 .btn-danger:hover {
   background: var(--red-50);
-  border-color: var(--red-500);
+  border-color: var(--red-100);
 }
 
 .btn-sm {
-  height: 34px;
-  padding: 0 14px;
+  height: 30px;
+  padding: 0 11px;
   font-size: 13px;
 }
 
 .btn-xs {
-  height: 28px;
-  padding: 0 10px;
+  height: 26px;
+  padding: 0 9px;
   font-size: 12px;
+  gap: 5px;
 }
 
 .btn-row {
   display: flex;
-  gap: 10px;
+  gap: 9px;
   margin-top: 8px;
   flex-wrap: wrap;
 }
 
 .btn-stack > .btn + .btn {
   margin-top: 10px;
+}
+
+/*
+| Icons inside a button track the label's size rather than whatever the icon
+| component was called with — a 20px glyph next to 13.5px text makes the
+| button look broken.
+*/
+.btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.btn-xs svg {
+  width: 13px;
+  height: 13px;
+}
+
+/*
+| Filter pills — the reference's `.pillset`, used wherever a row of links
+| chooses between views of the same page: the settings sub-nav, a todo
+| filter, the back-office ledgers.
+|
+| These are not buttons and must not look like them. A solid accent button on
+| "Profile" reads as *the* action on a settings page; a tinted pill reads as
+| "you are here", which is what a filter actually says.
+*/
+.pillset {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-soft);
+  background: none;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background var(--transition),
+    color var(--transition);
+}
+
+.pill:hover {
+  background: var(--slate-150);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.pill.active {
+  background: var(--accent-100);
+  border-color: var(--accent-200);
+  color: var(--accent-700);
+}
+
+/**
+ * The count beside a filter's label ("Open 12"), quieter than the label.
+ */
+.pill-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pill.active .pill-count {
+  color: var(--accent-500);
 }

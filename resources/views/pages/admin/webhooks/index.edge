@@ -5,14 +5,14 @@
   not happen, so the events that never applied belong at the top.
 --}}
 @component('layouts/admin', { title: 'Webhook ledger' })
-  <div class="btn-row" style="margin-bottom: 18px">
+  <div class="pillset" style="margin-bottom: 16px">
     @each(one in [
       { key: 'unprocessed', label: 'Never applied' },
       { key: 'failed', label: 'Failed with an error' },
       { key: 'all', label: 'Everything' },
     ])
       <a
-        class="btn btn-sm {{ filter === one.key ? 'btn-primary' : 'btn-outline' }}"
+        class="pill {{ filter === one.key ? 'active' : '' }}"
         href="{{ urlFor('admin.webhooks.index') }}?filter={{ one.key }}"
       >{{ one.label }}</a>
     @end

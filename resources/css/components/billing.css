@@ -1,17 +1,18 @@
 /*
 | The billing screen: current-plan banner and the plan grid.
-| Ported from example-ui/index.html (plan §13.4 "Billing").
+| Ported from ui-example/index.html (plan §13.4 "Billing").
 |
 | `.plan-card` doubles as the inline upsell shown when a create is blocked by
 | a plan limit (plan §7.4), which is why it works outside the plan grid too.
 */
 
 .billing-current {
-  background: var(--blue-50);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  margin-bottom: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 15px 20px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -26,30 +27,31 @@
 }
 
 .billing-current-plan {
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--text-strong);
 }
 
 .billing-current-meta {
-  font-size: 12px;
-  color: var(--gray-500);
+  font-size: 12.5px;
+  color: var(--text-muted);
 }
 
 .plan-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .plan-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  box-shadow: var(--shadow-card);
+  padding: 22px;
   position: relative;
-  transition: all var(--transition);
+  transition: box-shadow var(--transition);
 }
 
 .plan-card:hover {
@@ -58,7 +60,7 @@
 
 .plan-card.selected,
 .plan-card.current {
-  border-color: var(--blue-500);
+  border-color: var(--accent-500);
   box-shadow: var(--ring-selected);
 }
 
@@ -66,25 +68,26 @@
   position: absolute;
   top: -1px;
   right: 16px;
-  background: var(--blue-500);
+  background: var(--accent-500);
   color: var(--white);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.07em;
 }
 
 .plan-name {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-strong);
   margin-bottom: 4px;
 }
 
 .plan-desc {
-  font-size: 13px;
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--text-muted);
   margin-bottom: 16px;
 }
@@ -97,14 +100,15 @@
 }
 
 .plan-amount {
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 31px;
+  font-weight: 600;
   color: var(--text-strong);
-  letter-spacing: -1px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .plan-period {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--text-muted);
 }
 
@@ -114,8 +118,8 @@
 }
 
 .plan-features li {
-  font-size: 13px;
-  color: var(--gray-600);
+  font-size: 13.5px;
+  color: var(--text-soft);
   padding: 5px 0;
   display: flex;
   align-items: center;
@@ -123,14 +127,14 @@
 }
 
 .plan-check {
-  color: var(--green-500);
+  color: var(--green-600);
   font-weight: 700;
   font-size: 14px;
   flex-shrink: 0;
 }
 
 .plan-empty {
-  color: var(--gray-300);
+  color: var(--slate-300);
 }
 
 .plan-btn {

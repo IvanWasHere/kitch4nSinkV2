@@ -6,12 +6,6 @@
   incident.
 --}}
 @component('layouts/admin', { title: 'Dashboard' })
-  @slot('actions')
-    @form({ route: 'admin.session.destroy', method: 'POST' })
-      @!button({ text: 'Sign out', type: 'submit', variant: 'outline', size: 'sm' })
-    @end
-  @end
-
   @if(metrics.failedJobs > 0 || metrics.unprocessedWebhooks > 0 || attention.length > 0)
     <div class="info-box info-box-warning">
       <p><strong>Needs attention</strong></p>

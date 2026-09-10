@@ -1,6 +1,6 @@
 /*
 | The two-pane support layout: ticket list plus conversation.
-| Ported from example-ui/index.html (plan §13.4 "Support").
+| Ported from ui-example/index.html (plan §13.4 "Support").
 |
 | v1 ships only a contact form that emails support (plan §13.6.6); the layout
 | is kept so the ticketing screen it was designed for can be built later
@@ -10,7 +10,7 @@
 .support-layout {
   display: grid;
   grid-template-columns: 1fr 2.5fr;
-  gap: 24px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -18,6 +18,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
   max-height: 600px;
   display: flex;
@@ -25,15 +26,14 @@
 }
 
 .ticket-list-header {
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-muted);
+  padding: 15px 16px;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .ticket-list-header h3 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--gray-700);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-strong);
 }
 
 .ticket-list-body {
@@ -43,20 +43,20 @@
 
 .ticket-item {
   display: block;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--gray-100);
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border-soft);
   cursor: pointer;
   transition: background var(--transition);
   text-decoration: none;
 }
 
 .ticket-item:hover {
-  background: var(--blue-50);
+  background: var(--page);
 }
 
 .ticket-item.active {
-  background: var(--blue-50);
-  border-left: 3px solid var(--blue-500);
+  background: var(--accent-50);
+  border-left: 3px solid var(--accent-500);
 }
 
 .ticket-item-top {
@@ -68,14 +68,14 @@
 }
 
 .ticket-item-subject {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.3;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-strong);
+  line-height: 1.35;
 }
 
 .ticket-item-id {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   font-family: var(--font-mono);
 }
@@ -84,18 +84,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-muted);
 }
 
 .ticket-item-date {
-  color: var(--gray-500);
+  color: var(--text-muted);
 }
 
 .conversation-panel {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
   height: 600px;
   display: flex;
@@ -103,8 +104,8 @@
 }
 
 .conversation-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-soft);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -114,13 +115,13 @@
 
 .conv-subject {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-strong);
   margin-bottom: 2px;
 }
 
 .conv-meta {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-muted);
 }
 
@@ -128,7 +129,7 @@
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  background: var(--surface-muted);
+  background: var(--page);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -150,14 +151,14 @@
 }
 
 .msg-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 600;
   flex-shrink: 0;
 }
 
@@ -168,20 +169,20 @@
 }
 
 .msg.user .msg-avatar {
-  background: var(--blue-100);
-  color: var(--blue-600);
-  border: 1px solid var(--border-strong);
+  background: var(--accent-100);
+  color: var(--accent-700);
+  border: 1px solid var(--accent-200);
 }
 
 .msg-body {
   background: var(--surface);
   border-radius: 0 var(--radius-xl) var(--radius-xl) var(--radius-xl);
-  padding: 12px 16px;
-  font-size: 14px;
+  padding: 11px 14px;
+  font-size: 13.5px;
   line-height: 1.5;
-  color: var(--gray-700);
-  border: 1px solid var(--gray-200);
-  box-shadow: var(--shadow-subtle);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
 }
 
 .msg.user .msg-body {
@@ -191,7 +192,7 @@
 }
 
 .msg-meta {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 6px;
   display: flex;
@@ -203,7 +204,7 @@
 }
 
 .reply-area {
-  padding: 16px 20px;
+  padding: 14px 20px;
   background: var(--surface);
   border-top: 1px solid var(--border);
 }
@@ -212,6 +213,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 28px;
-  margin-bottom: 32px;
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  margin-bottom: 24px;
 }

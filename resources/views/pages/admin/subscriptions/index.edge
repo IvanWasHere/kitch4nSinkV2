@@ -13,11 +13,11 @@
     })
   @end
 
-  <div class="btn-row" style="margin-bottom: 18px">
-    <a class="btn btn-sm {{ status === '' ? 'btn-primary' : 'btn-outline' }}" href="{{ urlFor('admin.subscriptions.index') }}">All</a>
+  <div class="pillset" style="margin-bottom: 16px">
+    <a class="pill {{ status === '' ? 'active' : '' }}" href="{{ urlFor('admin.subscriptions.index') }}">All</a>
     @each(one in statuses)
       <a
-        class="btn btn-sm {{ status === one ? 'btn-primary' : 'btn-outline' }}"
+        class="pill {{ status === one ? 'active' : '' }}"
         href="{{ urlFor('admin.subscriptions.index') }}?status={{ one }}"
       >{{ one }}</a>
     @end

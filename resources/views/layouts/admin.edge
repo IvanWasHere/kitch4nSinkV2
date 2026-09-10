@@ -8,88 +8,125 @@
   screen, particularly while impersonating.
 
   Props:
-    title    — page <title> and topbar heading
+    title    — page <title> and the header's page label
   Slots:
     main, actions
 --}}
 @component('layouts/base', { title: $props.get('title') ? `${$props.get('title')} · Admin` : 'Admin' })
-  <div class="dash-layout" x-data="sidebar">
-    <aside class="dash-sidebar" :class="open && 'open'">
-      <div class="dash-sidebar-logo">
+  <div class="dash-shell" x-data="sidebar">
+    <header class="dash-topbar">
+      <div class="topbar-brand">
+        <button type="button" class="mobile-toggle" @click="toggle" aria-label="Open navigation">
+          @!icon({ name: 'menu', width: 18, height: 18 })
+        </button>
+
         <span class="logo">
-          <span class="logo-icon" style="background: var(--purple-500)">
+          <span class="logo-icon logo-icon-admin">
             @!icon({ name: 'shield' })
           </span>
           <span class="logo-text">{{ appName }} Admin</span>
         </span>
       </div>
 
-      <nav class="dash-sidebar-nav" aria-label="Admin">
-        <div class="nav-section-title">Support</div>
-        @if(hasRoute('admin.dashboard'))
-          @!navItem({ route: 'admin.dashboard', icon: 'barChart', label: 'Dashboard' })
-        @end
-        @if(hasRoute('admin.organizations.index'))
-          @!navItem({ route: 'admin.organizations.index', icon: 'package', label: 'Organisations' })
-        @end
-        @if(hasRoute('admin.users.index'))
-          @!navItem({ route: 'admin.users.index', icon: 'users', label: 'Users' })
-        @end
+      <span class="topbar-divider" aria-hidden="true"></span>
+      <h1 class="dash-topbar-title">{{ $props.get('title') ?? '' }}</h1>
 
-        @if(hasRoute('admin.subscriptions.index') || hasRoute('admin.webhooks.index') || hasRoute('admin.jobs.index') || hasRoute('admin.notifications.index') || hasRoute('admin.audit_logs.index'))
-          <div class="nav-section-title">Operations</div>
-        @end
-        @if(hasRoute('admin.subscriptions.index'))
-          @!navItem({ route: 'admin.subscriptions.index', icon: 'creditCard', label: 'Subscriptions' })
-        @end
-        @if(hasRoute('admin.webhooks.index'))
-          @!navItem({ route: 'admin.webhooks.index', icon: 'alert', label: 'Webhook ledger' })
-        @end
-        @if(hasRoute('admin.jobs.index'))
-          @!navItem({ route: 'admin.jobs.index', icon: 'clock', label: 'Job queue' })
-        @end
-        @if(hasRoute('admin.notifications.index'))
-          @!navItem({ route: 'admin.notifications.index', icon: 'alert', label: 'Announcements' })
-        @end
-        @if(hasRoute('admin.audit_logs.index'))
-          @!navItem({ route: 'admin.audit_logs.index', icon: 'list', label: 'Audit log' })
+      <div class="dash-topbar-actions">
+        @if($slots.actions)
+          {{{ await $slots.actions() }}}
         @end
 
         {{--
-          Staff management is admin-only (plan §6), so support does not see
-          the item at all rather than seeing one that answers 403 — the same
-          rule the tenant sidebar follows for Billing and API Keys.
+          Signing out lives here rather than in each page's `actions` slot,
+          which is how it ended up on two back-office screens out of twelve.
         --}}
-        @if(staff && staff.isAdmin && hasRoute('admin.staff.index'))
-          <div class="nav-section-title">Access</div>
-          @!navItem({ route: 'admin.staff.index', icon: 'shield', label: 'Staff' })
+        @if(staff)
+          <details class="dropdown" x-data="menu" @click.outside="close" @keydown.escape="close">
+            <summary class="topbar-avatar topbar-avatar-admin" aria-haspopup="true" aria-label="Staff menu">
+              @!avatar({ initials: staff.initials, alt: staff.fullName ?? staff.email })
+            </summary>
+
+            <div class="dropdown-menu">
+              <div class="dropdown-header">
+                <span class="dropdown-name">{{ staff.fullName ?? staff.email }}</span>
+                <span class="dropdown-email">
+                  {{ staff.isAdmin ? 'Administrator' : 'Support' }} · {{ staff.email }}
+                </span>
+              </div>
+
+              @if(hasRoute('home'))
+                <a class="dropdown-item" href="{{ urlFor('home') }}">
+                  @!icon({ name: 'arrowLeft', width: 15, height: 15 })
+                  Back to the site
+                </a>
+              @end
+
+              <div class="dropdown-divider"></div>
+
+              @form({ route: 'admin.session.destroy', method: 'POST' })
+                <button type="submit" class="dropdown-item">
+                  @!icon({ name: 'logOut', width: 15, height: 15 })
+                  Sign out
+                </button>
+              @end
+            </div>
+          </details>
         @end
-      </nav>
-    </aside>
+      </div>
+    </header>
 
-    <div class="sidebar-overlay" :class="open && 'open'" @click="close" x-cloak></div>
-
-    <div class="dash-main">
-      <header class="dash-topbar">
-        <div class="dash-topbar-inner">
-        <div style="display: flex; align-items: center; gap: 12px">
-          <button type="button" class="mobile-toggle" @click="toggle" aria-label="Open navigation">
-            @!icon({ name: 'menu', width: 18, height: 18 })
-          </button>
-          <h1 class="dash-topbar-title">{{ $props.get('title') ?? '' }}</h1>
-        </div>
-
-        <div class="dash-topbar-actions">
-          @if($slots.actions)
-            {{{ await $slots.actions() }}}
+    <div class="dash-layout">
+      <aside class="dash-sidebar" :class="open && 'open'">
+        <nav class="dash-sidebar-nav" aria-label="Admin">
+          <div class="nav-section-title">Support</div>
+          @if(hasRoute('admin.dashboard'))
+            @!navItem({ route: 'admin.dashboard', icon: 'barChart', label: 'Dashboard' })
           @end
-        </div>
-        </div>
-      </header>
+          @if(hasRoute('admin.organizations.index'))
+            @!navItem({ route: 'admin.organizations.index', icon: 'package', label: 'Organisations' })
+          @end
+          @if(hasRoute('admin.users.index'))
+            @!navItem({ route: 'admin.users.index', icon: 'users', label: 'Users' })
+          @end
 
-      <main class="dash-content">
-        {{{ await $slots.main() }}}
-      </main>
+          @if(hasRoute('admin.subscriptions.index') || hasRoute('admin.webhooks.index') || hasRoute('admin.jobs.index') || hasRoute('admin.notifications.index') || hasRoute('admin.audit_logs.index'))
+            <div class="nav-section-title">Operations</div>
+          @end
+          @if(hasRoute('admin.subscriptions.index'))
+            @!navItem({ route: 'admin.subscriptions.index', icon: 'creditCard', label: 'Subscriptions' })
+          @end
+          @if(hasRoute('admin.webhooks.index'))
+            @!navItem({ route: 'admin.webhooks.index', icon: 'alert', label: 'Webhook ledger' })
+          @end
+          @if(hasRoute('admin.jobs.index'))
+            @!navItem({ route: 'admin.jobs.index', icon: 'clock', label: 'Job queue' })
+          @end
+          @if(hasRoute('admin.notifications.index'))
+            @!navItem({ route: 'admin.notifications.index', icon: 'alert', label: 'Announcements' })
+          @end
+          @if(hasRoute('admin.audit_logs.index'))
+            @!navItem({ route: 'admin.audit_logs.index', icon: 'list', label: 'Audit log' })
+          @end
+
+          {{--
+            Staff management is admin-only (plan §6), so support does not see
+            the item at all rather than seeing one that answers 403 — the same
+            rule the tenant sidebar follows for Billing and API Keys.
+          --}}
+          @if(staff && staff.isAdmin && hasRoute('admin.staff.index'))
+            <div class="nav-section-title">Access</div>
+            @!navItem({ route: 'admin.staff.index', icon: 'shield', label: 'Staff' })
+          @end
+        </nav>
+      </aside>
+
+      <div class="sidebar-overlay" :class="open && 'open'" @click="close" x-cloak></div>
+
+      <div class="dash-main">
+        <main class="dash-content">
+          {{{ await $slots.main() }}}
+        </main>
+      </div>
     </div>
   </div>
 @end

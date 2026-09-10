@@ -56,9 +56,24 @@
 }
 
 @media (max-width: 768px) {
+  /*
+   | The sidebar leaves the flow and becomes a drawer over everything, header
+   | included — the reference's behaviour, and the only way a 232px column and
+   | a content area both fit on a phone.
+   |
+   | It separates itself from what it covers with a shadow: on the desktop
+   | layout it shares the page background and needs no edge, but a drawer with
+   | no edge over a white header has none.
+   */
   .dash-sidebar {
-    transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 90;
+    transform: translateX(-105%);
     transition: transform 0.25s ease;
+    box-shadow: 8px 0 40px rgb(15 25 50 / 0.12);
   }
 
   .dash-sidebar.open {
@@ -67,14 +82,38 @@
 
   .sidebar-overlay.open {
     display: block;
-  }
-
-  .dash-main {
-    margin-left: 0;
+    z-index: 85;
   }
 
   .mobile-toggle {
     display: flex;
+  }
+
+  /*
+   | The brand block stops standing in for the sidebar column — there is no
+   | column under it to line up with — and the page label gives way to the
+   | account controls, which are the only two things that must fit.
+   */
+  .topbar-brand {
+    width: auto;
+
+    /*
+     | Free to shrink here, unlike on the desktop layout where it is measured
+     | against the sidebar. The account controls are fixed-width and must not
+     | be pushed off the screen by a long workspace name.
+     */
+    flex-shrink: 1;
+    overflow: hidden;
+  }
+
+  .dash-topbar {
+    padding: 0 12px 0 14px;
+    gap: 10px;
+  }
+
+  .topbar-divider,
+  .dash-topbar-title {
+    display: none;
   }
 
   .stats-grid {
@@ -92,24 +131,29 @@
   }
 
   .dash-content {
-    padding: 18px;
+    padding: 20px 16px 56px;
   }
 
   .field-row {
     grid-template-columns: 1fr;
   }
 
-  .dash-topbar-inner,
   .marketing-header {
-    padding: 0 18px;
+    padding: 0 16px;
   }
 
-  .banner {
-    padding: 10px 18px;
+  .banner,
+  .account-banner,
+  .impersonation-banner {
+    padding: 10px 16px;
   }
 
   .hero-title {
-    font-size: 32px;
+    font-size: 34px;
+  }
+
+  .marketing-section {
+    padding: 48px 16px;
   }
 }
 
@@ -122,16 +166,28 @@
     padding: 28px 22px;
   }
 
+  .settings-card,
+  .plan-card,
+  .new-ticket-card {
+    padding: 18px;
+  }
+
+  /*
+   | Menus stay anchored to the control that opened them — their container is
+   | the trigger, so a `left` offset here would walk them off the right edge —
+   | and are capped to the window instead.
+   */
   .notif-menu,
   .dropdown-menu {
-    width: calc(100vw - 60px);
-    left: 16px;
-    right: auto;
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    right: 0;
+    left: auto;
   }
 
   .toast-stack {
     left: 16px;
     right: 16px;
-    top: 16px;
+    bottom: 16px;
   }
 }

@@ -1,35 +1,39 @@
 /*
 | Fields, inputs, checkboxes, the password toggle and the strength meter.
-| Ported from example-ui/index.html (plan §13.4 "Forms").
+| Ported from ui-example/index.html (plan §13.4 "Forms").
 |
 | `.field-error` is new: the mockup has no error state because it has no
 | server. It reuses the danger tokens so it reads as part of the same UI.
 */
 
 .field {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
 }
 
 .field-label {
   display: block;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--gray-600);
+  font-weight: 500;
+  color: var(--text-soft);
   margin-bottom: 6px;
 }
 
 .field-label[data-invalid='true'] {
-  color: var(--red-500);
+  color: var(--red-600);
 }
 
 .field-input {
   width: 100%;
-  height: 42px;
-  padding: 0 14px;
-  font-size: 14px;
+  height: 36px;
+  padding: 0 11px;
+  font-size: 13.5px;
   color: var(--text);
   background: var(--surface);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   outline: none;
   transition:
@@ -39,12 +43,16 @@
 }
 
 .field-input:focus {
-  border-color: var(--blue-400);
+  border-color: var(--accent-500);
   box-shadow: var(--ring-focus);
 }
 
 .field-input::placeholder {
-  color: var(--gray-300);
+  color: var(--slate-300);
+}
+
+.field-input:hover:not(:focus, :disabled) {
+  border-color: var(--border-strong);
 }
 
 .field-input[data-invalid='true'] {
@@ -52,42 +60,45 @@
 }
 
 .field-input[data-invalid='true']:focus {
-  border-color: var(--red-500);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+  border-color: var(--red-400);
+  box-shadow: var(--ring-danger);
 }
 
 .field-input:disabled {
-  background: var(--gray-50);
-  color: var(--gray-400);
+  background: var(--page);
+  color: var(--slate-400);
   cursor: not-allowed;
 }
 
 textarea.field-input {
   height: auto;
-  min-height: 80px;
-  padding: 10px 14px;
+  min-height: 76px;
+  padding: 9px 11px;
+  line-height: 1.5;
   resize: vertical;
 }
 
 select.field-input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 8l3-3.5' fill='none' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 8l3-3.5' fill='none' stroke='%238792a2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 14px;
-  padding-right: 34px;
+  background-position: right 11px center;
+  background-size: 13px;
+  padding-right: 32px;
+  cursor: pointer;
 }
 
 .field-error {
   display: block;
   font-size: 12px;
-  color: var(--red-500);
+  color: var(--red-600);
   margin-top: 6px;
 }
 
 .field-hint {
   display: block;
   font-size: 12px;
+  line-height: 1.45;
   color: var(--text-muted);
   margin-top: 6px;
 }
@@ -95,7 +106,7 @@ select.field-input {
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 12px;
 }
 
 .input-wrap {
@@ -121,31 +132,40 @@ select.field-input {
 }
 
 .pw-toggle:hover {
-  color: var(--gray-600);
+  color: var(--text-soft);
 }
 
 .check-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   font-size: 13px;
-  color: var(--gray-600);
+  color: var(--text-soft);
 }
 
 .check-row input[type='checkbox'],
 .check-row input[type='radio'] {
-  accent-color: var(--blue-500);
+  accent-color: var(--accent-500);
   width: 16px;
   height: 16px;
+  cursor: pointer;
 }
 
 .strength-bar {
   height: 3px;
   border-radius: 2px;
-  background: var(--blue-100);
+  background: var(--slate-150);
   margin-top: 6px;
   overflow: hidden;
+}
+
+/*
+| An empty field has no strength to report, and an empty track under it reads
+| as a stray rule rather than as a meter waiting for input.
+*/
+.strength-bar:has(.strength-fill[data-score='0']) {
+  background: transparent;
 }
 
 .strength-fill {

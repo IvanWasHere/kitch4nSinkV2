@@ -1,10 +1,4 @@
 @component('layouts/admin', { title: 'Job queue' })
-  @slot('actions')
-    @form({ route: 'admin.session.destroy', method: 'POST' })
-      @!button({ text: 'Sign out', type: 'submit', variant: 'outline', size: 'sm' })
-    @end
-  @end
-
   <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr)">
     @!statCard({ label: 'Waiting', value: counts.pending, icon: 'clock', tone: 'blue' })
     @!statCard({ label: 'Running', value: counts.reserved, icon: 'trendingUp', tone: 'purple' })

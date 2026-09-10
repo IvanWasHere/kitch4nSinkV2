@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px;
+  padding: 0 32px;
   gap: 16px;
 }
 
@@ -29,9 +29,9 @@
  * happen to be anchors.
  */
 .marketing-nav a:not(.btn) {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
-  color: var(--gray-600);
+  color: var(--text-soft);
   text-decoration: none;
 }
 
@@ -47,7 +47,7 @@
 .marketing-section {
   max-width: 1040px;
   margin: 0 auto;
-  padding: 64px 28px;
+  padding: 64px 32px;
 }
 
 .hero {
@@ -58,17 +58,18 @@
 }
 
 .hero-title {
-  font-size: 42px;
-  line-height: 1.15;
-  font-weight: 800;
-  letter-spacing: -1px;
+  font-size: 46px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   color: var(--text-strong);
   margin-bottom: 16px;
 }
 
 .hero-subtitle {
   font-size: 17px;
-  color: var(--gray-500);
+  line-height: 1.55;
+  color: var(--text-soft);
   margin-bottom: 28px;
 }
 
@@ -79,41 +80,49 @@
   flex-wrap: wrap;
 }
 
+/*
+| The one place a button is bigger than the dashboard's 34px: a landing page
+| has a single thing to ask for and room to ask for it.
+*/
 .hero-actions .btn {
   width: auto;
+  height: 42px;
+  padding: 0 20px;
+  font-size: 14.5px;
 }
 
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  gap: 16px;
 }
 
 .feature-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  box-shadow: var(--shadow-card);
+  padding: 22px;
 }
 
 .feature-title {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14.5px;
+  font-weight: 600;
   color: var(--text-strong);
   margin-bottom: 6px;
 }
 
 .feature-desc {
-  font-size: 13px;
-  color: var(--gray-500);
-  line-height: 1.6;
+  font-size: 13.5px;
+  color: var(--text-soft);
+  line-height: 1.55;
 }
 
 .marketing-footer {
   border-top: 1px solid var(--border);
   padding: 28px;
   text-align: center;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-muted);
   background: var(--surface);
 }
@@ -128,7 +137,8 @@
 
 .status-code {
   font-size: 42px;
-  font-weight: 800;
-  color: var(--blue-500);
-  letter-spacing: -1px;
+  font-weight: 700;
+  color: var(--accent-500);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }

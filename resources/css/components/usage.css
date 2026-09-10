@@ -21,28 +21,28 @@
 }
 
 .usage-meter-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--gray-600);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-soft);
 }
 
 .usage-meter-value {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .usage-meter-track {
-  height: 6px;
+  height: 8px;
   border-radius: var(--radius-pill);
-  background: var(--blue-100);
+  background: var(--slate-150);
   overflow: hidden;
 }
 
 .usage-meter-fill {
   height: 100%;
   border-radius: var(--radius-pill);
-  background: var(--blue-500);
+  background: linear-gradient(180deg, var(--accent-400), var(--accent-500));
   transition: width var(--transition);
 }
 
@@ -60,7 +60,7 @@
  */
 .usage-meter-unlimited .usage-meter-fill {
   width: 100%;
-  background: var(--gray-200);
+  background: var(--slate-200);
 }
 
 /* Pagination ---------------------------------------------------------- */
@@ -70,16 +70,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 20px;
+  padding: 12px 16px;
   border-top: 1px solid var(--border);
   font-size: 13px;
-  color: var(--gray-500);
+  color: var(--text-soft);
   flex-wrap: wrap;
 }
 
 .pagination-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* Copy to clipboard ---------------------------------------------------- */
@@ -94,12 +94,12 @@
   flex: 1;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-strong);
-  background: var(--gray-50);
-  border: 1px solid var(--border-strong);
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--page);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 12px;
+  padding: 9px 11px;
   overflow-x: auto;
   white-space: nowrap;
 }
@@ -115,24 +115,26 @@
 .file-drop {
   border: 1.5px dashed var(--border-strong);
   border-radius: var(--radius-lg);
-  background: var(--surface);
-  padding: 28px 20px;
+  background: var(--page);
+  padding: 22px 20px;
   text-align: center;
-  transition: all var(--transition);
+  transition:
+    border-color var(--transition),
+    background var(--transition);
   cursor: pointer;
 }
 
 .file-drop:hover,
 .file-drop.dragging {
-  border-color: var(--blue-400);
-  background: var(--blue-50);
+  border-color: var(--accent-500);
+  background: var(--accent-50);
 }
 
 .file-drop-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-strong);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .file-drop-hint {
@@ -143,14 +145,14 @@
 .file-progress {
   height: 4px;
   border-radius: var(--radius-pill);
-  background: var(--blue-100);
+  background: var(--slate-150);
   overflow: hidden;
   margin-top: 12px;
 }
 
 .file-progress-fill {
   height: 100%;
-  background: var(--blue-500);
+  background: var(--accent-500);
   transition: width var(--transition);
 }
 
@@ -167,15 +169,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 11px 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   font-size: 13px;
   background: var(--surface);
 }
 
 .file-row-name {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-strong);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -200,14 +202,13 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: var(--blue-50);
-  border: 1.5px solid var(--border-strong);
+  background: var(--slate-800);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  font-weight: 700;
-  color: var(--blue-500);
+  font-weight: 600;
+  color: var(--white);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -226,7 +227,7 @@
 .usage-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  gap: 16px;
 }
 
 /*
@@ -245,10 +246,10 @@
 .usage-sparkline .usage-bar {
   flex: 1;
   min-height: 2px;
-  border-radius: 3px 3px 0 0;
-  background: var(--blue-500);
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, var(--accent-400), var(--accent-500));
 }
 
 .usage-sparkline .usage-bar.has-errors {
-  background: var(--red-500);
+  background: linear-gradient(180deg, var(--red-400), var(--red-500));
 }

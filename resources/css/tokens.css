@@ -3,19 +3,27 @@
 | Design tokens
 |--------------------------------------------------------------------------
 |
-| Extracted from example-ui/index.html, which is the visual reference for the
+| Extracted from ui-example/index.html, which is the visual reference for the
 | whole tenant-facing UI (plan §13.2). This file is the single source of truth
 | for colour, shape, motion and elevation — nothing else in the application may
 | hardcode a hex value.
 |
-| Two kinds of additions were made to the mockup's `:root`:
+| The reference declares a handful of semantic names (--accent, --ink-2,
+| --border-soft, --green-b…) and then repeats literal hexes inline for every
+| step in between. Here those steps are named instead, so the "no hardcoded
+| colour" rule is actually achievable:
 |
-|   1. Steps the mockup's stylesheet *used* but never declared
-|      (--green-600, --purple-100, --purple-200). They rendered as invalid
-|      values in the prototype; here they resolve.
-|   2. Steps that existed in the mockup only as literal hexes repeated inline
-|      (--red-50/-100/-700, --green-100/-700), plus the shadows and the focus
-|      ring, so the "no hardcoded colour" rule is actually achievable.
+|   1. The two ramps the mockup uses constantly but never declares — the
+|      indigo either side of the accent (--accent-100 for an active pill,
+|      --accent-400 for the top of a bar gradient) and the slate between its
+|      border and its ink.
+|   2. The tone pairs. The mockup gives each tone a text and a background
+|      (--red-t / --red-b); we keep the ramp shape used elsewhere in the
+|      codebase, where -50 is the background and -600 the text on it.
+|
+| Ramp names describe hue, not role: --accent-* is the brand indigo, --slate-*
+| the blue-cast neutral, --info-* the *other* blue that means "informational"
+| and must not be confused with the brand. Roles are the block below them.
 |
 | Dark mode is deliberately absent: the mockup has no dark palette and the plan
 | defers designing one to M8. Because every colour below is a custom property,
@@ -24,102 +32,146 @@
 */
 
 :root {
-  /* Brand ------------------------------------------------------------- */
-  --blue-50: #eff6ff;
-  --blue-100: #dbeafe;
-  --blue-200: #bfdbfe;
-  --blue-300: #93c5fd;
-  --blue-400: #60a5fa;
-  --blue-500: #3b82f6;
-  --blue-600: #2563eb;
+  /* Brand — indigo ------------------------------------------------------ */
+  --accent-50:  #eff6ff; /* a selected table row */
+  --accent-100: #dbeafe; /* an active filter pill */
+  --accent-200: #bfdbfe; /* that pill's border */
+  --accent-300: #93c5fd;
+  --accent-400: #60a5fa; /* top of a bar gradient */
+  --accent-500: #3b82f6; /* the accent itself */
+  --accent-600: #2563eb; /* hover / pressed */
+  --accent-700: #1255e7; /* accent text on --accent-100 */
 
-  /* Neutral ----------------------------------------------------------- */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+
+  /* Neutral — slate, cool cast ------------------------------------------ */
+  --slate-50: #f6f8fa; /* the page */
+  --slate-100: #f0f2f5; /* a hairline inside a card */
+  --slate-150: #eaeef3; /* hover on a chrome row (sidebar, pager) */
+  --slate-200: #e3e8ee; /* every border */
+  --slate-300: #c1c8d4; /* a disabled glyph */
+  --slate-400: #8792a2; /* muted text */
+  --slate-500: #697386;
+  --slate-600: #4f566b; /* secondary text */
+  --slate-700: #3c4257;
+  --slate-800: #1a1f36; /* body text */
+  --slate-900: #0f1428; /* headings */
   --white: #ffffff;
 
-  /* Semantic — danger -------------------------------------------------- */
-  --red-50: #fef2f2;
-  --red-100: #fecaca;
-  --red-400: #f87171;
-  --red-500: #ef4444;
-  --red-700: #991b1b;
+  /* Semantic — danger --------------------------------------------------- */
+  --red-50: #fbe3ec;
+  --red-100: #f6cddc;
+  --red-400: #d5407a;
+  --red-500: #b13b5c;
+  --red-600: #a82050;
+  --red-700: #8d1d43;
 
-  /* Semantic — success ------------------------------------------------- */
-  --green-50: #f0fdf4;
-  --green-100: #dcfce7;
-  --green-400: #4ade80;
-  --green-500: #22c55e;
-  --green-600: #16a34a;
-  --green-700: #166534;
+  /* Semantic — success -------------------------------------------------- */
+  --green-50: #e0f2d3;
+  --green-100: #cbe7b4;
+  --green-400: #4a9a2a;
+  --green-500: #2f8508;
+  --green-600: #217005;
+  --green-700: #1a5a04;
 
-  /* Semantic — warning ------------------------------------------------- */
-  --orange-50: #fff7ed;
-  --orange-400: #fb923c;
-  --orange-500: #f97316;
-  --orange-600: #ea580c;
-  --yellow-400: #facc15;
-
-  /* Semantic — accent -------------------------------------------------- */
-  --purple-50: #faf5ff;
-  --purple-100: #f3e8ff;
-  --purple-200: #e9d5ff;
-  --purple-500: #a855f7;
-  --purple-600: #9333ea;
-
-  /* Surfaces ----------------------------------------------------------- */
-  --page: var(--gray-50);
-  --surface: var(--white);
-  --surface-muted: var(--gray-50);
-  --text: var(--gray-800);
-  --text-strong: var(--gray-900);
-  --text-muted: var(--gray-400);
+  /* Semantic — warning -------------------------------------------------- */
+  --orange-50: #fcf0d3;
+  --orange-100: #f3ddab;
+  --orange-400: #d9a13c;
+  --orange-500: #b8770d;
+  --orange-600: #9a5b0a;
+  --yellow-400: #e0b53c;
 
   /*
-   | Borders are blue, not gray. This is what gives the whole UI its cool
-   | cast — swapping it for a neutral makes every screen look like a
-   | different product.
+   | Semantic — informational.
+   |
+   | A separate blue from the brand on purpose. Now that the accent is indigo,
+   | a badge tinted with it would read as "this row is selected" rather than
+   | "here is a fact", so anything merely informational uses this instead.
    */
-  --border: var(--blue-100);
-  --border-strong: var(--blue-200);
-  --border-danger: var(--red-100);
-  --overlay: rgba(0, 0, 0, 0.3);
+  --info-50: #dff0fb;
+  --info-100: #c3e3f7;
+  --info-500: #0b6bb8;
+  --info-600: #095a9c;
 
-  /* Shape -------------------------------------------------------------- */
+  /*
+   | Semantic — accent/administrative.
+   |
+   | The violet is the back-office's own colour: staff-only chrome and the
+   | impersonation banner (plan §6). Deliberately deeper and redder than the
+   | brand indigo — the whole point of the banner is that it cannot be
+   | mistaken for the customer's UI.
+   */
+  --purple-50: #f0e8fd;
+  --purple-100: #e2d4fb;
+  --purple-200: #cdb6f6;
+  --purple-500: #6d3fb8;
+  --purple-600: #56309a;
+
+  /* Surfaces ------------------------------------------------------------ */
+  --page: var(--slate-50);
+  --surface: var(--white);
+  --surface-muted: var(--slate-50);
+
+  /**
+   * The dark ground used by the things that sit *on top of* the UI rather
+   * than in it — toasts, tooltips, a chart's hover label.
+   */
+  --surface-inverse: #20263e;
+
+  --text: var(--slate-800);
+  --text-strong: var(--slate-900);
+  --text-soft: var(--slate-600);
+  --text-muted: var(--slate-400);
+
+  /*
+   | One border colour, used everywhere a box has an edge, plus a softer one
+   | for the rules *inside* a box — a table's row dividers, a card's header
+   | rule. The pair is what keeps a dense table from looking like a grid: the
+   | outer edge is visible, the inner ones barely are.
+   */
+  --border: var(--slate-200);
+  --border-soft: var(--slate-100);
+  --border-strong: #cfd6df;
+  --border-danger: var(--red-100);
+  --overlay: rgba(23, 28, 48, 0.32);
+
+  /* Shape --------------------------------------------------------------- */
   --radius-sm: 6px;
   --radius: 8px;
   --radius-lg: 10px;
   --radius-xl: 12px;
   --radius-pill: 999px;
 
-  /* Motion ------------------------------------------------------------- */
-  --transition: 180ms ease;
+  /* Motion -------------------------------------------------------------- */
+  --transition: 160ms ease;
 
-  /* Elevation ---------------------------------------------------------- */
-  --shadow-card: 0 1px 3px rgba(59, 130, 246, 0.04), 0 4px 16px rgba(59, 130, 246, 0.03);
-  --shadow-hover: 0 2px 8px rgba(59, 130, 246, 0.06);
-  --shadow-menu: 0 10px 25px rgba(0, 0, 0, 0.08);
-  --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.02);
-  --ring-focus: 0 0 0 3px rgba(59, 130, 246, 0.08);
-  --ring-selected: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  /* Elevation ----------------------------------------------------------- */
+  --shadow-card: 0 1px 2px rgba(18, 28, 53, 0.05);
+  --shadow-hover: 0 4px 14px rgba(15, 25, 50, 0.09);
+  --shadow-menu: 0 10px 32px rgba(15, 25, 50, 0.14);
+  --shadow-toast: 0 8px 24px rgba(10, 15, 40, 0.3);
+  --shadow-subtle: 0 1px 2px rgba(18, 28, 53, 0.04);
+  --ring-focus: 0 0 0 3px rgba(99, 91, 255, 0.12);
+  --ring-danger: 0 0 0 3px rgba(213, 64, 122, 0.13);
+  --ring-selected: 0 0 0 1px var(--accent-500);
 
-  /* Type --------------------------------------------------------------- */
+  /* Type ---------------------------------------------------------------- */
+
+  /**
+   * Both faces are self-hosted (`@fontsource` packages imported by app.css)
+   * rather than pulled from a font CDN: the Content-Security-Policy in
+   * config/shield.ts allows `'self'` and nothing else for fonts and styles,
+   * and a self-hosted build keeps a deployment that cannot reach the public
+   * internet looking the way it is supposed to.
+   */
   --font-sans:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+    'Instrument Sans Variable', 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
 
-  /* Layout ------------------------------------------------------------- */
-  --sidebar-width: 240px;
-  --topbar-height: 60px;
+  /* Layout -------------------------------------------------------------- */
+  --sidebar-width: 232px;
+  --topbar-height: 58px;
 
   /**
    * The widest the application's content is allowed to get, centred in
@@ -131,5 +183,5 @@
    * decides when the grids collapse, this one decides how wide content may
    * get. They are independent numbers.
    */
-  --content-max-width: 1240px;
+  --content-max-width: 1180px;
 }

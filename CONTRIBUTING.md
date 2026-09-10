@@ -882,11 +882,32 @@ refuses to run unless `NODE_ENV=development`.
 
 ## Frontend
 
-`example-ui/index.html` is the **visual reference**, not code to port. It is a Mithril prototype
-with fixture data; its CSS is what transfers, and it has been extracted into `resources/css/`.
+`ui-example/index.html` is the **visual reference**, not code to port. It is a prototype with
+fixture data; its CSS is what transfers, and it has been extracted into `resources/css/`.
 Screens are Edge templates with Alpine.js for interactivity (plan §13).
 
 - Nothing hardcodes a colour. Every value comes from a token in `resources/css/tokens.css`.
+- The palette is indigo on slate. `--accent-*` is the brand, `--slate-*` the blue-cast neutral,
+  and `--info-*` the *other* blue — the one that means "informational" rather than "selected".
+  Reach for a role token (`--text`, `--border`, `--page`) before a ramp step.
+- Chrome recedes and the current position is the raised thing: the sidebar shares the page
+  background and the active nav item is the only white card in it. A card carries `--shadow-card`
+  and a `--border` edge; the rules *inside* it use `--border-soft`.
+- The shell is the viewport. `.dash-shell` is a full-height column — header, then the two banners,
+  then `.dash-layout` — and only `.dash-main` scrolls. That is why neither banner needs a
+  `position: sticky`, and why nothing in the chrome has to agree with anything else about how far
+  down the top of the page is. The header spans the window *over* the sidebar; `.topbar-brand` is
+  sized to the sidebar column so the divider after it lands on that column's edge.
+- Account controls live at the right of the header: the announcements bell, then the account menu.
+  Signing out is in that menu, once, in the layout — not in a page's `actions` slot.
+- A menu is a `<details>` with a `<summary>` trigger, never a JavaScript-only popover. The
+  disclosure is the browser's, so the menu — and the sign-out button in it — still works with the
+  bundle blocked; Alpine's `menu` component only adds close-on-outside-click and Escape.
+- Type is Instrument Sans over IBM Plex Mono, self-hosted from `@fontsource` packages imported by
+  `resources/css/app.css` — never a font CDN, which `font-src 'self'` in `config/shield.ts` would
+  block anyway. The scale starts from a 14px body; sizes in `components/` are steps off it.
+- A row of links that chooses between views of one page is `.pillset` / `.pill`, not a row of
+  buttons — a solid accent button reads as *the* action on the page.
 - Application content is capped at `--content-max-width` and centred beside the sidebar. The topbar
   stays full-bleed but its inner row shares the same cap, and the horizontal padding lives *inside*
   both capped boxes — put it on the bar instead and the page title stops lining up with the page.

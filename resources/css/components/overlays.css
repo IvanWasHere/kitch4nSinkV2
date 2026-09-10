@@ -13,8 +13,8 @@
   margin: auto;
   width: min(520px, calc(100vw - 32px));
   padding: 0;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow-menu);
@@ -33,19 +33,21 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 24px 0;
+  padding: 18px 22px 0;
 }
 
 .modal-title {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 17.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text-strong);
 }
 
 .modal-desc {
-  font-size: 13px;
+  font-size: 13.5px;
+  line-height: 1.5;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .modal-close {
@@ -59,18 +61,19 @@
 }
 
 .modal-close:hover {
-  color: var(--gray-600);
+  color: var(--text-soft);
 }
 
 .modal-body {
-  padding: 20px 24px;
+  padding: 20px 22px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 0 24px 20px;
+  gap: 9px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
 }
 
 .modal-footer .btn {
@@ -79,7 +82,12 @@
 
 /*
 | Generic dropdown. The notification menu in the mockup is a special case of
-| this; anything else that drops from the topbar uses these.
+| this; anything else that drops from the header uses these.
+|
+| The element is a <details> and the trigger its <summary>, so the open/closed
+| state is the browser's: the account menu — and the sign-out button inside it
+| — still works with JavaScript off. Alpine only closes it on an outside click
+| or Escape.
 */
 .dropdown {
   position: relative;
@@ -89,14 +97,49 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 200px;
+  min-width: 220px;
   background: var(--surface);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-menu);
   padding: 6px;
   z-index: 100;
-  animation: menuIn 0.2s ease;
+}
+
+details[open] > .dropdown-menu {
+  animation: menuIn 0.16s ease;
+}
+
+/*
+| Whose account this is, at the top of the account menu. The email is the
+| useful half — on a shared machine it is the only thing that distinguishes
+| two sessions of the same product.
+*/
+.dropdown-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 9px 10px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-soft);
+  min-width: 0;
+}
+
+.dropdown-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-email {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dropdown-item {
@@ -109,20 +152,56 @@
   background: none;
   border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 13px;
-  color: var(--gray-700);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-soft);
   text-align: left;
   text-decoration: none;
   cursor: pointer;
 }
 
 .dropdown-item:hover {
-  background: var(--blue-50);
+  background: var(--page);
   color: var(--text-strong);
+  text-decoration: none;
+}
+
+.dropdown-item svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/*
+| A count trailing a menu row — unread announcements. Pushed to the end so
+| the labels stay left-aligned however many of them carry one.
+*/
+.dropdown-count {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-100);
+  color: var(--accent-700);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+| Sign out is a form POST, so the row is a <button> inside a <form>; the form
+| itself must not interrupt the stack of rows.
+*/
+.dropdown-menu form {
+  display: contents;
 }
 
 .dropdown-item-danger {
-  color: var(--red-500);
+  color: var(--red-600);
+}
+
+.dropdown-item-danger svg {
+  color: currentcolor;
 }
 
 .dropdown-item-danger:hover {
@@ -132,7 +211,7 @@
 
 .dropdown-divider {
   height: 1px;
-  background: var(--border);
+  background: var(--border-soft);
   margin: 6px 0;
 }
 
@@ -150,11 +229,11 @@
   bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--gray-900);
+  background: var(--surface-inverse);
   color: var(--white);
   font-size: 12px;
   font-weight: 500;
-  padding: 6px 10px;
+  padding: 8px 11px;
   border-radius: var(--radius-sm);
   white-space: nowrap;
   z-index: 70;
