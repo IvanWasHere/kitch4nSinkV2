@@ -122,6 +122,12 @@ Alpine.data('toast', (timeout = 5000) => ({
 /**
  * A <dialog> modal. The browser supplies focus trapping, Esc-to-close and
  * inertness, so this only owns opening and closing.
+ *
+ * `$root`, not `$el`: these methods are called from `@click` on the close
+ * button and the footer's Cancel, and `$el` is whatever element the
+ * expression is being evaluated on — the button, which has no `.close()`.
+ * `$root` is the element the component is declared on, which is the <dialog>
+ * whichever descendant asked.
  */
 Alpine.data('modal', (openOnLoad = false) => ({
   init() {
@@ -133,17 +139,17 @@ Alpine.data('modal', (openOnLoad = false) => ({
      * Clicking the backdrop closes the dialog. The dialog element itself
      * fills its own box, so a click landing on <dialog> is a backdrop click.
      */
-    this.$el.addEventListener('click', (event) => {
-      if (event.target === this.$el) {
+    this.$root.addEventListener('click', (event) => {
+      if (event.target === this.$root) {
         this.close()
       }
     })
   },
   open() {
-    this.$el.showModal()
+    this.$root.showModal()
   },
   close() {
-    this.$el.close()
+    this.$root.close()
   },
 }))
 

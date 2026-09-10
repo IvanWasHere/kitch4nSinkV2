@@ -9,7 +9,7 @@
     @!button({
       text: 'New staff account',
       size: 'sm',
-      onclick: "document.getElementById('new-staff').showModal()",
+      '@click': "document.getElementById('new-staff').showModal()",
     })
   @end
 
@@ -110,7 +110,7 @@
       @!button({
         text: 'Cancel',
         variant: 'outline',
-        onclick: "document.getElementById('new-staff').close()",
+        '@click': 'close',
       })
       @!button({ text: 'Create account', type: 'submit', form: 'new-staff-form' })
     @end

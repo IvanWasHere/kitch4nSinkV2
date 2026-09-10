@@ -13,7 +13,7 @@
       @!button({
         text: 'New list',
         size: 'sm',
-        onclick: "document.getElementById('new-list').showModal()",
+        '@click': "document.getElementById('new-list').showModal()",
       })
     @else
       @!button({
@@ -97,7 +97,7 @@
           @!button({
             text: 'Create the first list',
             size: 'sm',
-            onclick: "document.getElementById('new-list').showModal()",
+            '@click': "document.getElementById('new-list').showModal()",
           })
         </div>
       @end
@@ -150,7 +150,7 @@
       @!button({
         text: 'Cancel',
         variant: 'outline',
-        onclick: "document.getElementById('new-list').close()",
+        '@click': 'close',
       })
       @!button({ text: 'Create list', type: 'submit', form: 'new-list-form' })
     @end

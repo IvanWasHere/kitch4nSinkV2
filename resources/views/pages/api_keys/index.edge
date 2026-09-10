@@ -20,7 +20,7 @@
       @!button({
         text: 'New key',
         size: 'sm',
-        onclick: "document.getElementById('new-api-key').showModal()",
+        '@click': "document.getElementById('new-api-key').showModal()",
       })
     @end
   @end
@@ -178,7 +178,7 @@
       @!button({
         text: 'Cancel',
         variant: 'outline',
-        onclick: "document.getElementById('new-api-key').close()",
+        '@click': 'close',
       })
       @!button({ text: 'Create key', type: 'submit', form: 'new-api-key-form' })
     @end

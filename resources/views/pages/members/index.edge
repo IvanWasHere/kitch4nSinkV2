@@ -4,7 +4,7 @@
       @!button({
         text: 'Invite member',
         size: 'sm',
-        onclick: "document.getElementById('invite-member').showModal()",
+        '@click': "document.getElementById('invite-member').showModal()",
       })
     @end
   @end
@@ -141,7 +141,7 @@
         @!button({
           text: 'Cancel',
           variant: 'outline',
-          onclick: "document.getElementById('invite-member').close()",
+          '@click': 'close',
         })
         @!button({ text: 'Send invitation', type: 'submit', form: 'invite-member-form' })
       @end

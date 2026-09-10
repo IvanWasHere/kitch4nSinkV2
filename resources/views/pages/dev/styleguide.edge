@@ -321,7 +321,7 @@
       @!button({
         text: 'Open modal',
         variant: 'outline',
-        onclick: "document.getElementById('demo-modal').showModal()",
+        '@click': "document.getElementById('demo-modal').showModal()",
       })
     </div>
   </div>
@@ -335,7 +335,7 @@
       @!button({
         text: 'Cancel',
         variant: 'outline',
-        onclick: "document.getElementById('demo-modal').close()",
+        '@click': 'close',
       })
       @!button({ text: 'Create list' })
     @end

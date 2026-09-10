@@ -64,7 +64,7 @@
                         text: 'Cancel',
                         variant: 'danger',
                         size: 'xs',
-                        onclick: `document.getElementById('cancel-${subscription.id}').showModal()`,
+                        '@click': `document.getElementById('cancel-${subscription.id}').showModal()`,
                       })
                     @end
                   </div>
@@ -108,7 +108,7 @@
             @!button({
               text: 'Back',
               variant: 'outline',
-              onclick: `document.getElementById('cancel-${subscription.id}').close()`,
+              '@click': 'close',
             })
             @!button({
               text: 'Cancel subscription',
