@@ -6,43 +6,6 @@ export type ScannedRoutes = {
   ALL: {
     'drive.private.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'drive.public.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
-    'dashboard.index': { paramsTuple?: []; params?: {} }
-    'settings.profile': { paramsTuple?: []; params?: {} }
-    'settings.profile.update': { paramsTuple?: []; params?: {} }
-    'settings.profile.avatar': { paramsTuple?: []; params?: {} }
-    'settings.organization': { paramsTuple?: []; params?: {} }
-    'settings.organization.update': { paramsTuple?: []; params?: {} }
-    'settings.organization.logo': { paramsTuple?: []; params?: {} }
-    'settings.organization.transfer': { paramsTuple?: []; params?: {} }
-    'settings.organization.destroy': { paramsTuple?: []; params?: {} }
-    'settings.organization.leave': { paramsTuple?: []; params?: {} }
-    'lists.index': { paramsTuple?: []; params?: {} }
-    'lists.store': { paramsTuple?: []; params?: {} }
-    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'lists.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'lists.archive': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'lists.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'todos.store': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
-    'todos.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'todos.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'todos.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'todos.move': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'files.index': { paramsTuple?: []; params?: {} }
-    'files.store': { paramsTuple?: []; params?: {} }
-    'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'files.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'notifications.index': { paramsTuple?: []; params?: {} }
-    'members.index': { paramsTuple?: []; params?: {} }
-    'members.invite': { paramsTuple?: []; params?: {} }
-    'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'invitations.revoke': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'invitations.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'settings.security': { paramsTuple?: []; params?: {} }
-    'settings.security.password': { paramsTuple?: []; params?: {} }
-    'settings.security.two_factor.start': { paramsTuple?: []; params?: {} }
-    'settings.security.two_factor.confirm': { paramsTuple?: []; params?: {} }
-    'settings.security.two_factor.recovery_codes': { paramsTuple?: []; params?: {} }
-    'settings.security.two_factor.disable': { paramsTuple?: []; params?: {} }
     'billing.index': { paramsTuple?: []; params?: {} }
     'billing.checkout': { paramsTuple?: []; params?: {} }
     'billing.return': { paramsTuple?: []; params?: {} }
@@ -85,6 +48,49 @@ export type ScannedRoutes = {
     'auth.session.destroy': { paramsTuple?: []; params?: {} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'auth.verify_email.resend': { paramsTuple?: []; params?: {} }
+    'dashboard.index': { paramsTuple?: []; params?: {} }
+    'settings.profile': { paramsTuple?: []; params?: {} }
+    'settings.profile.update': { paramsTuple?: []; params?: {} }
+    'settings.profile.avatar': { paramsTuple?: []; params?: {} }
+    'settings.organization': { paramsTuple?: []; params?: {} }
+    'settings.organization.update': { paramsTuple?: []; params?: {} }
+    'settings.organization.logo': { paramsTuple?: []; params?: {} }
+    'settings.organization.transfer': { paramsTuple?: []; params?: {} }
+    'settings.organization.destroy': { paramsTuple?: []; params?: {} }
+    'settings.organization.leave': { paramsTuple?: []; params?: {} }
+    'lists.index': { paramsTuple?: []; params?: {} }
+    'lists.store': { paramsTuple?: []; params?: {} }
+    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'lists.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'lists.archive': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'lists.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.store': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'todos.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'todos.move': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'files.index': { paramsTuple?: []; params?: {} }
+    'files.store': { paramsTuple?: []; params?: {} }
+    'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'files.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'support.index': { paramsTuple?: []; params?: {} }
+    'support.create': { paramsTuple?: []; params?: {} }
+    'support.store': { paramsTuple?: []; params?: {} }
+    'support.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'support.reply': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'support.attachment': { paramsTuple: [ParamValue,ParamValue]; params: {'id': ParamValue,'fileId': ParamValue} }
+    'notifications.index': { paramsTuple?: []; params?: {} }
+    'members.index': { paramsTuple?: []; params?: {} }
+    'members.invite': { paramsTuple?: []; params?: {} }
+    'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invitations.revoke': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invitations.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'settings.security': { paramsTuple?: []; params?: {} }
+    'settings.security.password': { paramsTuple?: []; params?: {} }
+    'settings.security.two_factor.start': { paramsTuple?: []; params?: {} }
+    'settings.security.two_factor.confirm': { paramsTuple?: []; params?: {} }
+    'settings.security.two_factor.recovery_codes': { paramsTuple?: []; params?: {} }
+    'settings.security.two_factor.disable': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.session.store': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
@@ -94,6 +100,12 @@ export type ScannedRoutes = {
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.jobs.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.index': { paramsTuple?: []; params?: {} }
+    'admin.support.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.reply': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.resolve': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.assign': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.attachment': { paramsTuple: [ParamValue,ParamValue]; params: {'id': ParamValue,'fileId': ParamValue} }
     'admin.organizations.index': { paramsTuple?: []; params?: {} }
     'admin.organizations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.organizations.suspend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -130,16 +142,6 @@ export type ScannedRoutes = {
   GET: {
     'drive.private.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'drive.public.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
-    'dashboard.index': { paramsTuple?: []; params?: {} }
-    'settings.profile': { paramsTuple?: []; params?: {} }
-    'settings.organization': { paramsTuple?: []; params?: {} }
-    'lists.index': { paramsTuple?: []; params?: {} }
-    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'files.index': { paramsTuple?: []; params?: {} }
-    'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'notifications.index': { paramsTuple?: []; params?: {} }
-    'members.index': { paramsTuple?: []; params?: {} }
-    'settings.security': { paramsTuple?: []; params?: {} }
     'billing.index': { paramsTuple?: []; params?: {} }
     'billing.return': { paramsTuple?: []; params?: {} }
     'billing.status': { paramsTuple?: []; params?: {} }
@@ -161,10 +163,27 @@ export type ScannedRoutes = {
     'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
+    'dashboard.index': { paramsTuple?: []; params?: {} }
+    'settings.profile': { paramsTuple?: []; params?: {} }
+    'settings.organization': { paramsTuple?: []; params?: {} }
+    'lists.index': { paramsTuple?: []; params?: {} }
+    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'files.index': { paramsTuple?: []; params?: {} }
+    'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'support.index': { paramsTuple?: []; params?: {} }
+    'support.create': { paramsTuple?: []; params?: {} }
+    'support.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'support.attachment': { paramsTuple: [ParamValue,ParamValue]; params: {'id': ParamValue,'fileId': ParamValue} }
+    'notifications.index': { paramsTuple?: []; params?: {} }
+    'members.index': { paramsTuple?: []; params?: {} }
+    'settings.security': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
+    'admin.support.index': { paramsTuple?: []; params?: {} }
+    'admin.support.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.attachment': { paramsTuple: [ParamValue,ParamValue]; params: {'id': ParamValue,'fileId': ParamValue} }
     'admin.organizations.index': { paramsTuple?: []; params?: {} }
     'admin.organizations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.users.index': { paramsTuple?: []; params?: {} }
@@ -185,16 +204,6 @@ export type ScannedRoutes = {
   HEAD: {
     'drive.private.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'drive.public.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
-    'dashboard.index': { paramsTuple?: []; params?: {} }
-    'settings.profile': { paramsTuple?: []; params?: {} }
-    'settings.organization': { paramsTuple?: []; params?: {} }
-    'lists.index': { paramsTuple?: []; params?: {} }
-    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'files.index': { paramsTuple?: []; params?: {} }
-    'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'notifications.index': { paramsTuple?: []; params?: {} }
-    'members.index': { paramsTuple?: []; params?: {} }
-    'settings.security': { paramsTuple?: []; params?: {} }
     'billing.index': { paramsTuple?: []; params?: {} }
     'billing.return': { paramsTuple?: []; params?: {} }
     'billing.status': { paramsTuple?: []; params?: {} }
@@ -216,10 +225,27 @@ export type ScannedRoutes = {
     'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
+    'dashboard.index': { paramsTuple?: []; params?: {} }
+    'settings.profile': { paramsTuple?: []; params?: {} }
+    'settings.organization': { paramsTuple?: []; params?: {} }
+    'lists.index': { paramsTuple?: []; params?: {} }
+    'lists.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'files.index': { paramsTuple?: []; params?: {} }
+    'files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'support.index': { paramsTuple?: []; params?: {} }
+    'support.create': { paramsTuple?: []; params?: {} }
+    'support.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'support.attachment': { paramsTuple: [ParamValue,ParamValue]; params: {'id': ParamValue,'fileId': ParamValue} }
+    'notifications.index': { paramsTuple?: []; params?: {} }
+    'members.index': { paramsTuple?: []; params?: {} }
+    'settings.security': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
     'admin.dashboard': { paramsTuple?: []; params?: {} }
     'admin.jobs.index': { paramsTuple?: []; params?: {} }
+    'admin.support.index': { paramsTuple?: []; params?: {} }
+    'admin.support.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.attachment': { paramsTuple: [ParamValue,ParamValue]; params: {'id': ParamValue,'fileId': ParamValue} }
     'admin.organizations.index': { paramsTuple?: []; params?: {} }
     'admin.organizations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.users.index': { paramsTuple?: []; params?: {} }
@@ -238,6 +264,23 @@ export type ScannedRoutes = {
     'styleguide': { paramsTuple?: []; params?: {} }
   }
   POST: {
+    'billing.checkout': { paramsTuple?: []; params?: {} }
+    'billing.portal': { paramsTuple?: []; params?: {} }
+    'api_keys.store': { paramsTuple?: []; params?: {} }
+    'api_keys.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'webhooks.creem': { paramsTuple?: []; params?: {} }
+    'api.lists.store': { paramsTuple?: []; params?: {} }
+    'api.todos.store': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
+    'api.todos.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.uncomplete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'auth.register.store': { paramsTuple?: []; params?: {} }
+    'auth.session.store': { paramsTuple?: []; params?: {} }
+    'auth.password.store': { paramsTuple?: []; params?: {} }
+    'auth.password.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'auth.two_factor.store': { paramsTuple?: []; params?: {} }
+    'invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'auth.session.destroy': { paramsTuple?: []; params?: {} }
+    'auth.verify_email.resend': { paramsTuple?: []; params?: {} }
     'settings.profile.update': { paramsTuple?: []; params?: {} }
     'settings.profile.avatar': { paramsTuple?: []; params?: {} }
     'settings.organization.update': { paramsTuple?: []; params?: {} }
@@ -256,6 +299,8 @@ export type ScannedRoutes = {
     'todos.move': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'files.store': { paramsTuple?: []; params?: {} }
     'files.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'support.store': { paramsTuple?: []; params?: {} }
+    'support.reply': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'members.invite': { paramsTuple?: []; params?: {} }
     'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invitations.revoke': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -265,28 +310,14 @@ export type ScannedRoutes = {
     'settings.security.two_factor.confirm': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.recovery_codes': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.disable': { paramsTuple?: []; params?: {} }
-    'billing.checkout': { paramsTuple?: []; params?: {} }
-    'billing.portal': { paramsTuple?: []; params?: {} }
-    'api_keys.store': { paramsTuple?: []; params?: {} }
-    'api_keys.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'webhooks.creem': { paramsTuple?: []; params?: {} }
-    'api.lists.store': { paramsTuple?: []; params?: {} }
-    'api.todos.store': { paramsTuple: [ParamValue]; params: {'listId': ParamValue} }
-    'api.todos.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'api.todos.uncomplete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'auth.register.store': { paramsTuple?: []; params?: {} }
-    'auth.session.store': { paramsTuple?: []; params?: {} }
-    'auth.password.store': { paramsTuple?: []; params?: {} }
-    'auth.password.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
-    'auth.two_factor.store': { paramsTuple?: []; params?: {} }
-    'invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
-    'auth.session.destroy': { paramsTuple?: []; params?: {} }
-    'auth.verify_email.resend': { paramsTuple?: []; params?: {} }
     'admin.session.store': { paramsTuple?: []; params?: {} }
     'admin.two_factor.store': { paramsTuple?: []; params?: {} }
     'admin.session.destroy': { paramsTuple?: []; params?: {} }
     'admin.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.jobs.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.reply': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.resolve': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.support.assign': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.organizations.suspend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.organizations.plan': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.organizations.limits': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

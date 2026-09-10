@@ -82,6 +82,17 @@ export default class StaffPolicy extends BasePolicy {
    * *see* the list — it needs to answer "did they get told?" — through
    * `view` above.
    */
+  /**
+   * Answering support tickets (plan §21.6).
+   *
+   * Support **and** admin, unlike the other write actions here. Answering
+   * customers is the support role's entire reason to exist; this is the one
+   * back-office surface where the §6 split does not narrow to admin.
+   */
+  answerSupport(staff: StaffUser): AuthorizerResponse {
+    return !staff.isDisabled
+  }
+
   manageNotifications(staff: StaffUser): AuthorizerResponse {
     return !staff.isDisabled && staff.isAdmin
   }

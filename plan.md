@@ -839,7 +839,7 @@ still read as part of the same UI.
 | Reset password (+ "check your email" state) | `/forgot`, `/reset/:token` | M1 |
 | Overview (4 stat cards, recent table, activity feed) | `/dashboard` — stats become Lists / Open todos / Completed this week / Overdue; the table becomes recent todos; the activity feed becomes list activity | M3.5 |
 | Billing (current plan, plan grid, transaction history) | `/billing` | M4 |
-| Support (ticket list + conversation) | `/support` | post-v1 |
+| Support (ticket list + conversation) | `/support` | M10 |
 | Settings → Profile Information | `/settings/profile` | M1 |
 | Settings → Store Settings | `/settings/organization` — **owner only** | M2 |
 | Settings → Security (change password) | `/settings/security` | M1 |
@@ -896,8 +896,11 @@ the difference back.
    **build it** — see §20. The `notifications` table lands in M9, the dot goes on the sidebar
    avatar rather than the topbar bell (that is where the request put it), and the dropdown itself
    stays unbuilt so there is one surface and one unread rule (§20.5).
-6. **Support tickets are mockup-only.** A full ticketing system is out of scope for v1; ship a
-   contact form that emails support, and keep the two-pane layout for when it is built.
+6. **Support tickets are mockup-only.** Decided: **build it** — see §21. The two-pane layout is
+   ported and unused; M10 gives it `support_tickets` + `support_messages`, attachments on the
+   existing `files` table, and a back-office queue. The contact-form-that-emails-support this
+   entry used to propose is superseded: it has no history, no status and nowhere to put a
+   screenshot.
 
 ### 13.7 Base kit
 
@@ -1075,6 +1078,13 @@ admin-only authoring in the back-office · `PruneNotificationsJob`.
 *Ordered after M8 because it is new product surface, not hardening — and because §20.3's predicate
 wants the OWASP pass already done around it.*
 
+**M10 — Support tickets** *(§21)*
+`support_tickets` + `support_messages` · tenant list/create/conversation reached from the account
+menu · back-office two-pane queue with `StaffPolicy.answerSupport` · image attachments on the
+existing `files` table, private disk behind an authorising route · reply email · `supportThrottle`.
+*Ordered after M9 because it reuses that milestone's mail path and the same back-office shell, and
+because M8's rate-limit work is what a public-facing contact surface leans on.*
+
 ---
 
 ## 18. Risks
@@ -1106,8 +1116,12 @@ wants the OWASP pass already done around it.*
    from v1, or add a `notifications` table?~~ **Answered: build it.** Staff-authored one-way
    announcements, audience by plan / owners / named users, in M9 — see §20. Its own open questions
    are listed there (§20.9).
-6. The mockup's **support ticketing** is a full two-pane messaging UI. Confirm v1 ships only a
-   contact form that emails support. (§13.6.6)
+6. ~~The mockup's **support ticketing** is a full two-pane messaging UI. Confirm v1 ships only a
+   contact form that emails support. (§13.6.6)~~ **Answered: build it.** Two-way tickets with
+   image attachments, opened from the account menu and answered in the back-office, in M10 — see
+   §21. Three calls are still open inside it and are marked there: who inside a workspace may read
+   a ticket (§21.4), whether attachments are exempt from the storage cap (§21.3), and whether
+   anything emails staff on a new ticket (§21.7).
 
 ---
 
@@ -1129,7 +1143,7 @@ seats."
   (§8); a quota block is a 402 and an inline upsell (§7.4). If a *feature* wants to tell one user
   something, that is a different mechanism, and mixing the two is how an announcements table
   becomes an event log with a million rows.
-- **Not two-way.** No replies, no read-and-respond. Support conversations are §13.6.6.
+- **Not two-way.** No replies, no read-and-respond. Support conversations are §21.
 - **Not email.** In-app only. Adding email later means `MailerService` plus a job and an
   unsubscribe preference — a decision with its own consequences, deliberately not bundled here.
 
@@ -1271,3 +1285,229 @@ exist for you, and that is the predicate's job, not a policy's.
   Left out only because it was not asked for.
 - Email delivery, per-item dismiss, read analytics, scheduling beyond `published_at`, and the
   dropdown surface. Each is listed above with what it would cost.
+
+---
+
+## 21. Support tickets (M10)
+
+Closes §19 Q6 with **build it**. The mockup's two-pane support UI has been dead CSS since M0
+(`.support-layout`, `.ticket-list`, `.ticket-item`, `.conversation-panel`, `.msg`, `.reply-area`,
+`.new-ticket-card` — ported in full, used by nothing); this gives it a backend. §13.6.6's
+"ship a contact form that emails support" is superseded: a form that emails support has no
+history, no status and nowhere to put a screenshot, which is most of what somebody opening a
+ticket came for.
+
+### 21.1 What this is, and what it is not
+
+**Is:** a two-way conversation between one workspace and staff, in the application, with
+attachments. A customer opens a ticket, sees every ticket they have opened before, and reads the
+reply where they asked the question.
+
+**Is not:**
+
+- **Not a helpdesk.** No SLAs, no queues, no macros, no CSAT, no email ingestion, no tags. If the
+  business needs those, this is the wrong table and Zendesk is a webhook away — but a boilerplate
+  that cannot answer "where do customers reach us" is missing a floor, not a ceiling.
+- **Not per-user chat.** A ticket belongs to an **organisation** (§5.4), like every other
+  tenant-owned row. Who inside it may read the ticket is §21.4, and that is a narrower question
+  than which tenant owns it.
+- **Not the announcements feed (§20).** That is one-way, staff-authored, cross-tenant and
+  non-transactional. This is two-way, customer-initiated and tenant-owned. They share nothing but
+  the word "message", and merging them would put a million-row event log in the table §20.4's
+  unread mechanism depends on staying small.
+- **Not email-in.** We send a notification with a link; replying to that email does nothing.
+  Inbound parsing means a provider webhook, MIME decoding, and a spam surface with a database
+  write behind it. Left out on purpose, and §21.11 says what it would cost.
+
+Volume assumption: **hundreds of tickets a year, tens of messages each.** Both tables are ordinary
+indexed tenant tables, so unlike §20 there is no clever mechanism resting on that number.
+
+### 21.2 Data model
+
+**`support_tickets`** — tenant-owned, `organization_id` on every query (§5.4).
+
+`id`, `public_id` (`tkt_…`), `organization_id`, `created_by_user_id`, `subject`,
+`status` (`open|answered|resolved`), `last_message_at`, `first_responded_at` (nullable),
+`assigned_staff_id` (nullable), `resolved_at` (nullable), timestamps, `deleted_at`
+
+**`support_messages`**
+
+`id`, `public_id` (`msg_…`), `support_ticket_id`, `author_type` (`user|staff`),
+`author_user_id` (nullable), `author_staff_id` (nullable), `body`, `created_at`
+
+- **Two nullable author columns, not one polymorphic id.** Tenant users and staff are separate
+  tables behind separate guards (D5); a single `author_id` would need the type to be read before
+  the row means anything, and a foreign key to nowhere. Exactly one is set, enforced in the
+  service and asserted in tests.
+- `first_responded_at` is the only reporting-shaped column here, and it is worth the byte: "how
+  long until somebody answered" is the one support number anybody ever asks for.
+- `last_message_at` is denormalised so the list sorts and pages without touching the messages
+  table. It is written in the same transaction as the message.
+- Deletion is soft, like files and lists. Deleting a workspace soft-deletes its tickets with
+  everything else (§5.7) — a ticket outliving its workspace is an orphan holding customer data.
+
+**Three statuses, and the reopen rule.**
+
+| From | Event | To |
+|---|---|---|
+| — | customer opens a ticket | `open` |
+| `open` | staff replies | `answered` |
+| `answered` | customer replies | `open` |
+| `open` / `answered` | staff resolves | `resolved` |
+| `resolved` | either replies | `open` |
+
+`open` means *waiting on us*, `answered` means *waiting on them*, and that is the whole state
+machine. There is no `closed`: a resolved ticket somebody replies to is open again, because that
+is what people do instead of opening a second ticket about the same thing. No status lives on a
+message — a conversation has one state and it is the ticket's.
+
+### 21.3 Attachments
+
+Reuse **`files`**, which is already polymorphic (`attachable_type`, `attachable_id`) and already
+does checksum, real content sniffing and the storage quota. The only change is widening
+`UploadInput.attachTo.type` in `app/storage/contracts.ts` from `'User' | 'Organization'` to
+include `'SupportMessage'`.
+
+- **Private disk, always.** A screenshot attached to a support ticket is the likeliest place in
+  the product for a customer to paste something they would not publish. It is served by a route
+  that authorises against the ticket first and *then* issues a short-TTL signed URL through the
+  existing `DiskStorage.urlFor()` — never a public URL, and never a signed URL minted before the
+  check.
+- **Caps:** three files per message, 5 MB each, images and PDF only. The sniffing layer already
+  refuses an HTML document wearing a `.png` extension (§10), which is the attack this feature
+  invites.
+- **The quota trap.** Attachments are recorded against the workspace's storage like any other
+  file, but are **exempt from the cap check**: otherwise a customer at their storage limit cannot
+  attach a screenshot to the ticket they are opening *about being at their storage limit*. The
+  bytes still count toward what the meter displays, so the number stays honest; only the refusal
+  is skipped. If that ever gets abused, the answer is a per-workspace attachment budget, not
+  re-arming the cap.
+
+### 21.4 Who inside a workspace can read a ticket
+
+**The author, plus owners.** Not workspace-wide.
+
+Lists and todos are workspace-wide by D8 because they are the shared work. A support ticket is
+not: it can carry a billing dispute, a complaint about a teammate, or a screenshot of something
+personal. Owners are included because they are already the billing and membership authority and
+will be answering for the workspace anyway.
+
+The alternative — every member sees every ticket, matching D8 — is one predicate in
+`SupportService.scopeFor(user)` and a different set of tests. It is a product call, not an
+architectural one, and reversing it later costs an afternoon.
+
+### 21.5 Screens
+
+**Entry point: the account menu.** A `Support` row with the `lifebuoy` icon in the header's
+account menu (`layouts/app.edge`), above the divider that separates *Sign out*. That is where the
+request put it, and it is one surface on desktop and mobile because that menu already is.
+
+**Tenant**
+
+| Route | Screen |
+|---|---|
+| `GET /support` | ticket list — `.ticket-list` + `.ticket-item`, `empty_state` when there are none |
+| `GET /support/new` | `.new-ticket-card` + the existing `file_drop` component |
+| `POST /support` | create |
+| `GET /support/:id` | conversation — `.conversation-panel`, one `.msg` per message |
+| `POST /support/:id/messages` | reply |
+| `GET /support/:id/files/:fileId` | authorise, then redirect to a signed URL |
+
+**Back-office — `/admin/support`.** The mockup's two-pane layout as designed: `.ticket-list` on
+the left filtered by status (`open` first, because that is the queue), `.conversation-panel` on
+the right with `.reply-area` under it. Staff can reply, resolve, and assign to themselves. The
+list is cross-tenant — that is the job — and every row shows which workspace it came from, linking
+to the org detail screen (§12).
+
+Plain form POSTs, no Alpine required (§13.3). The reply box is a textarea and a button; the
+`autoGrow` component already ported is sugar on top of it.
+
+### 21.6 Authorisation
+
+- **Staff:** a new `StaffPolicy.answerSupport` — `!staff.isDisabled`, so **support and admin
+  both**. Answering tickets is the support role's entire reason to exist; this is the one
+  back-office surface where the §6 support/admin split does *not* narrow to admin.
+- **Tenant:** no policy. §21.4's scope decides whether a ticket exists for you, the same way
+  §20.6 leaves the audience predicate to decide.
+- **Impersonation is already handled.** `app/middleware/impersonation.ts` refuses every non-GET
+  request for a non-admin staff session, so a support member impersonating a customer cannot open
+  or reply to a ticket as them. No new code, and a test that says so.
+
+### 21.7 Telling people there is a reply
+
+**Email on staff reply.** A `SupportReplyNotification` mail class plus `emails/support_reply.edge`
+and its `_text` twin, queued through `MailerService` like every other mail (§8). It carries the
+reply and a link — it is a notification, not a thread; §21.1 says why.
+
+**No new dot, and no new column.** Unread is *derived from status*: a ticket in `answered` is one
+staff has replied to and the customer has not answered. The count on the account menu's `Support`
+row is the number of those in scope. Replying flips it to `open` and it drops out of the count.
+That is one indexed query with no `seen_at` column, no join table, and no second definition of
+"unread" to disagree with §20.4's.
+
+**Nothing emails staff.** The back-office list filtered to `open` is the queue, and it is pulled,
+not pushed. A digest to `SUPPORT_EMAIL` is a job and four lines whenever somebody actually wants
+to be interrupted.
+
+### 21.8 Abuse, audit, retention
+
+- **Rate limits** (§14): `supportThrottle` beside the seven already in `start/limiter.ts` — five
+  tickets an hour and thirty messages an hour per user. A contact surface without a limiter is a
+  spam target with a database behind it.
+- **Validation:** subject ≤ 150 chars, body ≤ 5 000, in `app/validators/support.ts`.
+- **Audit (§12):** `support.ticket.created` as a user action; `support.message.created`,
+  `support.ticket.resolved` and `support.ticket.assigned` as staff actions. Staff reading and
+  writing customer data is already the audited category.
+- **Retention:** tickets follow the workspace. `PurgeDeletedFilesJob` already hard-deletes
+  soft-deleted files past 30 days; attachments inherit that unchanged.
+
+### 21.9 Tests
+
+- **Tenant isolation — the test that matters.** A member of workspace A gets a 404 on workspace
+  B's ticket, on its message endpoint, and on its attachment URL. New cases in
+  `tests/functional/tenant_isolation.spec.ts` (§20.7 added its own there for the same reason).
+- **Scope inside a workspace.** A member sees their own tickets and not a colleague's; an owner
+  sees both. Whichever way §21.4 lands, this file is where it is written down.
+- **Status machine.** Every transition in §21.2's table, including reopen-by-reply, and
+  `first_responded_at` being stamped once and never moved.
+- **Staff.** Support can reply and resolve; a disabled staff account cannot; a tenant user gets
+  nothing from `/admin/support`; impersonating support cannot post a message.
+- **Attachments.** A `.png` that is really HTML is refused (the existing fixture); over-size is
+  refused; a signed URL for one tenant's attachment does not work for another; the storage cap
+  does not block an attachment but does count its bytes.
+- **Rate limit.** The sixth ticket in an hour is a 429, not a row.
+- **Browser (§15).** Create a ticket with an image, staff replies, customer sees it. Multipart is
+  already the documented reason browser tests exist here.
+
+### 21.10 Build order
+
+Four slices, each shippable on its own.
+
+1. **Schema and the tenant slice.** Migrations for both tables, `schema_rules` entries, models,
+   `tkt_`/`msg_` prefixes in `public_id.ts`, `SupportService` (scope, create, reply, transitions),
+   `/support` list + new + show. No attachments, no staff side. A customer can ask a question and
+   read the thread.
+2. **Back-office.** `/admin/support` two-pane, reply, resolve, assign, `answerSupport` policy,
+   audit actions. Now somebody can answer.
+3. **Attachments.** Widen `attachTo`, the authorising download route, the caps and the quota
+   exemption, and their tests.
+4. **Polish.** `SupportReplyNotification` + templates, the `answered` count on the account menu,
+   `dev:seed` fixtures (one open ticket with an image, one answered, one resolved), a styleguide
+   entry, README and CONTRIBUTING, screenshots.
+
+Then update §13.5's table row, §13.6.6, and §19 Q6 — done in the same commit as this section.
+
+### 21.11 Deliberately not in v1
+
+- **Email-in.** Replying to the notification email should append to the ticket. It needs an
+  inbound webhook from the mail provider, MIME and quoted-reply parsing, and a spam gate on a
+  route that writes to the database. Worth doing the day support actually lives in email, and not
+  before.
+- **Internal staff notes** — a `is_internal` flag on a message, hidden from the customer. One
+  column and one `where`, deliberately deferred: the first time it is rendered on the wrong side
+  of the pane, a customer reads what staff said about them.
+- **Assignment beyond "assign to me"**, queues, SLA timers, canned replies, CSAT, tags, search
+  across tickets, and per-ticket read receipts.
+- **A ticket opened from a specific context** — "help with this failed payment" prefilled from
+  the billing screen. Cheap once the tables exist, and genuinely useful; it is not in slice 1
+  because the plumbing has to work first.

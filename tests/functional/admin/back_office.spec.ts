@@ -22,6 +22,7 @@ test.group('Back-office access', (group) => {
       '/admin',
       '/admin/organizations',
       '/admin/users',
+      '/admin/support',
       '/admin/subscriptions',
       '/admin/webhooks',
       '/admin/audit',

@@ -12,6 +12,7 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
+import { supportMessageThrottle, supportTicketThrottle } from '#start/limiter'
 
 router
   .group(() => {
@@ -78,6 +79,31 @@ router
     router.post('/files', [controllers.files.File, 'store']).as('files.store')
     router.get('/files/:id', [controllers.files.File, 'show']).as('files.show')
     router.post('/files/:id/delete', [controllers.files.File, 'destroy']).as('files.destroy')
+
+    /**
+     * Support tickets (plan §21). Reached from the account menu rather than
+     * the sidebar: it is a thing you do about the product, not a place in it.
+     *
+     * Opening and replying are throttled by account — a contact surface
+     * without a limiter is a spam target with a database behind it (§21.8).
+     * The attachment route authorises the *ticket* and only then mints a
+     * signed URL, so the grant never exists for somebody who cannot read the
+     * conversation.
+     */
+    router.get('/support', [controllers.support.Support, 'index']).as('support.index')
+    router.get('/support/new', [controllers.support.Support, 'create']).as('support.create')
+    router
+      .post('/support', [controllers.support.Support, 'store'])
+      .as('support.store')
+      .use(supportTicketThrottle)
+    router.get('/support/:id', [controllers.support.Support, 'show']).as('support.show')
+    router
+      .post('/support/:id/replies', [controllers.support.Support, 'reply'])
+      .as('support.reply')
+      .use(supportMessageThrottle)
+    router
+      .get('/support/:id/attachments/:fileId', [controllers.support.Support, 'attachment'])
+      .as('support.attachment')
 
     /**
      * Announcements (plan §20). Open to every member — there is nothing

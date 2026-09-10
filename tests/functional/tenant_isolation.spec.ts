@@ -8,6 +8,8 @@ import invitations from '#organizations/invitation_service'
 import Todo from '#models/todo'
 import TodoList from '#models/todo_list'
 import todoService from '#todos/todo_service'
+import SupportMessage from '#models/support_message'
+import support from '#support/support_service'
 import { addMember, createList, createWorkspace } from '#tests/helpers'
 
 /**
@@ -914,6 +916,74 @@ test.group('Tenant isolation', (group) => {
 
       assert.equal(unread, feed.length, `${user.email}`)
     }
+  })
+
+  /*
+  | Support tickets (plan §21). A ticket carries whatever a customer chose to
+  | tell us, and its attachment is customer bytes behind a URL — so both the
+  | conversation and the file get their own case here.
+  */
+  test('a support ticket is invisible to another workspace', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+
+    const { ticket } = await support.open(b.organization, b.user, {
+      subject: 'B private matter',
+      body: 'Only for support.',
+    })
+
+    const listing = await client.get('/support').loginAs(a.user)
+    assert.notInclude(listing.text(), 'B private matter')
+
+    const conversation = await client
+      .get(`/support/${ticket.publicId}`)
+      .loginAs(a.user)
+      .redirects(0)
+    conversation.assertStatus(302)
+    assert.notInclude(conversation.text(), 'Only for support.')
+  })
+
+  test('replying to another workspace ticket writes nothing', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+
+    const { ticket } = await support.open(b.organization, b.user, {
+      subject: 'B question',
+      body: 'First.',
+    })
+
+    await client
+      .post(`/support/${ticket.publicId}/replies`)
+      .loginAs(a.user)
+      .withCsrfToken()
+      .form({ body: 'Injected.' })
+      .redirects(0)
+
+    const messages = await SupportMessage.query().where('support_ticket_id', ticket.id)
+    assert.lengthOf(messages, 1, 'only B’s own message')
+  })
+
+  test('an attachment on another workspace ticket is not served', async ({ client, assert }) => {
+    const { a, b } = await twoWorkspaces()
+
+    const { ticket, message } = await support.open(b.organization, b.user, {
+      subject: 'B screenshot',
+      body: 'See attached.',
+    })
+
+    const { fixtureUpload } = await import('#tests/helpers')
+    const upload = await fixtureUpload('png', { clientName: 'private.png' })
+    const [file] = await support.attach(b.organization, b.user, message, [upload])
+
+    /**
+     * Through A's own ticket id as well as B's: neither path may end in a
+     * signed URL for a file A has nothing to do with.
+     */
+    const throughB = await client
+      .get(`/support/${ticket.publicId}/attachments/${file.publicId}`)
+      .loginAs(a.user)
+      .redirects(0)
+
+    throughB.assertStatus(302)
+    assert.notInclude(throughB.headers().location ?? '', file.key)
   })
 
   test('every organisation-scoped table carries its own rows only', async ({ assert }) => {

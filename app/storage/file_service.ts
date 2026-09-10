@@ -84,7 +84,9 @@ export class FileService {
           .where('id', organization.id)
           .firstOrFail()
 
-        plans.assertStorageWithinLimit(locked, validated.sizeBytes)
+        if (!input.skipQuota) {
+          plans.assertStorageWithinLimit(locked, validated.sizeBytes)
+        }
 
         const file = await File.create(
           {
@@ -283,7 +285,9 @@ export class FileService {
      * saves uploading bytes that are about to be refused; there it is the one
      * that is actually safe against a concurrent upload.
      */
-    plans.assertStorageWithinLimit(organization, size)
+    if (!input.skipQuota) {
+      plans.assertStorageWithinLimit(organization, size)
+    }
 
     const sniffed = await sniffFile(input.tmpPath, extension)
 

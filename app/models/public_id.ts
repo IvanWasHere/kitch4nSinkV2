@@ -44,6 +44,8 @@ export const PUBLIC_ID_PREFIXES = {
   file: 'fil',
   todoList: 'lst',
   todo: 'tdo',
+  supportTicket: 'tkt',
+  supportMessage: 'msg',
 } as const
 
 export type PublicIdResource = keyof typeof PUBLIC_ID_PREFIXES
