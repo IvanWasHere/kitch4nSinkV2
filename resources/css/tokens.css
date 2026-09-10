@@ -33,7 +33,7 @@
 
 :root {
   /* Brand — indigo ------------------------------------------------------ */
-  --accent-50:  #eff6ff; /* a selected table row */
+  --accent-50: #eff6ff; /* a selected table row */
   --accent-100: #dbeafe; /* an active filter pill */
   --accent-200: #bfdbfe; /* that pill's border */
   --accent-300: #93c5fd;
@@ -41,7 +41,6 @@
   --accent-500: #3b82f6; /* the accent itself */
   --accent-600: #2563eb; /* hover / pressed */
   --accent-700: #1255e7; /* accent text on --accent-100 */
-
 
   /* Neutral — slate, cool cast ------------------------------------------ */
   --slate-50: #f6f8fa; /* the page */
@@ -151,7 +150,7 @@
   --shadow-menu: 0 10px 32px rgba(15, 25, 50, 0.14);
   --shadow-toast: 0 8px 24px rgba(10, 15, 40, 0.3);
   --shadow-subtle: 0 1px 2px rgba(18, 28, 53, 0.04);
-  --ring-focus: 0 0 0 3px rgba(99, 91, 255, 0.12);
+  --ring-focus: 0 0 0 3px rgba(59, 130, 246, 0.12);
   --ring-danger: 0 0 0 3px rgba(213, 64, 122, 0.13);
   --ring-selected: 0 0 0 1px var(--accent-500);
 

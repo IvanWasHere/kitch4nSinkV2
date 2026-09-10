@@ -10,9 +10,17 @@
     icon   — icon name
     label  — visible text
     usage  — optional { current, limit } rendered as "3/3" (plan §13.6.1)
+    exact  — match the URL exactly instead of by prefix
+
+  An item stays current for everything below it — /lists/lst_x keeps *Lists*
+  lit — which is wrong for the one item whose URL is a prefix of every other
+  item in the same nav. /admin is the parent of /admin/users, so the
+  back-office *Dashboard* passes `exact` and only lights up on its own page.
 --}}
 @let(href = $props.has('href') ? $props.get('href') : urlFor($props.get('route')))
-@let(isCurrent = request.url() === href || request.url().startsWith(`${href}/`))
+@let(isCurrent = $props.get('exact')
+  ? request.url() === href
+  : request.url() === href || request.url().startsWith(`${href}/`))
 @let(navUsage = $props.get('usage'))
 @let(usageRatio = navUsage && navUsage.limit ? navUsage.current / navUsage.limit : 0)
 

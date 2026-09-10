@@ -80,7 +80,7 @@
         <nav class="dash-sidebar-nav" aria-label="Admin">
           <div class="nav-section-title">Support</div>
           @if(hasRoute('admin.dashboard'))
-            @!navItem({ route: 'admin.dashboard', icon: 'barChart', label: 'Dashboard' })
+            @!navItem({ route: 'admin.dashboard', icon: 'barChart', label: 'Dashboard', exact: true })
           @end
           @if(hasRoute('admin.organizations.index'))
             @!navItem({ route: 'admin.organizations.index', icon: 'package', label: 'Organisations' })

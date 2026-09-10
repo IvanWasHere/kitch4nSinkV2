@@ -126,11 +126,26 @@
   height: 13px;
 }
 
+/*
+| A wide panel with a narrow rail beside it, as in the reference's overview.
+| The rail is a fixed 320px because what belongs there is a summary — a
+| balance, a short list, a note.
+*/
 .panel-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 16px;
   margin-bottom: 16px;
+}
+
+/*
+| Two equal columns, for a pair of panels that both carry a table. A
+| four-column table does not fit in a 320px rail: it scrolls inside its own
+| box, and a table you have to scroll to read the last column of is a table
+| nobody reads.
+*/
+.panel-grid-even {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .panel {

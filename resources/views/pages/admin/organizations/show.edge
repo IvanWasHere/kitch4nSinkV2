@@ -39,7 +39,7 @@
     @!usageMeter({ label: 'Storage (MB)', current: usage.storage.current, limit: usage.storage.limit })
   </div>
 
-  <div class="panel-grid">
+  <div class="panel-grid panel-grid-even">
     @panel.root({ title: `Members (${members.length})`, flush: true })
       <div class="table-scroll">
         <table class="orders-table">
@@ -132,7 +132,7 @@
     @end
   @end
 
-  <div class="panel-grid">
+  <div class="panel-grid panel-grid-even">
     @panel.root({ title: `Files (${files.length})`, flush: true })
       @if(files.length)
         <div class="table-scroll">

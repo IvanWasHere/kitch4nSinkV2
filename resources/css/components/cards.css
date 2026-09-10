@@ -120,8 +120,13 @@
 /**
  * A colour stripe identifies a list at a glance. `todo_lists.color` stores a
  * token name, never a hex (plan §5.2), and these are the names it may hold.
+ *
+ * `display: block` is load-bearing: the element is a <span>, and an inline
+ * box ignores both of the sizes below — which is why this had been rendering
+ * as nothing at all.
  */
 .card-stripe {
+  display: block;
   height: 3px;
   width: 100%;
 }
