@@ -148,6 +148,26 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+/*
+| Panels that size to their own content rather than stretching to match the
+| tallest. For a chart beside a rail of two cards: stretched, the chart panel
+| grows a void under its summary.
+*/
+.panel-grid-top {
+  align-items: start;
+}
+
+/*
+| Two or more panels stacked in one column of a `.panel-grid` — the
+| reference's rail beside its chart.
+*/
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);

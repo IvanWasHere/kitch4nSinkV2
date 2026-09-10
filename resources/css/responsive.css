@@ -124,6 +124,23 @@
     grid-template-columns: 1fr;
   }
 
+  /*
+   | Two up, then one. The hairline between cells has to move with them or a
+   | wrapped row grows a stray vertical rule down its middle.
+   */
+  .snap {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .snap-cell:nth-child(3) {
+    border-left: none;
+  }
+
+  .snap-cell:nth-child(3),
+  .snap-cell:nth-child(4) {
+    border-top: 1px solid var(--border-soft);
+  }
+
   .products-grid,
   .card-grid,
   .feature-grid {
@@ -160,6 +177,23 @@
 @media (max-width: 480px) {
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .snap {
+    grid-template-columns: 1fr;
+  }
+
+  .snap-cell {
+    border-left: none;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .snap-cell:first-child {
+    border-top: none;
+  }
+
+  .bar-value {
+    display: none;
   }
 
   .auth-card {

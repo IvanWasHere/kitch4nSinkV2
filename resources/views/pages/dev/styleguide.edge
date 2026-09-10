@@ -127,6 +127,135 @@
     </div>
   </div>
 
+  <h2 class="section-title">Charts</h2>
+  <p class="section-desc">
+    The three shapes the back-office dashboard reports with — no charting library, just divs whose
+    one server-set value is a percentage.
+  </p>
+
+  <div class="page-header" style="align-items: center; margin-bottom: 14px">
+    <p class="section-desc" style="margin-bottom: 0">
+      Money cards carry a sparkline and a comparison; the segmented control beside them is a row
+      of links, so the range is in the URL.
+    </p>
+    <div class="seg">
+      <a href="#" class="active">7D</a>
+      <a href="#">30D</a>
+      <a href="#">90D</a>
+    </div>
+  </div>
+
+  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px">
+    @!moneyCard({
+      label: 'Gross volume',
+      amount: '$48,210',
+      previous: '$41,900',
+      since: 'previous 30 days',
+      figure: { cents: 4821000, previousCents: 4190000, differenceCents: 631000, direction: 'up', percent: 15.1 },
+      points: '0,29 14,22 28,25 42,12 57,16 71,7 85,9 100,3',
+    })
+    @!moneyCard({
+      label: 'Net volume from sales',
+      amount: '$46,880',
+      previous: '$41,110',
+      since: 'previous 30 days',
+      figure: { cents: 4688000, previousCents: 4111000, differenceCents: 577000, direction: 'up', percent: 14.0 },
+      points: '0,29 14,23 28,26 42,14 57,18 71,9 85,11 100,5',
+    })
+    @!moneyCard({
+      label: 'Refunded',
+      amount: '$1,330',
+      previous: '$790',
+      since: 'previous 30 days',
+      figure: { cents: 133000, previousCents: 79000, differenceCents: 54000, direction: 'up', percent: 68.4 },
+      points: '0,29 14,29 28,26 42,29 57,20 71,29 85,24 100,18',
+      good: 'down',
+      tone: 'danger',
+    })
+  </div>
+
+  @panel.root({ title: 'This month', flush: true })
+    <div class="snap">
+      @!snapCell({
+        label: 'Registered',
+        figure: { value: 24, previous: 18, difference: 6, direction: 'up' },
+      })
+      @!snapCell({
+        label: 'Started paying',
+        figure: { value: 6, previous: 9, difference: 3, direction: 'down' },
+      })
+      @!snapCell({
+        label: 'Renewals',
+        figure: { value: 41, previous: 41, difference: 0, direction: 'flat' },
+      })
+      {{-- Cancellations rising is not good news, so this one inverts. --}}
+      @!snapCell({
+        label: 'Churned',
+        figure: { value: 3, previous: 1, difference: 2, direction: 'up' },
+        good: 'down',
+      })
+    </div>
+  @end
+
+  <div class="panel-grid" style="margin-top: 16px">
+    @panel.root({ title: 'Workspaces registered' })
+      <div class="bars-wrap">
+        <div class="bars">
+          @each(month in [
+            { label: 'Apr', value: 11, height: 46, partial: false },
+            { label: 'May', value: 14, height: 58, partial: false },
+            { label: 'Jun', value: 9, height: 38, partial: false },
+            { label: 'Jul', value: 19, height: 79, partial: false },
+            { label: 'Aug', value: 24, height: 100, partial: false },
+            { label: 'Sep', value: 8, height: 33, partial: true },
+          ])
+            <div class="bar-col">
+              <div class="bar-value">{{ month.value }}</div>
+              <div class="bar-track">
+                <div
+                  class="bar-fill{{ month.partial ? ' partial' : '' }}"
+                  style="height: {{ month.height }}%"
+                ></div>
+              </div>
+              <div class="bar-label">{{ month.label }}</div>
+            </div>
+          @end
+        </div>
+      </div>
+
+      <div class="chart-summary">
+        <div>
+          <div class="chart-summary-label">Last 6 months</div>
+          <div class="chart-summary-value">85</div>
+        </div>
+        <div>
+          <div class="chart-summary-label">Monthly average</div>
+          <div class="chart-summary-value">14.2</div>
+        </div>
+        <span class="partial-key"><i></i> This month, still counting</span>
+      </div>
+    @end
+
+    @panel.root({ title: 'Workspaces by plan' })
+      <div class="share-bar">
+        <span class="tint-0" style="width: 62%"></span>
+        <span class="tint-1" style="width: 27%"></span>
+        <span class="tint-2" style="width: 11%"></span>
+      </div>
+      @each(plan in [
+        { name: 'Free', value: '62 · 62%', tint: 0 },
+        { name: 'Pro', value: '27 · 27%', tint: 1 },
+        { name: 'Business', value: '11 · 11%', tint: 2 },
+      ])
+        <div class="share-row">
+          <i class="swatch tint-{{ plan.tint }}"></i>
+          <span class="share-name">{{ plan.name }}</span>
+          <span class="share-value">{{ plan.value }}</span>
+        </div>
+      @end
+    @end
+  </div>
+
   <h2 class="section-title">Panel and table</h2>
   <p class="section-desc">The shape every list screen uses.</p>
   @panel.root({ title: 'Recent todos', flush: true })

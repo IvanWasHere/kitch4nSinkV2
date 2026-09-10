@@ -38,17 +38,16 @@
       icon: 'alert',
       tone: metrics.pastDueSubscriptions > 0 ? 'red' : 'green',
     })
+    {{--
+      Signups are counted in the strip below, so the fourth card carries the
+      number that has nowhere else to go: cancellations over the subscriptions
+      that could have cancelled.
+    --}}
     @!statCard({
-      label: 'Signups this month',
-      value: metrics.signupsThisMonth,
-      icon: 'users',
-      tone: 'purple',
-      change: metrics.signupsLastMonth > 0
-        ? {
-            direction: metrics.signupsThisMonth >= metrics.signupsLastMonth ? 'up' : 'down',
-            text: `${metrics.signupsLastMonth} last month`,
-          }
-        : undefined,
+      label: 'Churn, 30 days',
+      value: metrics.churnRate === null ? '—' : `${(metrics.churnRate * 100).toFixed(1)}%`,
+      icon: 'trendingUp',
+      tone: metrics.churnRate !== null && metrics.churnRate >= 0.05 ? 'red' : 'green',
     })
   </div>
 
@@ -57,6 +56,251 @@
     trying to collect. It knows nothing about discounts or proration, because nothing here sells
     them yet.
   </p>
+
+  {{--
+    Volume through the account (plan §12). The window is a query string, so
+    every range is a link somebody can send.
+  --}}
+  <div class="page-header" style="align-items: center; margin-bottom: 14px">
+    <div>
+      <h2 class="section-title">Volume</h2>
+      <p class="section-desc" style="margin-bottom: 0">
+        Charges through the account over the last {{ revenue.days }} days, in {{ revenue.currency }}.
+      </p>
+    </div>
+
+    <div class="seg">
+      @each(one in ranges)
+        <a
+          href="{{ urlFor('admin.dashboard') }}?range={{ one }}"
+          class="{{ revenue.range === one ? 'active' : '' }}"
+        >{{ one.toUpperCase() }}</a>
+      @end
+    </div>
+  </div>
+
+  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr)">
+    @!moneyCard({
+      label: 'Gross volume',
+      amount: money(revenue.gross.cents, revenue.currency, true),
+      previous: money(revenue.gross.previousCents, revenue.currency, true),
+      since: `previous ${revenue.days} days`,
+      figure: revenue.gross,
+      points: revenue.sparkGross,
+    })
+    @!moneyCard({
+      label: 'Net volume from sales',
+      amount: money(revenue.net.cents, revenue.currency, true),
+      previous: money(revenue.net.previousCents, revenue.currency, true),
+      since: `previous ${revenue.days} days`,
+      figure: revenue.net,
+      points: revenue.sparkNet,
+    })
+    {{-- Refunds rising is not good news, so this card inverts. --}}
+    @!moneyCard({
+      label: 'Refunded',
+      amount: money(revenue.refunded.cents, revenue.currency, true),
+      previous: money(revenue.refunded.previousCents, revenue.currency, true),
+      since: `previous ${revenue.days} days`,
+      figure: revenue.refunded,
+      points: revenue.sparkRefunded,
+      good: 'down',
+      tone: 'danger',
+    })
+  </div>
+
+  @if(revenue.otherCurrencies.length)
+    <p class="field-hint" style="margin: -10px 0 22px">
+      Figures are {{ revenue.currency }} only. Also taken this period:
+      @each((other, otherIndex) in revenue.otherCurrencies)
+        {{ otherIndex > 0 ? ', ' : '' }}{{ money(other.netCents, other.currency) }}
+      @end
+      Minor units are not comparable across currencies, so they are listed rather than added.
+    </p>
+  @end
+
+  <div class="panel-grid panel-grid-top" style="margin-top: 16px">
+    @panel.root({ title: `Net volume, by ${revenue.bucketsAreWeekly ? 'week' : 'day'}` })
+      <div class="bars-wrap">
+        <div class="bars" style="min-width: {{ revenue.buckets.length * 26 }}px">
+          @each(bucket in revenue.buckets)
+            <div class="bar-col" title="{{ money(bucket.cents, revenue.currency) }} · {{ bucket.label }}">
+              <div class="bar-track">
+                <div class="bar-fill" style="height: {{ bucket.heightPercent }}%"></div>
+              </div>
+              <div class="bar-label">{{ bucket.label }}</div>
+            </div>
+          @end
+        </div>
+      </div>
+
+      <div class="chart-summary">
+        <div>
+          <div class="chart-summary-label">Gross</div>
+          <div class="chart-summary-value">{{ money(revenue.gross.cents, revenue.currency) }}</div>
+        </div>
+        <div>
+          <div class="chart-summary-label">Refunded</div>
+          <div class="chart-summary-value">
+            {{ money(revenue.refunded.cents, revenue.currency) }}
+          </div>
+        </div>
+        <div>
+          <div class="chart-summary-label">Net</div>
+          <div class="chart-summary-value">{{ money(revenue.net.cents, revenue.currency) }}</div>
+        </div>
+      </div>
+    @end
+
+    <div class="rail">
+      @panel.root({ title: 'Balance' })
+        <div class="balance-section">Collected, all time</div>
+        <div class="balance-row">
+          <span class="balance-currency">{{ revenue.currency }}</span>
+          <span class="balance-amount">
+            {{ money(revenue.collectedAllTimeCents, revenue.currency) }}
+          </span>
+        </div>
+
+        <div class="balance-section">Refunded, all time</div>
+        <div class="balance-row">
+          <span class="balance-currency">{{ revenue.currency }}</span>
+          <span class="balance-amount">
+            {{ money(revenue.refundedAllTimeCents, revenue.currency) }}
+          </span>
+        </div>
+
+        {{--
+          The honest version of the reference's payout line. What is available
+          and what is pending are the provider's numbers, and this screen is
+          deliberately readable when the provider is not (plan §12).
+        --}}
+        <div class="balance-note">
+          @!icon({ name: 'info' })
+          <span>
+            What our rows say customers were charged — not what has settled. The available and
+            pending balances live at the payment provider;
+            <code>node ace billing:sync</code> is what compares the two.
+          </span>
+        </div>
+      @end
+
+      @panel.root({ title: 'Volume by plan' })
+        @if(revenue.byPlan.length)
+          <div class="share-bar">
+            @each((plan, planIndex) in revenue.byPlan)
+              <span class="tint-{{ (planIndex + 1) % 5 }}" style="width: {{ plan.percent }}%"></span>
+            @end
+          </div>
+
+          @each((plan, planIndex) in revenue.byPlan)
+            <div class="share-row">
+              <i class="swatch tint-{{ (planIndex + 1) % 5 }}"></i>
+              <span class="share-name">{{ plan.name }}</span>
+              <span class="share-value">
+                {{ money(plan.cents, revenue.currency) }} · {{ plan.percent.toFixed(0) }}%
+              </span>
+            </div>
+          @end
+        @else
+          <p class="chart-note" style="margin-top: 0">
+            Nothing was charged in this window, so there is nothing to split.
+          </p>
+        @end
+      @end
+    </div>
+  </div>
+
+  <h2 class="section-title" style="margin-top: 28px">Growth</h2>
+
+  {{--
+    How the business moved, under what it is worth. Four events on one line,
+    each against the same month before it (plan §12).
+  --}}
+  @panel.root({ title: 'This month', flush: true })
+    <div class="snap">
+      @!snapCell({ label: 'Registered', figure: growth.registered })
+      @!snapCell({ label: 'Started paying', figure: growth.startedPaying })
+      @!snapCell({ label: 'Renewals', figure: growth.renewals })
+      @!snapCell({ label: 'Churned', figure: growth.churned, good: 'down' })
+    </div>
+  @end
+
+  <p class="field-hint" style="margin: 10px 0 22px">
+    A workspace counts as <em>started paying</em> in the month its first successful payment
+    landed, and every payment after that is a <em>renewal</em>. <em>Churned</em> is subscriptions
+    cancelled or expired — a workspace that drops to Free is churn, one that simply goes quiet is
+    not.
+  </p>
+
+  <div class="panel-grid">
+    @panel.root({ title: 'Workspaces registered' })
+      <div class="bars-wrap">
+        <div class="bars">
+          @each(month in growth.months)
+            <div class="bar-col" title="{{ month.registered }} in {{ month.label }}">
+              <div class="bar-value">{{ month.registered || '' }}</div>
+              <div class="bar-track">
+                {{--
+                  The height is the only thing the server knows that the
+                  stylesheet cannot: it is a share of the busiest month in the
+                  window, not an absolute.
+                --}}
+                <div
+                  class="bar-fill{{ month.isCurrent ? ' partial' : '' }}"
+                  style="height: {{ month.heightPercent }}%"
+                ></div>
+              </div>
+              <div class="bar-label">{{ month.label }}</div>
+            </div>
+          @end
+        </div>
+      </div>
+
+      <div class="chart-summary">
+        <div>
+          <div class="chart-summary-label">Last 12 months</div>
+          <div class="chart-summary-value">{{ growth.registeredInWindow }}</div>
+        </div>
+        <div>
+          <div class="chart-summary-label">Monthly average</div>
+          <div class="chart-summary-value">{{ growth.monthlyAverage.toFixed(1) }}</div>
+        </div>
+        <div>
+          <div class="chart-summary-label">Best month</div>
+          <div class="chart-summary-value">{{ growth.busiestMonth }}</div>
+        </div>
+        <span class="partial-key"><i></i> This month, still counting</span>
+      </div>
+    @end
+
+    @panel.root({ title: 'Workspaces by plan' })
+      <div class="share-bar">
+        @each((plan, planIndex) in growth.planMix)
+          @if(plan.percent > 0)
+            <span class="tint-{{ planIndex % 5 }}" style="width: {{ plan.percent }}%"></span>
+          @end
+        @end
+      </div>
+
+      @each((plan, planIndex) in growth.planMix)
+        <div class="share-row">
+          <i class="swatch tint-{{ planIndex % 5 }}"></i>
+          <span class="share-name">{{ plan.name }}</span>
+          <span class="share-value">
+            {{ plan.count }} · {{ plan.percent.toFixed(0) }}%
+          </span>
+        </div>
+      @end
+
+      <p class="chart-note">
+        {{ growth.payingWorkspaces }} of {{ metrics.organizations }} workspaces
+        {{ growth.payingWorkspaces === 1 ? 'is' : 'are' }} on a paid plan
+        ({{ growth.payingPercent.toFixed(0) }}%). Counted from each workspace's current
+        entitlement, so a staff override counts as the plan the customer actually has.
+      </p>
+    @end
+  </div>
 
   <div class="panel-grid panel-grid-even">
     @panel.root({ title: 'Needs attention', flush: true })

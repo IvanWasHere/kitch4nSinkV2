@@ -20,6 +20,25 @@ import storage from '#storage/disk_storage'
 edge.global('appName', env.get('APP_NAME', 'Acme'))
 
 /**
+ * Money, formatted at the edge and nowhere else.
+ *
+ * Amounts live as integer minor units everywhere else in the application
+ * (portability rule 8); this is the one place they become a decimal, and it
+ * is a template helper precisely so that no controller is tempted to hand a
+ * view a pre-formatted string it cannot re-round.
+ *
+ * `whole` drops the fractional part, for a headline figure where the cents
+ * are noise.
+ */
+edge.global('money', (cents: number, currency = 'USD', whole = false) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    ...(whole ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}),
+  }).format((cents ?? 0) / 100)
+)
+
+/**
  * Whether a named route is registered.
  *
  * The application shell lists every destination it will eventually have, but

@@ -1,0 +1,64 @@
+{{--
+  A money figure over a window, with the same figure over the window before
+  it and a sparkline of its daily shape (plan §12).
+
+  Props:
+    label     — what is being counted
+    amount    — formatted string, already in its currency
+    figure    — a MoneyFigure: { direction, percent, previousCents, … }
+    previous  — the previous period's amount, formatted
+    since     — the window being compared against, e.g. "previous 30 days"
+    points    — sparkline polyline points, from the service
+    good      — which direction is good news, 'up' (default) or 'down'
+    tone      — sparkline tone: 'accent' (default) | 'muted' | 'danger'
+
+  A period with nothing before it to compare against says so, rather than
+  showing an infinite rise.
+--}}
+@let(figure = $props.get('figure'))
+@let(goodDirection = $props.get('good') ?? 'up')
+@let(tone = $props.get('tone') ?? 'accent')
+@let(deltaTone = figure.direction === 'flat'
+  ? 'delta-flat'
+  : figure.direction === goodDirection
+    ? 'delta-good'
+    : 'delta-bad')
+
+<div class="stat-card money-card">
+  <div>
+    <div class="stat-label">{{ $props.get('label') }}</div>
+    <div class="money-value">{{ $props.get('amount') }}</div>
+
+    <div class="money-delta">
+      @if(figure.percent === null)
+        <span class="delta delta-flat">No comparison</span>
+        <span>nothing in the {{ $props.get('since') }}</span>
+      @elseif(figure.direction === 'flat')
+        <span class="delta delta-flat">No change</span>
+        <span>vs the {{ $props.get('since') }}</span>
+      @else
+        <span class="delta {{ deltaTone }}">
+          @!icon({ name: figure.direction === 'up' ? 'arrowUp' : 'arrowDown', width: 13, height: 13 })
+          {{ figure.percent.toFixed(1) }}%
+        </span>
+        <span>{{ $props.get('previous') }} in the {{ $props.get('since') }}</span>
+      @end
+    </div>
+  </div>
+
+  {{--
+    `preserveAspectRatio="none"` lets the 100×30 viewBox the server drew in
+    stretch to whatever width the card gives it; the stroke keeps its weight
+    because of `vector-effect` in the stylesheet.
+  --}}
+  @if($props.get('points'))
+    <svg
+      class="spark spark-{{ tone }}"
+      viewBox="0 0 100 30"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <polyline points="{{ $props.get('points') }}" />
+    </svg>
+  @end
+</div>

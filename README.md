@@ -212,7 +212,7 @@ so nobody is offered a screen that would refuse them.
 |---|---|
 | 👑 **Workspace owner** — billing, API keys and usage meters in the nav | <img src="docs/screenshots/owner-dashboard.jpg" alt="Owner dashboard with usage meters" width="420" /> |
 | 👤 **Workspace member** — no Billing, no API Keys, and a 🔴 dot on the bell for a new announcement | <img src="docs/screenshots/member-dashboard.jpg" alt="Member dashboard with an unread announcement dot on the bell" width="420" /> |
-| 🛡️ **Staff — admin** — MRR, what needs attention, and the full operations nav | <img src="docs/screenshots/staff-admin-dashboard.jpg" alt="Admin back-office dashboard" width="420" /> |
+| 🛡️ **Staff — admin** — gross and net volume over 7/30/90 days, MRR and churn, who registered, started paying, renewed or left, the plan mix, and the full operations nav | <img src="docs/screenshots/staff-admin-dashboard.jpg" alt="Admin back-office dashboard" width="420" /> |
 | 🎧 **Staff — support** — every screen except Staff management, which is admin-only | <img src="docs/screenshots/staff-support-organisations.jpg" alt="Support view of organisation search" width="420" /> |
 
 <details>

@@ -1,0 +1,42 @@
+{{--
+  One figure in a snapshot strip: this month's number, and how it compares
+  with last month's (plan §12).
+
+  Props:
+    label   — what is being counted
+    figure  — a GrowthFigure: { value, previous, difference, direction }
+    good    — which direction is the good news, 'up' (default) or 'down'.
+              Cancellations rising is not a green number.
+    sub     — optional line under the delta
+
+  A flat month says so rather than showing a green zero, because "no change"
+  and "no growth" read differently to whoever opens this.
+--}}
+@let(figure = $props.get('figure'))
+@let(goodDirection = $props.get('good') ?? 'up')
+@let(deltaTone = figure.direction === 'flat'
+  ? 'delta-flat'
+  : figure.direction === goodDirection
+    ? 'delta-good'
+    : 'delta-bad')
+
+<div class="snap-cell">
+  <div class="snap-label">{{ $props.get('label') }}</div>
+  <div class="snap-value">{{ figure.value }}</div>
+
+  <div class="snap-delta">
+    @if(figure.direction === 'flat')
+      <span class="delta {{ deltaTone }}">No change</span>
+    @else
+      <span class="delta {{ deltaTone }}">
+        @!icon({ name: figure.direction === 'up' ? 'arrowUp' : 'arrowDown', width: 13, height: 13 })
+        {{ figure.difference }}
+      </span>
+    @end
+    <span>{{ figure.previous }} last month</span>
+  </div>
+
+  @if($props.has('sub'))
+    <div class="chart-note" style="margin-top: 8px">{{ $props.get('sub') }}</div>
+  @end
+</div>

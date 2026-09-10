@@ -908,6 +908,14 @@ Screens are Edge templates with Alpine.js for interactivity (plan §13).
   block anyway. The scale starts from a 14px body; sizes in `components/` are steps off it.
 - A row of links that chooses between views of one page is `.pillset` / `.pill`, not a row of
   buttons — a solid accent button reads as *the* action on the page.
+- Money is formatted by the `money(cents, currency, whole?)` view global and nowhere else. Amounts
+  are integer minor units everywhere behind it (portability rule 8), so no controller ever hands a
+  template a pre-formatted string it cannot re-round.
+- Charts are divs, not a library: `.bars`, `.share-bar` and the snapshot strip in
+  `components/charts.css` cover what the back-office reports with. The server sets one number per
+  element — a percentage, inline — because a height as a share of the busiest month is the one
+  thing a stylesheet cannot work out. A dependency here would be hundreds of kilobytes to draw
+  rectangles, and it would degrade to a blank canvas rather than to nothing.
 - Application content is capped at `--content-max-width` and centred beside the sidebar. The topbar
   stays full-bleed but its inner row shares the same cap, and the horizontal padding lives *inside*
   both capped boxes — put it on the bar instead and the page title stops lining up with the page.

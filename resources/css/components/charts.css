@@ -1,0 +1,465 @@
+/*
+| The three shapes ui-example/index.html uses to show a number over time or
+| split between categories: the snapshot strip, the bar chart, and the share
+| bar. Ported for the back-office dashboard (plan §12).
+|
+| No charting library, deliberately. Twelve bars and a stacked rule are a
+| handful of divs; a dependency here would be several hundred kilobytes to
+| draw rectangles, and it would degrade to a blank canvas rather than to
+| nothing. Heights and widths are percentages set inline from the server —
+| the one thing a stylesheet cannot know.
+*/
+
+/* Snapshot strip ------------------------------------------------------- */
+
+/*
+| Four figures across the top of a card, divided by hairlines rather than
+| boxed separately: they are one reading of one period, not four cards.
+*/
+.snap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.snap-cell {
+  padding: 15px 20px 17px;
+  border-left: 1px solid var(--border-soft);
+}
+
+.snap-cell:first-child {
+  border-left: none;
+}
+
+.snap-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.snap-value {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.snap-delta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 7px;
+}
+
+/*
+| The arrow and the difference. Whether up is good is the caller's business —
+| a rise in cancellations is not — so the tone classes are named for the
+| meaning, not for the direction.
+*/
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+}
+
+.delta-good {
+  color: var(--green-600);
+}
+
+.delta-bad {
+  color: var(--red-600);
+}
+
+.delta-flat {
+  color: var(--text-muted);
+}
+
+/* Bars ------------------------------------------------------------------ */
+
+/*
+| The chart scrolls sideways rather than squeezing: twelve bars under 500px
+| stop being readable, and a squashed chart is one nobody trusts.
+*/
+.bars-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 190px;
+  min-width: 500px;
+}
+
+.bar-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.bar-value {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar-track {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar-fill {
+  width: 100%;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, var(--accent-400), var(--accent-500));
+  transform-origin: bottom;
+  animation: barUp 0.5s cubic-bezier(0.32, 0.72, 0.24, 1) both;
+}
+
+@keyframes barUp {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/*
+| The month still running. Hatched rather than solid, because a bar that is
+| shorter only because the month is not over yet reads as a decline.
+*/
+.bar-fill.partial {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--accent-200),
+    var(--accent-200) 5px,
+    var(--accent-100) 5px,
+    var(--accent-100) 10px
+  );
+}
+
+.bar-label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-col:hover .bar-label {
+  color: var(--text-soft);
+}
+
+/*
+| What the bars add up to, under the rule that closes them off. The chart
+| answers "what shape", this answers "how many".
+*/
+.chart-summary {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.chart-summary-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.chart-summary-value {
+  font-weight: 600;
+  font-size: 15.5px;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-summary-value small {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.partial-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.partial-key i {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  display: inline-block;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--accent-200),
+    var(--accent-200) 4px,
+    var(--accent-100) 4px,
+    var(--accent-100) 8px
+  );
+}
+
+/* Share bar ------------------------------------------------------------- */
+
+/*
+| One rule split by category, with the legend beneath doubling as the table
+| of values. Segments carry no gap: the whole point is that they add to one.
+*/
+.share-bar {
+  display: flex;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin: 4px 0 14px;
+  background: var(--slate-150);
+}
+
+.share-bar span {
+  height: 100%;
+}
+
+.share-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.share-row .share-name {
+  color: var(--text-soft);
+}
+
+.share-row .share-value {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/*
+| Category colours, by position rather than by name: the plans are configured
+| in config/plans.ts and a deployment may have different ones. The first is
+| deliberately neutral — it is the free tier, which is a floor rather than a
+| result.
+*/
+.tint-0 {
+  background: var(--slate-300);
+}
+
+.tint-1 {
+  background: var(--accent-500);
+}
+
+.tint-2 {
+  background: var(--purple-500);
+}
+
+.tint-3 {
+  background: var(--green-500);
+}
+
+.tint-4 {
+  background: var(--orange-500);
+}
+
+.chart-note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+
+/* Range control --------------------------------------------------------- */
+
+/*
+| The reference's segmented control: one pill-shaped track, the current
+| option raised out of it. Tighter than `.pillset` because it lives inside a
+| card header beside a title, not on the page as a filter row.
+|
+| These are links to the same screen with a different query string, so the
+| range survives a reload, a paste into a ticket, and a browser with no
+| JavaScript.
+*/
+.seg {
+  display: inline-flex;
+  align-self: flex-start;
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 2px;
+  gap: 1px;
+}
+
+.seg a {
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition:
+    color var(--transition),
+    background var(--transition);
+}
+
+.seg a:hover {
+  color: var(--text-soft);
+  text-decoration: none;
+}
+
+.seg a.active {
+  background: var(--surface);
+  color: var(--text-strong);
+  box-shadow: 0 1px 1.5px rgb(18 28 53 / 0.08);
+}
+
+/* Sparkline ------------------------------------------------------------- */
+
+/*
+| The line beside a headline figure. It carries no axis and no labels on
+| purpose: it says which way the number has been going, and the number beside
+| it says how much.
+*/
+.spark {
+  width: 92px;
+  height: 30px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.spark polyline {
+  fill: none;
+  stroke: var(--accent-500);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.spark-accent polyline {
+  stroke: var(--accent-500);
+}
+
+.spark-muted polyline {
+  stroke: var(--slate-300);
+}
+
+.spark-danger polyline {
+  stroke: var(--red-400);
+}
+
+/*
+| A money card: the figure on the left, its sparkline on the right, baselines
+| ignored — the line is a texture beside the number, not a second column.
+*/
+.money-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.money-value {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-top: 6px;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.money-delta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 7px;
+}
+
+/* Balance --------------------------------------------------------------- */
+
+.balance-section {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 14px 0 4px;
+}
+
+.balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 0;
+}
+
+.balance-row .balance-currency {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.balance-row .balance-amount {
+  font-weight: 600;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+| The note under a balance. In the reference this is the next payout; here it
+| is the reason there is no payout to show — the settled balance lives at the
+| provider, and this application never calls it.
+*/
+.balance-note {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 11px 12px;
+  background: var(--page);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.balance-note svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-muted);
+}

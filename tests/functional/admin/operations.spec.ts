@@ -173,6 +173,240 @@ test.group('Back-office — the dashboard', (group) => {
     assert.isNull(figures.churnRate)
   })
 
+  /*
+  | Growth (plan §12).
+  |
+  | The four counts are the ones somebody asks for out loud — who arrived, who
+  | started paying, who paid again, who left — and the trap in all of them is
+  | the boundary: a payment must be a *first* payment or a renewal and never
+  | both, and a month must not borrow from the one beside it.
+  */
+  const pay = async (organizationId: number, occurredAt: DateTime, amountCents = 2900) =>
+    Payment.create({
+      organizationId,
+      provider: 'creem',
+      providerOrderId: `ord_${Math.random().toString(36).slice(2, 10)}`,
+      amountCents,
+      currency: 'USD',
+      status: 'succeeded',
+      refundedAmountCents: 0,
+      occurredAt,
+    })
+
+  test('counts a first payment as new, and every one after it as a renewal', async ({ assert }) => {
+    const { organization } = await createWorkspace({ email: 'a@example.com' })
+    const now = DateTime.utc()
+
+    await pay(organization.id, now.minus({ months: 1 }))
+    await pay(organization.id, now)
+    await pay(organization.id, now)
+
+    const growth = await metrics.growth()
+
+    assert.equal(growth.startedPaying.value, 0, 'they started paying last month, not this one')
+    assert.equal(growth.startedPaying.previous, 1)
+    assert.equal(growth.renewals.value, 2)
+    assert.equal(growth.renewals.direction, 'up')
+    assert.equal(growth.renewals.difference, 2)
+  })
+
+  test('a second workspace paying for the first time is new, not a renewal', async ({ assert }) => {
+    const a = await createWorkspace({ email: 'a@example.com' })
+    const b = await createWorkspace({ email: 'b@example.com' })
+    const now = DateTime.utc()
+
+    await pay(a.organization.id, now)
+    await pay(b.organization.id, now)
+
+    const growth = await metrics.growth()
+
+    assert.equal(growth.startedPaying.value, 2)
+    assert.equal(growth.renewals.value, 0)
+  })
+
+  test('counts cancellations in the month they happened', async ({ assert }) => {
+    const { organization } = await createWorkspace()
+    const subscription = await subscribe(organization.id, 'pro', 'canceled')
+
+    subscription.canceledAt = DateTime.utc().minus({ months: 1 })
+    await subscription.save()
+
+    const growth = await metrics.growth()
+
+    assert.equal(growth.churned.value, 0)
+    assert.equal(growth.churned.previous, 1)
+    assert.equal(growth.churned.direction, 'down', 'fewer cancellations than last month')
+  })
+
+  /**
+   * A month nobody signed up in is still a month. Twelve columns whatever
+   * happened, or a quiet quarter reads as a busy one.
+   */
+  test('the window is twelve months, and the last of them is still running', async ({ assert }) => {
+    await createWorkspace()
+
+    const growth = await metrics.growth()
+
+    assert.lengthOf(growth.months, 12)
+    assert.isTrue(growth.months.at(-1)!.isCurrent)
+    assert.isFalse(growth.months[0].isCurrent)
+    assert.equal(growth.months.at(-1)!.registered, 1)
+    assert.equal(growth.registeredInWindow, 1)
+    assert.equal(growth.busiestMonth, 1)
+  })
+
+  /**
+   * A bar for one signup in a window whose best month had thirty is a bar
+   * nobody can see, so a month with anything in it never rounds to nothing.
+   */
+  test('a month with anything in it gets a visible bar', async ({ assert }) => {
+    const now = DateTime.utc()
+    const { organization } = await createWorkspace({ email: 'old@example.com' })
+
+    organization.createdAt = now.minus({ months: 3 })
+    await organization.save()
+
+    for (let index = 0; index < 30; index++) {
+      await createWorkspace({ email: `bulk-${index}@example.com` })
+    }
+
+    const growth = await metrics.growth()
+    const quietMonth = growth.months.find((month) => month.registered === 1)!
+
+    assert.isAtLeast(quietMonth.heightPercent, 2)
+    assert.equal(growth.months.at(-1)!.heightPercent, 100, 'the busiest month sets the scale')
+  })
+
+  test('splits workspaces by the plan they are entitled to now', async ({ assert }) => {
+    const free = await createWorkspace({ email: 'free@example.com' })
+    const pro = await createWorkspace({ email: 'pro@example.com' })
+    void free
+
+    pro.organization.planKey = 'pro'
+    await pro.organization.save()
+
+    const growth = await metrics.growth()
+    const mix = Object.fromEntries(growth.planMix.map((plan) => [plan.key, plan]))
+
+    assert.equal(mix.free.count, 1)
+    assert.equal(mix.pro.count, 1)
+    assert.equal(mix.business.count, 0)
+    assert.equal(mix.pro.percent, 50)
+    assert.isFalse(mix.free.isPaid)
+    assert.isTrue(mix.pro.isPaid)
+    assert.equal(growth.payingWorkspaces, 1)
+    assert.equal(growth.payingPercent, 50)
+  })
+
+  /*
+  | Volume (plan §12).
+  |
+  | A refund does not delete the sale: the charge stays in gross and comes off
+  | net. Getting that wrong is how a dashboard reports a month that never
+  | happened.
+  */
+  test('gross keeps a refunded charge, net does not', async ({ assert }) => {
+    const { organization } = await createWorkspace()
+    const now = DateTime.utc()
+
+    await pay(organization.id, now.minus({ days: 2 }), 10000)
+    const refunded = await pay(organization.id, now.minus({ days: 1 }), 4000)
+
+    refunded.refundedAmountCents = 2500
+    refunded.status = 'partially_refunded'
+    await refunded.save()
+
+    const revenue = await metrics.revenue('30d')
+
+    assert.equal(revenue.gross.cents, 14000)
+    assert.equal(revenue.refunded.cents, 2500)
+    assert.equal(revenue.net.cents, 11500)
+  })
+
+  test('compares the window with the one before it', async ({ assert }) => {
+    const { organization } = await createWorkspace()
+    const now = DateTime.utc()
+
+    await pay(organization.id, now.minus({ days: 2 }), 4000)
+    await pay(organization.id, now.minus({ days: 10 }), 2000)
+
+    const revenue = await metrics.revenue('7d')
+
+    assert.equal(revenue.gross.cents, 4000, 'only the last seven days')
+    assert.equal(revenue.gross.previousCents, 2000, 'the seven days before those')
+    assert.equal(revenue.gross.direction, 'up')
+    assert.equal(revenue.gross.percent, 100)
+  })
+
+  /**
+   * Nothing to divide by is not a 100% rise.
+   */
+  test('says so when there is nothing to compare against', async ({ assert }) => {
+    const { organization } = await createWorkspace()
+
+    await pay(organization.id, DateTime.utc().minus({ days: 1 }), 4000)
+
+    const revenue = await metrics.revenue('7d')
+
+    assert.isNull(revenue.gross.percent)
+    assert.equal(revenue.gross.previousCents, 0)
+  })
+
+  /**
+   * Minor units are only comparable inside one currency, so the headline is
+   * the busiest one and the rest are listed rather than added to it.
+   */
+  test('reports one currency and names the others', async ({ assert }) => {
+    const { organization } = await createWorkspace()
+    const now = DateTime.utc()
+
+    await pay(organization.id, now.minus({ days: 1 }), 10000)
+    const euros = await pay(organization.id, now.minus({ days: 1 }), 3000)
+
+    euros.currency = 'EUR'
+    await euros.save()
+
+    const revenue = await metrics.revenue('30d')
+
+    assert.equal(revenue.currency, 'USD')
+    assert.equal(revenue.net.cents, 10000, 'the euros are not added in')
+    assert.deepEqual(revenue.otherCurrencies, [{ currency: 'EUR', netCents: 3000 }])
+  })
+
+  test('attributes volume to the plan the subscription was on', async ({ assert }) => {
+    const { organization } = await createWorkspace()
+    const subscription = await subscribe(organization.id, 'business', 'active')
+
+    /* The workspace has since been moved to Pro; the charge was for Business. */
+    organization.planKey = 'pro'
+    await organization.save()
+
+    const payment = await pay(organization.id, DateTime.utc().minus({ days: 1 }), 9900)
+    payment.subscriptionId = subscription.id
+    await payment.save()
+
+    const revenue = await metrics.revenue('30d')
+
+    assert.deepEqual(
+      revenue.byPlan.map((plan) => [plan.key, plan.cents, Math.round(plan.percent)]),
+      [['business', 9900, 100]]
+    )
+  })
+
+  test('buckets by day up to a month, and by week beyond it', async ({ assert }) => {
+    const { organization } = await createWorkspace()
+    await pay(organization.id, DateTime.utc().minus({ days: 1 }), 4000)
+
+    const week = await metrics.revenue('7d')
+    assert.lengthOf(week.buckets, 7)
+    assert.isFalse(week.bucketsAreWeekly)
+
+    const quarter = await metrics.revenue('90d')
+    assert.lengthOf(quarter.buckets, 13)
+    assert.isTrue(quarter.bucketsAreWeekly)
+    assert.equal(quarter.buckets.at(-1)!.heightPercent, 100)
+  })
+
   test('surfaces what is broken: failed jobs and unapplied webhooks', async ({ assert }) => {
     await WebhookEvent.create({
       provider: 'creem',
