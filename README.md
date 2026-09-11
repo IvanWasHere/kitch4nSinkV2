@@ -231,6 +231,8 @@ is offered a screen that would refuse them.
 | 💳 **Billing** — current plan, usage, the plan grid, and every charge and refund | <img src="docs/screenshots/owner-billing.jpg" alt="Billing screen with plan grid and transaction history" width="420" /> |
 | 🔐 **Security** — two-factor turned on, recovery codes, and changing a password | <img src="docs/screenshots/owner-security.jpg" alt="Security settings with two-factor enabled" width="420" /> |
 | 📣 **Announcements** — one-way notices, new ones highlighted | <img src="docs/screenshots/member-announcements.jpg" alt="Announcements feed" width="420" /> |
+| 🎫 **Support** — the workspace's tickets, with the ones we have answered marked | <img src="docs/screenshots/owner-support.jpg" alt="Support ticket list with answered and resolved tickets" width="420" /> |
+| 💬 **A ticket** — the conversation with staff, attachments, and replying to a resolved ticket reopens it | <img src="docs/screenshots/owner-support-ticket.jpg" alt="A support conversation with a staff reply" width="420" /> |
 
 </details>
 
@@ -242,6 +244,7 @@ is offered a screen that would refuse them.
 | ⚠️ **Past due** — a charge failed. Nothing is taken away; the banner is on every screen until it is fixed | <img src="docs/screenshots/owner-past-due.jpg" alt="Billing screen for a past-due workspace" width="420" /> |
 | 🔎 **A workspace, from the back office** — usage, members, the subscription mirror, plan and limit overrides, impersonation | <img src="docs/screenshots/staff-admin-organisation.jpg" alt="Back-office view of one workspace" width="420" /> |
 | 🧾 **Subscriptions** — every subscription, filterable by state, with what the provider last told us | <img src="docs/screenshots/staff-admin-subscriptions.jpg" alt="Back-office subscription ledger" width="420" /> |
+| 🎧 **The support queue** — waiting on us, waiting on them, resolved; every workspace's tickets beside the open conversation | <img src="docs/screenshots/staff-support-queue.jpg" alt="Back-office support queue with a conversation open" width="420" /> |
 
 </details>
 
