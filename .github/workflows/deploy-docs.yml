@@ -41,6 +41,10 @@ jobs:
       - name: Configure GitHub Pages
         id: pages
         uses: actions/configure-pages@v5
+        with:
+          # Turn Pages on and point it at Actions if it is not set up yet,
+          # instead of failing with "Get Pages site failed".
+          enablement: true
 
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
