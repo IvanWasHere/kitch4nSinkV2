@@ -9,9 +9,20 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# A runner has no `.env`, and `.env.test` only carries the values that differ
+# in tests. Everything `start/env.ts` demands unconditionally therefore has to
+# be supplied here, or `node ace` refuses to boot at all.
 env:
   APP_KEY: ci_only_key_do_not_use_in_production
   NODE_ENV: test
+  PORT: 3333
+  HOST: localhost
+  LOG_LEVEL: warn
+  APP_URL: http://localhost:3333
+  # The suite writes and compares UTC throughout and fails in any other zone.
+  # Runners happen to be UTC already; pinning it means that staying true is not
+  # luck.
+  TZ: UTC
 
 jobs:
   static:
