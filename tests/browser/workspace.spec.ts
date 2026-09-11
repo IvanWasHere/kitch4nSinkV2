@@ -27,17 +27,8 @@ test.group('Upgrading a plan', (group) => {
     }
   })
 
-  test('hands the owner off to the provider', async ({ visit, browserContext, assert }) => {
+  test('hands the owner off to the provider', async ({ visit, assert }) => {
     await createWorkspace({ email: 'jane@example.com' })
-
-    /**
-     * The fake provider's checkout URL points at a host that does not exist,
-     * so it is answered here — the test is about the handoff, and nothing
-     * should leave the machine to prove it.
-     */
-    await browserContext.route('https://checkout.test/**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'text/html', body: 'provider checkout' })
-    })
 
     const page = await visit('/login')
     await page.fill('input[name="email"]', 'jane@example.com')
@@ -46,21 +37,32 @@ test.group('Upgrading a plan', (group) => {
     await page.waitForURL('**/dashboard')
 
     await page.goto('/billing')
-    await page.click('#checkout-pro button[type="submit"]')
 
-    await page.waitForURL('https://checkout.test/**')
+    /**
+     * The request the browser issues is the assertion, not the page it lands
+     * on. The fake provider's checkout host does not exist — nothing should
+     * leave the machine to prove a handoff — and route interception cannot
+     * stand in for it: Playwright does not intercept a cross-origin navigation
+     * produced by a server redirect, so a stub here passed only on a machine
+     * whose DNS answers for hosts that are not there.
+     *
+     * Waiting for the request keeps both halves of what this is worth. A form
+     * POST answering with an off-site redirect is subject to `form-action`,
+     * enforced across the redirect and failing silently — no error page, no
+     * exception, just a button that does nothing (config/shield.ts). Blocked,
+     * the browser issues no request at all and this times out.
+     */
+    const [request] = await Promise.all([
+      page.waitForRequest('https://checkout.test/**'),
+      page.click('#checkout-pro button[type="submit"]'),
+    ])
 
     /**
      * Which product they were sent to matters: this is the mapping from a
      * plan key to a provider product id (§7.3), and getting it wrong sells
      * somebody the wrong thing.
-     *
-     * That the browser got here at all is the other half. A form POST that
-     * answers with a redirect off-site is subject to `form-action`, which is
-     * enforced across the redirect and fails silently — no error page, no
-     * exception, just a button that does nothing (config/shield.ts).
      */
-    assert.include(page.url(), 'prod_test_pro')
+    assert.include(request.url(), 'prod_test_pro')
   })
 
   /**
