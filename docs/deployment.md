@@ -1,3 +1,8 @@
+---
+title: Deployment
+nav_order: 13
+---
+
 # Deploying this application
 
 Two processes, one database, one object store, one mail provider. Nothing here needs Kubernetes,
