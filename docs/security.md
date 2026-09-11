@@ -1,3 +1,8 @@
+---
+title: Security
+nav_order: 14
+---
+
 # Security
 
 What this application does about the usual attacks, what it deliberately does not, and what is

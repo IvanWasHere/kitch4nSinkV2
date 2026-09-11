@@ -18,6 +18,10 @@ storage/*
 # Frontend assets compiled code
 public/assets
 
+# Documentation site, built from docs/ by GitHub Actions and never committed
+_site
+docs/.jekyll-cache
+
 # Build tools specific
 npm-debug.log
 yarn-error.log
