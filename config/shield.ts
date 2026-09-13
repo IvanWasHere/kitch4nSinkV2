@@ -2,6 +2,7 @@ import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/shield'
 
 import env from '#start/env'
+import { serverStatsEnabled } from '#start/dev_toolbar'
 
 /**
  * Security configuration using Shield.
@@ -49,6 +50,33 @@ const viteSocket = app.inProduction ? [] : ['ws://localhost:*', 'ws://127.0.0.1:
 
 const storageOrigins = [...originOf(env.get('R2_PUBLIC_URL')), ...originOf(env.get('R2_ENDPOINT'))]
 
+/**
+ * What `script-src` has to become for the development toolbar
+ * (`#start/dev_toolbar`) to run, and why it cannot be done by addition.
+ *
+ * The toolbar is deliberately self-contained: `@serverStats()` writes its
+ * stylesheet and its client into the page as inline `<style>` and `<script>`
+ * elements, and the dashboard at `/__stats` is served the same way. None of
+ * those scripts carry the nonce, because the package has no way to know
+ * about it — it takes no nonce option and never reads `cspNonce`.
+ *
+ * Adding `'unsafe-inline'` alongside `@nonce` would do nothing at all. A
+ * browser that understands nonces **ignores** `'unsafe-inline'` as soon as a
+ * nonce or hash source appears in the directive, which is the rule that
+ * makes nonce policies worth having; the toolbar would still be blocked and
+ * the only evidence would be a console message. So the nonce has to come out
+ * for `'unsafe-inline'` to mean anything, and the two cannot be combined.
+ *
+ * Hashing the inline blocks instead was the other option and was rejected:
+ * there are several of them, their content changes with every release of the
+ * package, and a stale hash fails exactly like a policy error.
+ *
+ * This applies only where `serverStatsEnabled` is true, which is only where
+ * the package is installed — never in a deployed environment, where the
+ * nonce policy below is unchanged and is the one that matters.
+ */
+const toolbarScriptSrc = serverStatsEnabled ? [`'unsafe-inline'`] : ['@nonce']
+
 const shieldConfig = defineConfig({
   /**
    * Content Security Policy (plan §16, M8).
@@ -75,6 +103,10 @@ const shieldConfig = defineConfig({
        * whole point and also the first thing to check when one silently
        * stops working.
        *
+       * `toolbarScriptSrc` is that nonce, except on a machine running the
+       * development toolbar, where it is `'unsafe-inline'` instead. The
+       * reasoning, and why the two cannot both be listed, is above.
+       *
        * `'unsafe-eval'` is Alpine. Alpine compiles the expressions in
        * `x-show`, `x-text` and friends with `new Function`, so the standard
        * build cannot run without it. It is a narrower hole than it sounds:
@@ -89,7 +121,13 @@ const shieldConfig = defineConfig({
        * Delete both the entry and that `<script>` if you would rather bundle
        * it or drop the page.
        */
-      scriptSrc: [`'self'`, '@nonce', `'unsafe-eval'`, 'https://cdn.jsdelivr.net', ...viteServing],
+      scriptSrc: [
+        `'self'`,
+        ...toolbarScriptSrc,
+        `'unsafe-eval'`,
+        'https://cdn.jsdelivr.net',
+        ...viteServing,
+      ],
 
       /**
        * `'unsafe-inline'` for styles, deliberately.
@@ -198,6 +236,25 @@ const shieldConfig = defineConfig({
      */
     exceptRoutes: (ctx) => {
       const pattern = ctx.route?.pattern ?? ''
+
+      /**
+       * The development toolbar's own routes (`#start/dev_toolbar`). Its
+       * dashboard mutates things — retry a job, drop a cache key, save a
+       * filter — from `fetch()` calls that carry no CSRF token, because the
+       * package knows nothing about this application's session. It guards
+       * those handlers itself with a same-origin check on `Origin` and
+       * `Referer`, which is the protection actually being relied on here.
+       *
+       * Only ever reachable on a developer's machine: `serverStatsEnabled`
+       * is false wherever the package is not installed, and this predicate
+       * then never widens.
+       */
+      if (
+        serverStatsEnabled &&
+        (pattern.startsWith('/__stats') || pattern.includes('/api/debug'))
+      ) {
+        return true
+      }
 
       return pattern.startsWith('/webhooks/') || pattern.startsWith('/api/')
     },

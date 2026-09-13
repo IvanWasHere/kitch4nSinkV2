@@ -11,6 +11,8 @@
 import router from '@adonisjs/core/services/router'
 import server from '@adonisjs/core/services/server'
 
+import { serverStatsEnabled } from '#start/dev_toolbar'
+
 /**
  * The error handler is used to convert an exception
  * to an HTTP response.
@@ -24,6 +26,18 @@ server.errorHandler(() => import('#exceptions/handler'))
  */
 server.use([
   () => import('#middleware/container_bindings_middleware'),
+
+  /**
+   * Request timing and tracing for the development toolbar
+   * (`#start/dev_toolbar`), guarded because the package is a devDependency
+   * and is absent from the runtime image.
+   *
+   * Near the top of the stack so the duration it reports is the one the
+   * browser waited, not the fraction left after the middleware below it have
+   * run. Still inside the container bindings, because the per-request
+   * timeline it builds resolves services out of the request container.
+   */
+  ...(serverStatsEnabled ? [() => import('adonisjs-server-stats/middleware')] : []),
 
   /**
    * Outermost, so the headers are on every response including the ones no

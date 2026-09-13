@@ -29,5 +29,6 @@
     @include('partials/flash_alerts')
     {{{ await $slots.main() }}}
     @stack('scripts')
+    @includeIf(serverStatsEnabled, 'partials/server_stats')
   </body>
 </html>
