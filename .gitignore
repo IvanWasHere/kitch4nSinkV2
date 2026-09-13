@@ -18,6 +18,12 @@ storage/*
 # Frontend assets compiled code
 public/assets
 
+# The development toolbar's history — a SQLite database and a debug-data
+# dump, written by adonisjs-server-stats (start/dev_toolbar.ts). Only
+# `.adonisjs/server-stats`, because the codegen beside it under
+# `.adonisjs/server` is committed.
+.adonisjs/server-stats
+
 # Documentation site, built from docs/ by GitHub Actions and never committed
 _site
 docs/.jekyll-cache

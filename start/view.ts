@@ -13,11 +13,22 @@ import router from '@adonisjs/core/services/router'
 
 import plans from '#billing/plan_service'
 import storage from '#storage/disk_storage'
+import { serverStatsEnabled } from '#start/dev_toolbar'
 
 /**
  * The product name, rendered in the logo, the <title> and transactional mail.
  */
 edge.global('appName', env.get('APP_NAME', 'Acme'))
+
+/**
+ * Whether the development toolbar is in this process (`#start/dev_toolbar`).
+ *
+ * Read by `layouts/base.edge` to decide whether to include the partial that
+ * carries the `@serverStats()` tag. A global rather than something each
+ * controller shares, because the layout is rendered by every page and none
+ * of them should have to know the toolbar exists.
+ */
+edge.global('serverStatsEnabled', serverStatsEnabled)
 
 /**
  * Money, formatted at the edge and nowhere else.

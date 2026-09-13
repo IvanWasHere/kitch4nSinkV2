@@ -121,6 +121,78 @@ Everything goes through the queue, so run a worker. Locally the transport is
 brew install mailpit && mailpit     # then open http://localhost:8025
 ```
 
+### 🔍 The development toolbar
+
+`npm run dev` puts a stats bar at the foot of every page — Node version, uptime, CPU, event-loop
+lag, heap and RSS, requests per second, average latency, error rate, and the database pool. Click
+the tool icon at its far left and it opens into a debug panel over the page:
+
+| Panel | What is in it |
+|---|---|
+| 🗃️ **Queries** | Every SQL statement this request ran, with bindings, duration, and `EXPLAIN` on demand |
+| 📡 **Events** | Application events and their payloads |
+| ✉️ **Emails** | What was sent, to whom, and the rendered body — without leaving the page |
+| 🧭 **Routes** | Every registered route and its handler |
+| 📝 **Logs** | The log stream, filterable by level and correlated by request id |
+| ⏱️ **Requests** | A trace per request — the waterfall of queries and events inside it |
+| ⚙️ **Config / Internals** | Resolved configuration and the toolbar's own state |
+
+There is also a full page at **`http://localhost:3333/__stats`** — the same data kept over time,
+with charts, slowest endpoints, grouped query analysis and saved filters. Its history lives in a
+SQLite file under `.adonisjs/server-stats/`, which is git-ignored.
+
+Nothing to configure and nothing to start: it is wired up in `config/server_stats.ts` and appears
+on its own.
+
+> ⚠️ **There is no login on any of it.** The debug panel renders resolved environment variables,
+> email bodies and SQL with its bindings to anyone who can reach the port.
+
+That is deliberate, and it is safe for one reason only — **the toolbar cannot exist in a deployed
+environment.** [`adonisjs-server-stats`](https://www.npmjs.com/package/adonisjs-server-stats) is a
+**devDependency**, the runtime image is built with `npm ci --omit=dev`, and every place that
+registers it — the provider in `adonisrc.ts`, the middleware in `start/kernel.ts`, the config in
+`config/server_stats.ts`, the Edge global in `start/view.ts` and the partial it includes from
+`layouts/base.edge` — is guarded on one flag:
+
+```ts
+// start/dev_toolbar.ts
+export const serverStatsEnabled =
+  process.env.NODE_ENV !== 'production' &&
+  process.env.NODE_ENV !== 'test' &&
+  isInstalled('adonisjs-server-stats')
+```
+
+Read that flag before changing it; each clause is load-bearing and two of them are not obvious.
+`NODE_ENV` is compared against `production` rather than `development` because AdonisJS evaluates
+`adonisrc.ts` **before** it loads `.env`, so at that moment `NODE_ENV` is `undefined` on a laptop —
+the obvious spelling disables the toolbar for everyone and says nothing about why. `test` is
+excluded separately because the suite installs dev dependencies but boots the application in the
+`test` environment, where the provider does not load; without that clause the layout would include
+a tag nothing had registered and Edge would print `@serverStats()` into the HTML that every
+functional and browser test asserts against. The resolve check is what makes a deploy that forgets
+to set `NODE_ENV` degrade to *off* rather than to a crash loop on a missing module.
+
+`config/shield.ts` makes two concessions to it, both keyed on the same flag and both inert in
+production:
+
+- **CSP** — `script-src` trades the nonce for `'unsafe-inline'`. The toolbar inlines its own
+  client, and a browser **ignores** `'unsafe-inline'` as soon as a nonce appears in the directive,
+  so the two cannot simply be listed together. Deployed, the nonce policy is untouched.
+- **CSRF** — the toolbar's own routes are exempt. Its dashboard mutates state from `fetch()` calls
+  that carry no token; the package guards those handlers itself with a same-origin check.
+
+The collector list in `config/server_stats.ts` is spelled out rather than left on `'auto'`, to drop
+one collector that counts rows in three tables every three seconds — with `debug: app.inDev` on
+both connections that is sixty lines of SQL a minute in your terminal on an idle server. The cost
+is three tiles; the Queries panel is unaffected, because it reads `db:query` events rather than
+that collector.
+
+To remove the toolbar entirely: delete the guarded blocks in the five files above and in
+`config/shield.ts`, delete `start/dev_toolbar.ts` and `partials/server_stats.edge`, then
+`npm uninstall adonisjs-server-stats`. Uninstalling alone is not enough — the application still
+*runs*, because every import is lazy and behind the flag, but `npm run typecheck` fails on four
+modules it can no longer resolve.
+
 ---
 
 ## 🔧 Environment
@@ -308,6 +380,7 @@ is offered a screen that would refuse them.
 | 🧹 | `eslint` + `prettier` | Lint and format, Adonis configs |
 | 🔥 | `hot-hook` | HMR in development |
 | 🩺 | `youch` + `pino-pretty` | Readable errors and logs |
+| 🔍 | `adonisjs-server-stats` | [The development toolbar](#-the-development-toolbar) — stats bar, debug panel, `/__stats`. Dev only, and absent from the image |
 
 ---
 

@@ -6,6 +6,43 @@ export type ScannedRoutes = {
   ALL: {
     'drive.private.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'drive.public.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
+    'server-stats.api': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.config': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.diagnostics': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.events': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queryExplain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emailPreview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.traceDetail': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.dashboard': { paramsTuple?: []; params?: {} }
+    'server-stats.overview': { paramsTuple?: []; params?: {} }
+    'server-stats.overview.chart': { paramsTuple?: []; params?: {} }
+    'server-stats.requests': { paramsTuple?: []; params?: {} }
+    'server-stats.requests.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.events': { paramsTuple?: []; params?: {} }
+    'server-stats.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.emails.preview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.traces.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.queries.grouped': { paramsTuple?: []; params?: {} }
+    'server-stats.queries.explain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.cache': { paramsTuple?: []; params?: {} }
+    'server-stats.cache.show': { paramsTuple: [ParamValue]; params: {'key': ParamValue} }
+    'server-stats.cache.delete': { paramsTuple: [ParamValue]; params: {'key': ParamValue} }
+    'server-stats.jobs': { paramsTuple?: []; params?: {} }
+    'server-stats.jobs.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.config': { paramsTuple?: []; params?: {} }
+    'server-stats.filters': { paramsTuple?: []; params?: {} }
+    'server-stats.filters.create': { paramsTuple?: []; params?: {} }
+    'server-stats.filters.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'billing.index': { paramsTuple?: []; params?: {} }
     'billing.checkout': { paramsTuple?: []; params?: {} }
     'billing.return': { paramsTuple?: []; params?: {} }
@@ -142,6 +179,39 @@ export type ScannedRoutes = {
   GET: {
     'drive.private.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'drive.public.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
+    'server-stats.api': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.config': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.diagnostics': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.events': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queryExplain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emailPreview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.traceDetail': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.dashboard': { paramsTuple?: []; params?: {} }
+    'server-stats.overview': { paramsTuple?: []; params?: {} }
+    'server-stats.overview.chart': { paramsTuple?: []; params?: {} }
+    'server-stats.requests': { paramsTuple?: []; params?: {} }
+    'server-stats.requests.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.events': { paramsTuple?: []; params?: {} }
+    'server-stats.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.emails.preview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.traces.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.queries.grouped': { paramsTuple?: []; params?: {} }
+    'server-stats.queries.explain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.cache': { paramsTuple?: []; params?: {} }
+    'server-stats.cache.show': { paramsTuple: [ParamValue]; params: {'key': ParamValue} }
+    'server-stats.jobs': { paramsTuple?: []; params?: {} }
+    'server-stats.jobs.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.config': { paramsTuple?: []; params?: {} }
+    'server-stats.filters': { paramsTuple?: []; params?: {} }
     'billing.index': { paramsTuple?: []; params?: {} }
     'billing.return': { paramsTuple?: []; params?: {} }
     'billing.status': { paramsTuple?: []; params?: {} }
@@ -204,6 +274,39 @@ export type ScannedRoutes = {
   HEAD: {
     'drive.private.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'drive.public.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
+    'server-stats.api': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.config': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.diagnostics': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.events': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queryExplain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emailPreview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.traceDetail': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.dashboard': { paramsTuple?: []; params?: {} }
+    'server-stats.overview': { paramsTuple?: []; params?: {} }
+    'server-stats.overview.chart': { paramsTuple?: []; params?: {} }
+    'server-stats.requests': { paramsTuple?: []; params?: {} }
+    'server-stats.requests.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.events': { paramsTuple?: []; params?: {} }
+    'server-stats.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.emails.preview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.traces.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.queries.grouped': { paramsTuple?: []; params?: {} }
+    'server-stats.queries.explain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.cache': { paramsTuple?: []; params?: {} }
+    'server-stats.cache.show': { paramsTuple: [ParamValue]; params: {'key': ParamValue} }
+    'server-stats.jobs': { paramsTuple?: []; params?: {} }
+    'server-stats.jobs.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.config': { paramsTuple?: []; params?: {} }
+    'server-stats.filters': { paramsTuple?: []; params?: {} }
     'billing.index': { paramsTuple?: []; params?: {} }
     'billing.return': { paramsTuple?: []; params?: {} }
     'billing.status': { paramsTuple?: []; params?: {} }
@@ -263,7 +366,15 @@ export type ScannedRoutes = {
     'docs.openapi': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
   }
+  DELETE: {
+    'server-stats.cache.delete': { paramsTuple: [ParamValue]; params: {'key': ParamValue} }
+    'server-stats.filters.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.lists.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'api.todos.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+  }
   POST: {
+    'server-stats.jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.filters.create': { paramsTuple?: []; params?: {} }
     'billing.checkout': { paramsTuple?: []; params?: {} }
     'billing.portal': { paramsTuple?: []; params?: {} }
     'api_keys.store': { paramsTuple?: []; params?: {} }
@@ -338,10 +449,6 @@ export type ScannedRoutes = {
   PATCH: {
     'api.lists.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'api.todos.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-  }
-  DELETE: {
-    'api.lists.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'api.todos.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

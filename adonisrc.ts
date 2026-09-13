@@ -2,6 +2,8 @@ import { indexEntities } from '@adonisjs/core'
 import { defineConfig } from '@adonisjs/core/app'
 import { indexPolicies } from '@adonisjs/bouncer'
 
+import { serverStatsEnabled } from '#start/dev_toolbar'
+
 export default defineConfig({
   /*
   |--------------------------------------------------------------------------
@@ -61,6 +63,25 @@ export default defineConfig({
     () => import('@adonisjs/ally/ally_provider'),
     () => import('@adonisjs/drive/drive_provider'),
     () => import('@adonisjs/limiter/limiter_provider'),
+
+    /**
+     * The development toolbar (`#start/dev_toolbar`). It registers its own
+     * routes — `/admin/api/server-stats`, `/admin/api/debug/*`, `/__stats/*`
+     * — so there is nothing to add to `#start/routes`.
+     *
+     * Spread out of an array rather than listed like the others, because the
+     * specifier must not be *evaluated* in an image built without dev
+     * dependencies. Restricted to `web` so `node ace` and the test runner do
+     * not pay for a metrics engine neither of them displays.
+     */
+    ...(serverStatsEnabled
+      ? [
+          {
+            file: () => import('adonisjs-server-stats/provider'),
+            environment: ['web' as const],
+          },
+        ]
+      : []),
   ],
 
   /*

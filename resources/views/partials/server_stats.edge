@@ -1,0 +1,15 @@
+{{--
+  The development toolbar's stats bar (`#start/dev_toolbar`).
+
+  In its own partial, and included with `@includeIf` rather than wrapped in
+  an `@if`, because `@serverStats()` is registered by a package that is not
+  installed in production. Edge resolves tags when it *compiles* a template;
+  a partial is only compiled if it is actually included, so this file is
+  never parsed in an environment where the tag does not exist. Inside an
+  `@if` in the layout it would be parsed either way.
+
+  The tag inlines its own CSS and JS — no asset to build, and nothing added
+  to the Vite entrypoints. That inline script is also why
+  `#config/shield` relaxes `script-src` when this is switched on.
+--}}
+@serverStats()
