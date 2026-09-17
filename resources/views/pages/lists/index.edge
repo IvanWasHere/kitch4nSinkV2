@@ -20,7 +20,7 @@
         text: 'New list',
         size: 'sm',
         disabled: true,
-        title: `Your plan allows ${usage.lists.limit} lists. Delete one, or upgrade for more.`,
+        title: `Your plan allows ${usage.quotas.lists.limit} lists. Delete one, or upgrade for more.`,
       })
     @end
   @end
@@ -30,13 +30,13 @@
     — and *also* when a blocked create redirected here, where `planLimit`
     carries the same numbers the API returns as a 402.
   --}}
-  @if(usage.lists.isFull || flashMessages.has('planLimit'))
+  @if(usage.quotas.lists.isFull || flashMessages.has('planLimit'))
     <div class="info-box info-box-warning" style="margin-bottom: 18px">
       <p>
         <strong>
           {{ flashMessages.get('planLimit')
             ? flashMessages.get('planLimit').message
-            : `You are using all ${usage.lists.limit} lists on the ${usage.plan.name} plan.` }}
+            : `You are using all ${usage.quotas.lists.limit} lists on the ${usage.plan.name} plan.` }}
         </strong>
       </p>
       <p>

@@ -2,7 +2,7 @@ import router from '@adonisjs/core/services/router'
 import { Exception } from '@adonisjs/core/exceptions'
 import type { HttpContext } from '@adonisjs/core/http'
 
-import type { LimitKey } from '#config/plans'
+import { nounFor, type LimitKey } from '#config/plans'
 
 export interface PlanLimitDetails {
   limit: LimitKey
@@ -43,16 +43,13 @@ export default class PlanLimitExceededException extends Exception {
    * useful thing an upsell can say.
    */
   static messageFor({ limit, allowed, current }: PlanLimitDetails): string {
-    const nouns: Record<string, string> = {
-      seats: 'seats',
-      lists: 'lists',
-      todosPerList: 'todos in a list',
-      storageMb: 'MB of storage',
-      apiKeys: 'API keys',
-      apiCallsPerMonth: 'API calls this month',
-    }
-
-    const noun = nouns[limit] ?? limit
+    /**
+     * The noun comes from `config/plans.ts`, beside the limit it names, so
+     * this class holds no second list of limits to fall out of date — and a
+     * limit with no word for it is a compile error there rather than a `402`
+     * that reads "you have used all 5 apiKeys".
+     */
+    const noun = nounFor(limit)
 
     if (allowed === 0) {
       return `${noun[0].toUpperCase()}${noun.slice(1)} are not included in your plan.`

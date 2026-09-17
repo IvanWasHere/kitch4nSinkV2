@@ -387,7 +387,7 @@ test.group('Billing — the past_due banner', (group) => {
 
     response.assertStatus(302)
 
-    const { default: plans } = await import('#billing/plan_service')
-    assert.equal(await plans.listCount(organization), 1)
+    const { default: lists } = await import('#todos/list_service')
+    assert.equal(await lists.count(organization), 1)
   })
 })

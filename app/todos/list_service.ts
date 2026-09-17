@@ -6,7 +6,7 @@ import Todo from '#models/todo'
 import type User from '#models/user'
 import TodoList from '#models/todo_list'
 import type Organization from '#models/organization'
-import plans from '#billing/plan_service'
+import plans, { type LimitUsage } from '#billing/plan_service'
 import { nextPosition } from '#todos/position'
 
 export type ListColor = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'gray'
@@ -73,6 +73,43 @@ export class ListService {
   }
 
   /**
+   * How many lists count against the `lists` quota.
+   *
+   * This is the counter `start/quotas.ts` registers, so it is what both the
+   * meter on the dashboard and the row-locked check inside `create` read —
+   * two calculations of "how many lists are you using" would eventually
+   * disagree, and the day they did a customer would be either blocked below
+   * their limit or given more than they pay for.
+   *
+   * Archived lists are included on purpose: archiving is a UI convenience,
+   * not a quota escape (plan §5.6). Soft-deleted ones are not — deleting is
+   * how a customer frees a slot.
+   */
+  async count(organization: Organization, trx?: TransactionClientContract): Promise<number> {
+    const [row] = await TodoList.query(trx ? { client: trx } : {})
+      .where('organization_id', organization.id)
+      .whereNull('deleted_at')
+      .count('* as total')
+
+    return Number(row.$extras.total)
+  }
+
+  /**
+   * Per-list todo usage, for the count pill on a list card and the disabled
+   * *Add todo* button.
+   *
+   * `todosPerList` is a ceiling on each list rather than on the workspace, so
+   * it is registered as a limit with no counter and metered here instead.
+   *
+   * Read from the denormalised `todos_count` rather than a `COUNT(*)`,
+   * because this is rendered once per card on a grid and checked on every
+   * todo create (plan §5.5).
+   */
+  todoUsage(organization: Organization, list: Pick<TodoList, 'todosCount'>): LimitUsage {
+    return plans.describeCount(list.todosCount, plans.limit(organization, 'todosPerList'))
+  }
+
+  /**
    * Create a list, if the plan has room for one.
    *
    * The quota check is the first thing inside the transaction and it locks
@@ -84,7 +121,7 @@ export class ListService {
   async create(organization: Organization, actor: User, data: CreateListData): Promise<TodoList> {
     return db.transaction(async (trx) => {
       await plans.lockAndAssertLimit(trx, organization, 'lists', (client) =>
-        plans.listCount(organization, client)
+        this.count(organization, client)
       )
 
       await this.assertNameIsFree(organization, data.name, trx)

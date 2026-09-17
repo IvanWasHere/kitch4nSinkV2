@@ -96,6 +96,12 @@ export default defineConfig({
     () => import('#start/routes'),
     () => import('#start/kernel'),
     () => import('#start/validator'),
+
+    /**
+     * Before the view layer, because a rendered page reads plan usage and
+     * usage is whatever is registered here.
+     */
+    () => import('#start/quotas'),
     () => import('#start/view'),
   ],
 

@@ -33,17 +33,11 @@
     </div>
   </div>
 
+  {{-- Whatever `start/quotas.ts` registers, in that file's order. --}}
   <div class="usage-grid" style="margin-bottom: 22px">
-    {{--
-      Guarded: `lists` is a quota the demo domain contributes, and a build
-      with that module removed has no such key (see docs/modules.md). Seats
-      and storage are core and are always there.
-    --}}
-    @if(usage.lists)
-      @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
+    @each(meter in usage.meters)
+      @!usageMeter({ label: meter.label, current: meter.current, limit: meter.limit })
     @end
-    @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
-    @!usageMeter({ label: 'Storage (MB)', current: usage.storage.current, limit: usage.storage.limit })
   </div>
 
   <div class="panel-grid panel-grid-even">

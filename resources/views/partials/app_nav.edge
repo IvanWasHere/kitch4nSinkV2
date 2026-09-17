@@ -10,10 +10,10 @@
   its routes land — the shell never links somewhere that does not exist.
 
   Expects (all optional until the milestone that supplies them):
-    usage — { lists: { current, limit }, seats: { … } } from PlanService
+    usage.quotas — { lists: { current, limit }, seats: { … } } from PlanService
     isOwner — boolean
 --}}
-@let(navUsage = state.usage ?? {})
+@let(navQuotas = state.usage && state.usage.quotas ? state.usage.quotas : {})
 @let(navIsOwner = state.isOwner ?? false)
 
 @if(hasRoute('dashboard.index') || hasRoute('lists.index') || hasRoute('files.index'))
@@ -28,7 +28,7 @@
     route: 'lists.index',
     icon: 'list',
     label: 'Lists',
-    usage: navUsage.lists,
+    usage: navQuotas.lists,
   })
 @end
 @if(hasRoute('files.index'))
@@ -41,7 +41,7 @@
     route: 'members.index',
     icon: 'users',
     label: 'Members',
-    usage: navUsage.seats,
+    usage: navQuotas.seats,
   })
 @end
 

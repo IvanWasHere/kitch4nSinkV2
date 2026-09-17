@@ -96,6 +96,35 @@ export const DEFAULT_PLAN: PlanKey = 'free'
 export const LIMIT_KEYS = Object.keys(plans[DEFAULT_PLAN].limits) as LimitKey[]
 
 /**
+ * How each limit is named to a customer.
+ *
+ * Here rather than in the quota registry because a noun belongs to the
+ * *limit*, and not every limit is a registered quota: `apiKeys` and
+ * `apiCallsPerMonth` are enforced and metered without anything counting a
+ * tenant-owned table for them. Typed as an exhaustive `Record<LimitKey, …>`,
+ * so adding a limit without a word for it is a compile error rather than a
+ * `402` that says "you have used all 5 apiKeys".
+ *
+ * Lower case and plural: each is dropped into "Your plan allows 3 …".
+ */
+export const LIMIT_NOUNS: Record<LimitKey, string> = {
+  seats: 'seats',
+  lists: 'lists',
+  todosPerList: 'todos in a list',
+  storageMb: 'MB of storage',
+  apiKeys: 'API keys',
+  apiCallsPerMonth: 'API calls this month',
+}
+
+/**
+ * The noun for a limit, falling back to the key for a string that is not one
+ * — an ugly message is a better failure than a 500 on top of a 402.
+ */
+export function nounFor(limit: string): string {
+  return LIMIT_NOUNS[limit as LimitKey] ?? limit
+}
+
+/**
  * The plan for an organisation, falling back to Free for an unrecognised key
  * — a plan removed from this file must not lock a customer out of their data.
  */

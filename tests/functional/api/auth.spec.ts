@@ -169,8 +169,8 @@ test.group('API scopes', (group) => {
       error: { code: 'insufficient_scope', details: { required_scope: 'lists:write' } },
     })
 
-    const { default: plans } = await import('#billing/plan_service')
-    assert.equal(await plans.listCount(organization), 0)
+    const { default: lists } = await import('#todos/list_service')
+    assert.equal(await lists.count(organization), 0)
   })
 
   /**

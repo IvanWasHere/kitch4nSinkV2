@@ -1,13 +1,13 @@
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
-import TodoList from '#models/todo_list'
 import Organization from '#models/organization'
-import { seatUsage } from '#organizations/seats'
+import quotas from '#billing/quotas'
 import UpgradeRequiredException from '#exceptions/upgrade_required_exception'
 import PlanLimitExceededException from '#exceptions/plan_limit_exceeded_exception'
 import {
   DEFAULT_PLAN,
   limitFor,
+  nounFor,
   planFor,
   plans,
   type FeatureKey,
@@ -38,12 +38,58 @@ export interface LimitUsage {
   isNearLimit: boolean
 }
 
+/**
+ * One quota's usage, carrying enough to render a meter without a second
+ * lookup for its label.
+ */
+export interface QuotaUsage extends LimitUsage {
+  key: LimitKey
+  label: string
+  noun: string
+}
+
+/**
+ * A limit with no workspace total — see `QuotaDescriptor.count`.
+ */
+export interface DeclaredLimit {
+  key: LimitKey
+  label: string
+  noun: string
+  limit: number | null
+}
+
 export interface PlanUsage {
   planKey: PlanKey
   plan: PlanDefinition
-  lists: LimitUsage
-  seats: LimitUsage
-  storage: LimitUsage
+
+  /**
+   * Counted quotas by key, for a screen that wants one of them by name —
+   * `usage.quotas.lists` on the Lists screen.
+   *
+   * Every value is optional because a quota is present only while whatever
+   * registered it is (`start/quotas.ts`). Screens that belong to a feature
+   * can rely on that feature's quota; shared screens must not.
+   */
+  quotas: Partial<Record<LimitKey, LimitUsage>>
+
+  /**
+   * The same quotas in registration order, for the meter grids. Iterating
+   * this is what lets a quota be added or removed without touching a
+   * template.
+   */
+  meters: QuotaUsage[]
+
+  /**
+   * Registered limits that are not counted per workspace. The API reports
+   * these as a ceiling with no usage.
+   */
+  declared: DeclaredLimit[]
+
+  /**
+   * The quotas that are full, for the at-cap banner. Derived from `meters`
+   * rather than recomputed, so the banner and the block can never disagree.
+   */
+  atCap: QuotaUsage[]
 }
 
 /**
@@ -172,38 +218,63 @@ export class PlanService {
   }
 
   /**
-   * How many lists count against the quota.
+   * The count for one registered quota.
    *
-   * Archived lists are included on purpose: archiving is a UI convenience,
-   * not a quota escape (plan §5.6). Soft-deleted ones are not — deleting is
-   * how a customer frees a slot.
+   * Goes through the registry so that the row-locked check inside a create
+   * and the meter on the dashboard call the same counter — the point of one
+   * class is undone the moment a caller counts something itself.
    */
-  async listCount(organization: Organization, trx?: TransactionClientContract): Promise<number> {
-    const [row] = await TodoList.query(trx ? { client: trx } : {})
-      .where('organization_id', organization.id)
-      .whereNull('deleted_at')
-      .count('* as total')
+  async countFor(
+    key: LimitKey,
+    organization: Organization,
+    trx?: TransactionClientContract
+  ): Promise<number> {
+    const quota = quotas.get(key)
 
-    return Number(row.$extras.total)
+    if (!quota?.count) {
+      throw new Error(`No counted quota is registered for "${key}" (see start/quotas.ts)`)
+    }
+
+    return quota.count(organization, trx)
   }
 
   /**
    * Everything the meters, the nav counters and the at-cap buttons render
    * from — the same numbers enforcement uses, never a second calculation
    * (plan §7.4).
+   *
+   * One query per counted quota, in parallel, against indexed
+   * `organization_id` columns. This runs on every rendered page
+   * (`RequireOrganizationMiddleware`), which is the reason a quota's counter
+   * has to stay a single count and not grow into a scan.
    */
   async usage(organization: Organization): Promise<PlanUsage> {
-    const [lists, seats] = await Promise.all([
-      this.listCount(organization),
-      seatUsage(organization),
-    ])
+    const counted = quotas.counted()
+
+    const counts = await Promise.all(counted.map((quota) => quota.count!(organization)))
+
+    const byKey: Partial<Record<LimitKey, LimitUsage>> = {}
+
+    const meters = counted.map((quota, index): QuotaUsage => {
+      const described = this.describe(counts[index], this.limit(organization, quota.key))
+
+      byKey[quota.key] = described
+
+      return { key: quota.key, label: quota.label, noun: nounFor(quota.key), ...described }
+    })
 
     return {
       planKey: this.planKeyFor(organization),
       plan: this.planFor(organization),
-      lists: this.describe(lists, this.limit(organization, 'lists')),
-      seats: this.describe(seats.used, seats.limit),
-      storage: this.storageUsage(organization),
+      quotas: byKey,
+      meters,
+      declared: quotas.declared().map((quota) => ({
+        key: quota.key,
+        label: quota.label,
+        noun: nounFor(quota.key),
+        limit: this.limit(organization, quota.key),
+      })),
+      atCap: meters.filter((meter) => meter.isFull),
     }
   }
 
@@ -216,9 +287,16 @@ export class PlanService {
    * a single 1-byte file does not read as using nothing.
    */
   storageUsage(organization: Organization): LimitUsage {
-    const usedMb = Math.ceil(organization.storageUsedBytes / BYTES_PER_MB)
+    return this.describe(this.storageMbUsed(organization), this.limit(organization, 'storageMb'))
+  }
 
-    return this.describe(usedMb, this.limit(organization, 'storageMb'))
+  /**
+   * The same number, unwrapped — what the registered `storageMb` quota counts
+   * with (`start/quotas.ts`). Separate so the rounding rule above is written
+   * once and the meter and the quota cannot round differently.
+   */
+  storageMbUsed(organization: Organization): number {
+    return Math.ceil(organization.storageUsedBytes / BYTES_PER_MB)
   }
 
   /**
@@ -248,18 +326,6 @@ export class PlanService {
       allowed: allowedMb,
       current: Math.ceil(used / BYTES_PER_MB),
     })
-  }
-
-  /**
-   * Per-list todo usage, for the count pill on a list card and the disabled
-   * *Add todo* button.
-   *
-   * Read from the denormalised `todos_count` rather than a `COUNT(*)`,
-   * because this is rendered once per card on a grid and checked on every
-   * todo create (plan §5.5).
-   */
-  todoUsage(organization: Organization, list: Pick<TodoList, 'todosCount'>): LimitUsage {
-    return this.describe(list.todosCount, this.limit(organization, 'todosPerList'))
   }
 
   /**

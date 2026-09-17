@@ -55,7 +55,7 @@ export default class ListController {
        * the same number the create guard checks under a lock (plan §7.4), so
        * the disabled button and the block agree.
        */
-      todoUsage: plans.todoUsage(organization, list),
+      todoUsage: lists.todoUsage(organization, list),
     })
   }
 

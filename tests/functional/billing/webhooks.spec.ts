@@ -293,8 +293,7 @@ test.group('Webhooks — applying an event', (group) => {
     assert.equal(organization.planKey, 'free')
     assert.equal(organization.status, 'active', 'a cancellation is not a suspension')
 
-    const { default: plans } = await import('#billing/plan_service')
-    assert.equal(await plans.listCount(organization), 4, 'every list survived the downgrade')
+    assert.equal(await lists.count(organization), 4, 'every list survived the downgrade')
   })
 
   test('a payment is recorded once and emails one receipt', async ({ client, assert }) => {

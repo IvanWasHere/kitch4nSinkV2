@@ -5,9 +5,8 @@ import Todo from '#models/todo'
 import TodoList from '#models/todo_list'
 import lists from '#todos/list_service'
 import todos from '#todos/todo_service'
-import plans from '#billing/plan_service'
 import PlanLimitExceededException from '#exceptions/plan_limit_exceeded_exception'
-import { createList, createWorkspace } from '#tests/helpers'
+import { addMember, createList, createWorkspace } from '#tests/helpers'
 
 /**
  * The quota suite (plan §15).
@@ -38,7 +37,7 @@ test.group('Quotas — lists', (group) => {
       assert.equal(details.current, 3)
     }
 
-    assert.equal(await plans.listCount(organization), 3, 'and nothing was inserted')
+    assert.equal(await lists.count(organization), 3, 'and nothing was inserted')
   })
 
   /**
@@ -59,7 +58,7 @@ test.group('Quotas — lists', (group) => {
     const succeeded = results.filter((result) => result.status === 'fulfilled')
 
     assert.lengthOf(succeeded, 1, 'exactly one create claimed the last slot')
-    assert.equal(await plans.listCount(organization), 3, 'and the cap was never exceeded')
+    assert.equal(await lists.count(organization), 3, 'and the cap was never exceeded')
   })
 
   /**
@@ -106,7 +105,7 @@ test.group('Quotas — lists', (group) => {
     await lists.create(organization, user, { name: 'Four' })
 
     assert.equal(organization.planKey, 'free', 'still on free')
-    assert.equal(await plans.listCount(organization), 4)
+    assert.equal(await lists.count(organization), 4)
   })
 
   test('an unlimited plan has no ceiling', async ({ assert }) => {
@@ -119,7 +118,7 @@ test.group('Quotas — lists', (group) => {
       await createList(organization, user, name)
     }
 
-    assert.equal(await plans.listCount(organization), 5)
+    assert.equal(await lists.count(organization), 5)
   })
 })
 
@@ -365,11 +364,12 @@ test.group('Quotas — how a block is presented', (group) => {
   })
 
   /**
-   * The at-cap banner reads its quotas through a guard rather than
-   * dereferencing them, because `lists` is contributed by the demo domain and
-   * a build without that module has no such key (see docs/modules.md). These
-   * two tests are what stops that guard being "simplified" back into
-   * `usage.lists.isFull`, which would throw on every screen in the app.
+   * The at-cap banner names whichever quotas are full, from `usage.atCap` —
+   * it hardcodes none of them, so that a quota contributed by a feature
+   * appears there without an edit and one removed with a feature cannot
+   * leave a stale word or a dereference behind (`start/quotas.ts`,
+   * docs/modules.md). These tests are what stop it being "simplified" back
+   * into `usage.lists.isFull`, which would throw on every screen in the app.
    */
   test('the at-cap banner names the full quota for the owner', async ({ client }) => {
     const { user, organization } = await createWorkspace()
@@ -393,6 +393,25 @@ test.group('Quotas — how a block is presented', (group) => {
 
     response.assertStatus(200)
     assert.notInclude(response.text(), 'of your lists.')
+  })
+
+  test('the at-cap banner joins several full quotas into one sentence', async ({ client }) => {
+    const { user, organization } = await createWorkspace()
+
+    for (const name of ['One', 'Two', 'Three']) {
+      await createList(organization, user, name)
+    }
+
+    /**
+     * Free allows two seats and the owner holds one, so a single member puts
+     * the workspace on both ceilings at once.
+     */
+    await addMember(organization, user, 'sam@example.com')
+
+    const response = await client.get('/dashboard').loginAs(user).withCsrfToken()
+
+    response.assertStatus(200)
+    response.assertTextIncludes('You are out of lists and seats.')
   })
 
   test('a blocked create over JSON is a 402 with a machine-readable limit', async ({ client }) => {

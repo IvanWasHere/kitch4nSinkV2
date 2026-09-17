@@ -13,6 +13,7 @@ import router from '@adonisjs/core/services/router'
 
 import plans from '#billing/plan_service'
 import storage from '#storage/disk_storage'
+import type { LimitKey } from '#config/plans'
 import { serverStatsEnabled } from '#start/dev_toolbar'
 
 /**
@@ -86,11 +87,38 @@ edge.global('can', function (this: any, feature: string) {
  *
  * Usage comes from what the controller shared, because counting here would be
  * a second calculation of a number enforcement already owns.
+ *
+ * Takes any `LimitKey` rather than a hand-written union, so a quota
+ * contributed by a feature is usable here the moment `config/plans.ts`
+ * declares it. An unregistered or unmetered limit reads as "room available":
+ * a ceiling nothing counts cannot be known to be full, and guessing *full*
+ * would disable a button for a limit that is not being enforced.
  */
-edge.global('withinLimit', function (this: any, limit: 'lists' | 'seats') {
+edge.global('withinLimit', function (this: any, limit: LimitKey) {
   const usage = this?.usage ?? this?.state?.usage
+  const quota = usage?.quotas?.[limit]
 
-  return usage?.[limit] ? !usage[limit].isFull : true
+  return quota ? !quota.isFull : true
+})
+
+/**
+ * "a", "a and b", "a, b and c" — an English list, for a sentence assembled
+ * from a variable number of things.
+ *
+ * A template helper because the strings it joins are copy: the at-cap banner
+ * names whichever quotas are full, and deciding that wording inside
+ * `PlanService` would put a sentence in a class whose job is arithmetic.
+ */
+edge.global('andList', (items: string[]) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return ''
+  }
+
+  if (items.length === 1) {
+    return items[0]
+  }
+
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
 })
 
 /**

@@ -556,10 +556,10 @@ test.group('Tenant isolation', (group) => {
     await createList(b.organization, b.user, 'B two')
 
     const usageA = await plans.usage(a.organization)
-    assert.equal(usageA.lists.current, 0, "B's lists do not count against A")
+    assert.equal(usageA.quotas.lists!.current, 0, "B's lists do not count against A")
 
     const usageB = await plans.usage(b.organization)
-    assert.equal(usageB.lists.current, 2)
+    assert.equal(usageB.quotas.lists!.current, 2)
   })
 
   /**

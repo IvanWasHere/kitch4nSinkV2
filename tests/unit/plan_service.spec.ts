@@ -2,7 +2,13 @@ import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 
 import plans from '#billing/plan_service'
-import { plans as catalogue, type LimitKey, type PlanKey } from '#config/plans'
+import {
+  LIMIT_KEYS,
+  LIMIT_NOUNS,
+  plans as catalogue,
+  type LimitKey,
+  type PlanKey,
+} from '#config/plans'
 import PlanLimitExceededException from '#exceptions/plan_limit_exceeded_exception'
 import UpgradeRequiredException from '#exceptions/upgrade_required_exception'
 import { createList, createWorkspace } from '#tests/helpers'
@@ -42,6 +48,36 @@ test.group('PlanService — entitlements', () => {
         )
       }
     }
+  })
+
+  /**
+   * Every limit needs a word a customer can read, whether or not anything
+   * counts it. `apiKeys` and `apiCallsPerMonth` are enforced without being
+   * registered quotas, and reading their noun off the quota registry instead
+   * of the catalogue is what produced "you have used all 5 apiKeys".
+   */
+  test('every limit has a noun, and a blocked create uses it', ({ assert }) => {
+    for (const key of LIMIT_KEYS) {
+      assert.isString(LIMIT_NOUNS[key], key)
+    }
+
+    assert.equal(
+      PlanLimitExceededException.messageFor({ limit: 'apiKeys', allowed: 5, current: 5 }),
+      'Your plan allows 5 API keys, and you are using 5.'
+    )
+
+    assert.equal(
+      PlanLimitExceededException.messageFor({ limit: 'lists', allowed: 3, current: 3 }),
+      'Your plan allows 3 lists, and you are using 3.'
+    )
+
+    /**
+     * `0` is "not on this plan at all", which is a different sentence.
+     */
+    assert.equal(
+      PlanLimitExceededException.messageFor({ limit: 'apiKeys', allowed: 0, current: 0 }),
+      'API keys are not included in your plan.'
+    )
   })
 
   /**
@@ -151,13 +187,13 @@ test.group('PlanService — usage', (group) => {
 
     const usage = await plans.usage(organization)
 
-    assert.equal(usage.lists.current, 2)
-    assert.equal(usage.lists.limit, 3)
-    assert.equal(usage.lists.remaining, 1)
-    assert.isFalse(usage.lists.isFull)
+    assert.equal(usage.quotas.lists!.current, 2)
+    assert.equal(usage.quotas.lists!.limit, 3)
+    assert.equal(usage.quotas.lists!.remaining, 1)
+    assert.isFalse(usage.quotas.lists!.isFull)
 
-    assert.equal(usage.seats.current, 1, 'the owner')
-    assert.equal(usage.seats.limit, 2)
+    assert.equal(usage.quotas.seats!.current, 1, 'the owner')
+    assert.equal(usage.quotas.seats!.limit, 2)
   })
 
   /**
@@ -172,7 +208,7 @@ test.group('PlanService — usage', (group) => {
     await lists.archive(list)
 
     const usage = await plans.usage(organization)
-    assert.equal(usage.lists.current, 1)
+    assert.equal(usage.quotas.lists!.current, 1)
   })
 
   test('deleting a list frees a slot', async ({ assert }) => {
@@ -183,7 +219,7 @@ test.group('PlanService — usage', (group) => {
     await lists.delete(list)
 
     const usage = await plans.usage(organization)
-    assert.equal(usage.lists.current, 0)
+    assert.equal(usage.quotas.lists!.current, 0)
   })
 
   test('a meter turns amber at 80% and full at the cap', async ({ assert }) => {
@@ -201,19 +237,19 @@ test.group('PlanService — usage', (group) => {
     }
 
     let usage = await plans.usage(organization)
-    assert.isFalse(usage.lists.isNearLimit, '3 of 5 is 60%')
+    assert.isFalse(usage.quotas.lists!.isNearLimit, '3 of 5 is 60%')
 
     await createList(organization, user, 'Four')
 
     usage = await plans.usage(organization)
-    assert.isTrue(usage.lists.isNearLimit, '4 of 5 is exactly 80%')
-    assert.isFalse(usage.lists.isFull)
+    assert.isTrue(usage.quotas.lists!.isNearLimit, '4 of 5 is exactly 80%')
+    assert.isFalse(usage.quotas.lists!.isFull)
 
     await createList(organization, user, 'Five')
 
     usage = await plans.usage(organization)
-    assert.isTrue(usage.lists.isFull)
-    assert.equal(usage.lists.remaining, 0)
+    assert.isTrue(usage.quotas.lists!.isFull)
+    assert.equal(usage.quotas.lists!.remaining, 0)
   })
 
   /**
@@ -234,10 +270,10 @@ test.group('PlanService — usage', (group) => {
     await organization.save()
 
     const usage = await plans.usage(organization)
-    assert.equal(usage.lists.current, 5)
-    assert.equal(usage.lists.limit, 3)
-    assert.equal(usage.lists.remaining, 0, 'clamped, never negative')
-    assert.isTrue(usage.lists.isFull)
+    assert.equal(usage.quotas.lists!.current, 5)
+    assert.equal(usage.quotas.lists!.limit, 3)
+    assert.equal(usage.quotas.lists!.remaining, 0, 'clamped, never negative')
+    assert.isTrue(usage.quotas.lists!.isFull)
   })
 
   test('an unlimited plan never reads as full or near', async ({ assert }) => {
@@ -249,9 +285,9 @@ test.group('PlanService — usage', (group) => {
     await createList(organization, user, 'One')
 
     const usage = await plans.usage(organization)
-    assert.isNull(usage.lists.limit)
-    assert.isNull(usage.lists.remaining)
-    assert.isFalse(usage.lists.isFull)
-    assert.isFalse(usage.lists.isNearLimit)
+    assert.isNull(usage.quotas.lists!.limit)
+    assert.isNull(usage.quotas.lists!.remaining)
+    assert.isFalse(usage.quotas.lists!.isFull)
+    assert.isFalse(usage.quotas.lists!.isNearLimit)
   })
 })

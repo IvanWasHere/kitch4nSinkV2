@@ -1,3 +1,4 @@
+import string from '@adonisjs/core/helpers/string'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
 import type Organization from '#models/organization'
@@ -38,21 +39,27 @@ export default class OrganizationTransformer extends BaseTransformer<Organizatio
        * Shaped as `{ limit, used, remaining }` per quota rather than a flat
        * map, because "how many more can I create" is the question being
        * asked and making a client subtract two numbers invites off-by-ones.
+       *
+       * Built from the quota registry rather than written out, so a quota
+       * that arrives with a feature is reported without an edit here and one
+       * that leaves with it stops being reported. Keys are snake_cased to
+       * match the rest of the API — `storageMb` becomes `storage_mb`.
+       *
+       * A limit with no workspace total reports `used: null` rather than
+       * being left out: `todos_per_list` is a real ceiling an integration
+       * needs to know about before it starts writing, it just has no single
+       * number to compare against.
        */
-      usage: {
-        lists: this.describe(this.usage.lists),
-        seats: this.describe(this.usage.seats),
-        storage_mb: this.describe(this.usage.storage),
-        todos_per_list: {
-          limit: this.usage.plan.limits.todosPerList,
-          used: null,
-          remaining: null,
-        },
-      },
+      usage: Object.fromEntries([
+        ...this.usage.meters.map((quota) => [
+          string.snakeCase(quota.key),
+          { limit: quota.limit, used: quota.current, remaining: quota.remaining },
+        ]),
+        ...this.usage.declared.map((quota) => [
+          string.snakeCase(quota.key),
+          { limit: quota.limit, used: null, remaining: null },
+        ]),
+      ]),
     }
-  }
-
-  private describe(usage: { current: number; limit: number | null; remaining: number | null }) {
-    return { limit: usage.limit, used: usage.current, remaining: usage.remaining }
   }
 }

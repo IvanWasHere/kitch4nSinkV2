@@ -510,6 +510,42 @@ test.group('API — plan limits', (group) => {
   })
 
   /**
+   * The usage payload is built from the quota registry (`start/quotas.ts`)
+   * rather than written out, so this pins the published shape: a quota that
+   * is renamed, added or dropped changes a documented API, and it should
+   * break a test here rather than a customer's integration.
+   */
+  test('GET /organization reports every registered quota, and nothing else', async ({
+    client,
+    assert,
+  }) => {
+    const { headers } = await createApiWorkspace()
+
+    const response = await client.get('/api/v1/organization').headers(headers)
+
+    response.assertStatus(200)
+
+    const usage = response.body().data.usage
+
+    assert.deepEqual(Object.keys(usage).sort(), ['lists', 'seats', 'storage_mb', 'todos_per_list'])
+
+    for (const [key, quota] of Object.entries(usage)) {
+      assert.deepEqual(Object.keys(quota as object).sort(), ['limit', 'remaining', 'used'], key)
+    }
+
+    /**
+     * `todosPerList` is a ceiling on each list, so it is registered without a
+     * counter and reports a limit with no workspace total — rather than being
+     * left out, which would hide a limit an integration has to plan around.
+     */
+    assert.equal(usage.todos_per_list.limit, 500, 'the Pro ceiling')
+    assert.isNull(usage.todos_per_list.used)
+    assert.isNull(usage.todos_per_list.remaining)
+
+    assert.deepEqual(usage.lists, { limit: 25, used: 0, remaining: 25 })
+  })
+
+  /**
    * The bulk-import contract: size the batch from `remaining`, and treat a
    * mid-batch 402 as a stop signal.
    */

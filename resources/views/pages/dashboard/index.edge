@@ -31,14 +31,11 @@
         @!link({ route: 'billing.index', text: 'Billing', class: 'btn-ghost' })
       @end
     @end
+    {{-- Whatever `start/quotas.ts` registers, in that file's order. --}}
     <div class="usage-grid">
-      @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
-      @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
-      @!usageMeter({
-        label: 'Storage (MB)',
-        current: usage.storage.current,
-        limit: usage.storage.limit,
-      })
+      @each(meter in usage.meters)
+        @!usageMeter({ label: meter.label, current: meter.current, limit: meter.limit })
+      @end
     </div>
   @end
 

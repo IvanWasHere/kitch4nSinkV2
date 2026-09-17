@@ -54,23 +54,17 @@
     a meter that disagreed with the block would be worse than no meter.
   --}}
   @panel.root({ title: 'Usage on this plan' })
+    {{--
+      The meters iterate whatever `start/quotas.ts` registers, in that file's
+      order, so a quota added or removed with a feature needs no edit here
+      (docs/modules.md).
+    --}}
     <div class="usage-grid">
-      {{--
-        `lists` is a quota the demo domain contributes; seats and storage are
-        core. Guarded so a build with that module removed renders the two it
-        still has rather than failing (see docs/modules.md).
-      --}}
-      @if(usage.lists)
-        @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
+      @each(meter in usage.meters)
+        @!usageMeter({ label: meter.label, current: meter.current, limit: meter.limit })
       @end
-      @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
-      @!usageMeter({
-        label: 'Storage (MB)',
-        current: usage.storage.current,
-        limit: usage.storage.limit,
-      })
     </div>
-    @if(usage.lists)
+    @if(usage.quotas.lists)
       <p class="field-hint" style="margin-top: 12px">
         Archived lists still count — archiving hides a list, it does not free a slot. Deleting one
         does.
