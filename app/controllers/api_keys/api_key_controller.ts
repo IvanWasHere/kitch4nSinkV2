@@ -3,7 +3,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import plans from '#billing/plan_service'
 import usage from '#api/usage_service'
 import apiKeys, { ApiKeyError } from '#api/api_key_service'
-import { API_SCOPES, SCOPE_DESCRIPTIONS } from '#api/scopes'
+import scopes from '#api/scopes'
 import { createApiKeyValidator } from '#validators/api'
 
 /**
@@ -26,7 +26,9 @@ export default class ApiKeyController {
 
     return view.render('pages/api_keys/index', {
       keys,
-      scopes: API_SCOPES.map((scope) => ({ value: scope, label: SCOPE_DESCRIPTIONS[scope] })),
+      scopes: scopes
+        .entries()
+        .map(({ scope, description }) => ({ value: scope, label: description })),
       keyUsage: plans.describeCount(active, plans.limit(organization, 'apiKeys')),
       callUsage: plans.describeCount(monthly, plans.limit(organization, 'apiCallsPerMonth')),
       recentDays: recent,

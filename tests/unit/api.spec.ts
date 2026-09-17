@@ -7,7 +7,7 @@ import {
   parseAuthorizationHeader,
   PREFIX_LENGTH,
 } from '#api/keys'
-import { API_SCOPES, DEFAULT_SCOPES, isApiScope, normalizeScopes } from '#api/scopes'
+import scopes from '#api/scopes'
 import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
@@ -79,31 +79,46 @@ test.group('API keys', () => {
 
 test.group('API scopes', () => {
   test('the default is read-only', ({ assert }) => {
-    assert.deepEqual(DEFAULT_SCOPES, ['lists:read', 'todos:read', 'members:read'])
+    assert.deepEqual(scopes.defaults(), ['lists:read', 'todos:read', 'members:read'])
 
-    for (const scope of DEFAULT_SCOPES) {
+    for (const scope of scopes.defaults()) {
       assert.notInclude(scope, ':write', 'nothing a pasted script could destroy')
     }
   })
 
-  test('recognises only the published scopes', ({ assert }) => {
-    for (const scope of API_SCOPES) {
-      assert.isTrue(isApiScope(scope), scope)
-    }
+  /**
+   * The registry is filled by `start/api.ts`, and `ApiScope` is assembled by
+   * type augmentation from each feature. Nothing makes TypeScript check that
+   * the two agree — a scope augmented into the union but never registered
+   * would type-check everywhere and then be silently unusable, because
+   * `normalize` drops what it does not recognise. This is that check.
+   */
+  test('every registered scope has a description and is recognised', ({ assert }) => {
+    const registered = scopes.all()
 
-    assert.isFalse(isApiScope('lists:delete'))
-    assert.isFalse(isApiScope('*'))
-    assert.isFalse(isApiScope(undefined))
+    assert.isNotEmpty(registered, 'start/api.ts registered nothing')
+
+    for (const scope of registered) {
+      assert.isTrue(scopes.has(scope), scope)
+      assert.isNotEmpty(scopes.describe(scope), `${scope} has no description`)
+      assert.notEqual(scopes.describe(scope), scope, `${scope} fell back to its own key`)
+    }
+  })
+
+  test('recognises only the registered scopes', ({ assert }) => {
+    assert.isFalse(scopes.has('lists:delete'))
+    assert.isFalse(scopes.has('*'))
+    assert.isFalse(scopes.has(undefined))
   })
 
   test('normalising drops anything unrecognised', ({ assert }) => {
-    assert.deepEqual(normalizeScopes(['lists:read', 'admin', '*']), ['lists:read'])
-    assert.deepEqual(normalizeScopes('lists:read'), [], 'not an array')
-    assert.deepEqual(normalizeScopes(undefined), [])
+    assert.deepEqual(scopes.normalize(['lists:read', 'admin', '*']), ['lists:read'])
+    assert.deepEqual(scopes.normalize('lists:read'), [], 'not an array')
+    assert.deepEqual(scopes.normalize(undefined), [])
   })
 
   test('normalising de-duplicates and gives a stable order', ({ assert }) => {
-    assert.deepEqual(normalizeScopes(['todos:read', 'lists:read', 'lists:read']), [
+    assert.deepEqual(scopes.normalize(['todos:read', 'lists:read', 'lists:read']), [
       'lists:read',
       'todos:read',
     ])

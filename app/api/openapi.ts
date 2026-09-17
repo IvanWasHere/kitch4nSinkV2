@@ -1,6 +1,9 @@
+import string from '@adonisjs/core/helpers/string'
+
 import env from '#start/env'
 
-import { API_SCOPES, SCOPE_DESCRIPTIONS } from '#api/scopes'
+import scopes from '#api/scopes'
+import quotas from '#billing/quotas'
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '#api/cursor'
 import { BURST_REQUESTS, BURST_WINDOW } from '#middleware/api_rate_limit'
 
@@ -19,7 +22,7 @@ import { BURST_REQUESTS, BURST_WINDOW } from '#middleware/api_rate_limit'
  * possible reading.
  */
 
-const errorSchema = {
+export const errorSchema = {
   type: 'object',
   required: ['error'],
   properties: {
@@ -38,48 +41,6 @@ const errorSchema = {
   },
 } as const
 
-const listSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'string', example: 'lst_7fj2k9pqrstu' },
-    name: { type: 'string' },
-    description: { type: 'string', nullable: true },
-    color: { type: 'string', enum: ['blue', 'green', 'orange', 'purple', 'red', 'gray'] },
-    position: { type: 'integer' },
-    todos_count: {
-      type: 'integer',
-      description:
-        'Counts completed todos too. This is the number the todosPerList limit is checked against.',
-    },
-    archived: { type: 'boolean' },
-    archived_at: { type: 'string', format: 'date-time', nullable: true },
-    created_at: { type: 'string', format: 'date-time' },
-    updated_at: { type: 'string', format: 'date-time', nullable: true },
-  },
-} as const
-
-const todoSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'string', example: 'tdo_7fj2k9pqrstu' },
-    list_id: { type: 'string', example: 'lst_7fj2k9pqrstu' },
-    title: { type: 'string' },
-    notes: { type: 'string', nullable: true },
-    priority: { type: 'string', enum: ['low', 'normal', 'high'] },
-    position: { type: 'integer' },
-    due_at: { type: 'string', format: 'date-time', nullable: true },
-    completed: { type: 'boolean' },
-    completed_at: { type: 'string', format: 'date-time', nullable: true },
-    assigned_to: {
-      type: 'string',
-      nullable: true,
-      description: "A member's id. An id from another organisation is a 422, never a silent null.",
-    },
-    created_at: { type: 'string', format: 'date-time' },
-    updated_at: { type: 'string', format: 'date-time', nullable: true },
-  },
-} as const
-
 const memberSchema = {
   type: 'object',
   properties: {
@@ -90,7 +51,7 @@ const memberSchema = {
   },
 } as const
 
-const quotaSchema = {
+export const quotaSchema = {
   type: 'object',
   properties: {
     limit: { type: 'integer', nullable: true, description: 'null means unlimited.' },
@@ -99,7 +60,7 @@ const quotaSchema = {
   },
 } as const
 
-const cursorParams = [
+export const cursorParams = [
   {
     name: 'cursor',
     in: 'query',
@@ -114,7 +75,7 @@ const cursorParams = [
   },
 ] as const
 
-function page(itemSchema: unknown) {
+export function page(itemSchema: unknown) {
   return {
     type: 'object',
     properties: {
@@ -134,11 +95,11 @@ function page(itemSchema: unknown) {
   }
 }
 
-function item(itemSchema: unknown) {
+export function item(itemSchema: unknown) {
   return { type: 'object', properties: { data: itemSchema } }
 }
 
-function json(schema: unknown) {
+export function json(schema: unknown) {
   return { content: { 'application/json': { schema } } }
 }
 
@@ -146,20 +107,57 @@ function json(schema: unknown) {
  * Responses every endpoint can produce. Spelled out once and referenced, so
  * a new endpoint cannot forget to document the ones that matter.
  */
-const commonResponses = {
+export const commonResponses = {
   401: { description: 'Missing, unknown, revoked or expired key.', ...json(errorSchema) },
   403: { description: 'The key lacks the required scope.', ...json(errorSchema) },
   404: { description: 'No such resource in this organisation.', ...json(errorSchema) },
   429: { description: 'Rate limited. See Retry-After.', ...json(errorSchema) },
 }
 
-const planLimitResponse = {
+export const planLimitResponse = {
   402: {
     description:
       'Plan limit reached. **A stop signal, not a retryable error** — retrying will fail identically until the customer upgrades or frees a slot. error.details carries limit, allowed, current and upgrade_url. Call GET /organization first to size a bulk import.',
     ...json(errorSchema),
   },
 }
+
+/**
+ * What a feature adds to the document.
+ *
+ * `schemas` land under `components.schemas`; `paths` are merged in after
+ * core's. Both are plain OpenAPI fragments — there is no wrapper type to
+ * learn, because the spec *is* the contract and hiding it behind a builder is
+ * how a published interface starts drifting from what it describes.
+ */
+export interface OpenApiContribution {
+  schemas?: Record<string, unknown>
+  paths?: Record<string, unknown>
+}
+
+export class OpenApiRegistry {
+  #contributions: OpenApiContribution[] = []
+
+  register(contribution: OpenApiContribution): this {
+    this.#contributions.push(contribution)
+    return this
+  }
+
+  schemas(): Record<string, unknown> {
+    return Object.assign({}, ...this.#contributions.map((entry) => entry.schemas ?? {}))
+  }
+
+  paths(): Record<string, unknown> {
+    return Object.assign({}, ...this.#contributions.map((entry) => entry.paths ?? {}))
+  }
+
+  reset(): this {
+    this.#contributions = []
+    return this
+  }
+}
+
+export const openApi = new OpenApiRegistry()
 
 export function openApiDocument() {
   const server = `${env.get('APP_URL')}/api/v1`
@@ -175,8 +173,8 @@ export function openApiDocument() {
         '**The key is the scope.** No endpoint accepts an organisation id — an API key',
         'identifies the workspace, so there is nothing to pass and nothing to forge.',
         '',
-        '**A 402 is a stop signal.** `POST /lists` and `POST /lists/{id}/todos` return 402',
-        'with `plan_limit_exceeded` when the workspace is at a plan limit. Do not retry it:',
+        '**A 402 is a stop signal.** Any endpoint that creates something returns 402 with',
+        '`plan_limit_exceeded` when the workspace is at a plan limit. Do not retry it:',
         'call `GET /organization` first, size your batch to `usage.*.remaining`, and treat a',
         '402 mid-batch as "stop and tell the customer", not as a failure to back off from.',
       ].join('\n'),
@@ -191,16 +189,15 @@ export function openApiDocument() {
           description: [
             'An organisation API key: `Authorization: Bearer sk_live_…`.',
             'Created by the workspace owner and shown once. Scopes:',
-            ...API_SCOPES.map((scope) => `- \`${scope}\` — ${SCOPE_DESCRIPTIONS[scope]}`),
+            ...scopes.entries().map(({ scope, description }) => `- \`${scope}\` — ${description}`),
           ].join('\n'),
         },
       },
       schemas: {
         Error: errorSchema,
-        List: listSchema,
-        Todo: todoSchema,
         Member: memberSchema,
         Quota: quotaSchema,
+        ...openApi.schemas(),
       },
     },
 
@@ -230,14 +227,17 @@ export function openApiDocument() {
                         features: { type: 'array', items: { type: 'string' } },
                       },
                     },
+                    /**
+                     * Built from the quota registry, exactly as
+                     * `OrganizationTransformer` builds the payload it
+                     * documents — so the two cannot disagree about which
+                     * quotas exist.
+                     */
                     usage: {
                       type: 'object',
-                      properties: {
-                        lists: quotaSchema,
-                        seats: quotaSchema,
-                        storage_mb: quotaSchema,
-                        todos_per_list: quotaSchema,
-                      },
+                      properties: Object.fromEntries(
+                        quotas.all().map((quota) => [string.snakeCase(quota.key), quotaSchema])
+                      ),
                     },
                   },
                 })
@@ -260,182 +260,11 @@ export function openApiDocument() {
         },
       },
 
-      '/lists': {
-        get: {
-          summary: 'List lists',
-          parameters: [
-            ...cursorParams,
-            {
-              name: 'archived',
-              in: 'query',
-              schema: { type: 'string', enum: ['true', 'false', 'all'] },
-              description: 'Omit for live lists only. Archived lists still count against quota.',
-            },
-          ],
-          responses: {
-            200: { description: 'A page of lists.', ...json(page(listSchema)) },
-            ...commonResponses,
-          },
-        },
-        post: {
-          summary: 'Create a list',
-          requestBody: json({
-            type: 'object',
-            required: ['name'],
-            properties: {
-              name: { type: 'string', maxLength: 120 },
-              description: { type: 'string', nullable: true, maxLength: 500 },
-              color: listSchema.properties.color,
-            },
-          }),
-          responses: {
-            201: { description: 'Created.', ...json(item(listSchema)) },
-            422: { description: 'Invalid body, or a duplicate name.', ...json(errorSchema) },
-            ...planLimitResponse,
-            ...commonResponses,
-          },
-        },
-      },
-
-      '/lists/{id}': {
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        get: {
-          summary: 'Fetch a list',
-          responses: {
-            200: { description: 'The list.', ...json(item(listSchema)) },
-            ...commonResponses,
-          },
-        },
-        patch: {
-          summary: 'Update a list',
-          description: 'Archiving is a field here, so a rename and an archive are one call.',
-          requestBody: json({
-            type: 'object',
-            properties: {
-              name: { type: 'string', maxLength: 120 },
-              description: { type: 'string', nullable: true, maxLength: 500 },
-              color: listSchema.properties.color,
-              archived: { type: 'boolean' },
-            },
-          }),
-          responses: {
-            200: { description: 'The updated list.', ...json(item(listSchema)) },
-            422: { description: 'Invalid body, or a duplicate name.', ...json(errorSchema) },
-            ...commonResponses,
-          },
-        },
-        delete: {
-          summary: 'Delete a list and its todos',
-          description:
-            'Soft delete, and it frees quota. Requires `lists:write` — a read-only key cannot do this by any route.',
-          responses: { 204: { description: 'Deleted.' }, ...commonResponses },
-        },
-      },
-
-      '/lists/{id}/todos': {
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        get: {
-          summary: 'List todos in a list',
-          parameters: [
-            ...cursorParams,
-            { name: 'completed', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } },
-            {
-              name: 'assigned_to',
-              in: 'query',
-              schema: { type: 'string' },
-              description: 'A member id. An unknown id matches nothing rather than erroring.',
-            },
-          ],
-          responses: {
-            200: { description: 'A page of todos.', ...json(page(todoSchema)) },
-            ...commonResponses,
-          },
-        },
-        post: {
-          summary: 'Create a todo',
-          description:
-            'Completed todos still count against `todosPerList`, so a full list stays full until todos are deleted or moved.',
-          requestBody: json({
-            type: 'object',
-            required: ['title'],
-            properties: {
-              title: { type: 'string', maxLength: 200 },
-              notes: { type: 'string', nullable: true, maxLength: 2000 },
-              priority: todoSchema.properties.priority,
-              due_at: { type: 'string', format: 'date-time', nullable: true },
-              assigned_to: { type: 'string', nullable: true },
-            },
-          }),
-          responses: {
-            201: { description: 'Created.', ...json(item(todoSchema)) },
-            422: {
-              description: 'Invalid body, or an `assigned_to` outside this organisation.',
-              ...json(errorSchema),
-            },
-            ...planLimitResponse,
-            ...commonResponses,
-          },
-        },
-      },
-
-      '/todos/{id}': {
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        get: {
-          summary: 'Fetch a todo',
-          responses: {
-            200: { description: 'The todo.', ...json(item(todoSchema)) },
-            ...commonResponses,
-          },
-        },
-        patch: {
-          summary: 'Update a todo',
-          requestBody: json({
-            type: 'object',
-            properties: {
-              title: { type: 'string', maxLength: 200 },
-              notes: { type: 'string', nullable: true, maxLength: 2000 },
-              priority: todoSchema.properties.priority,
-              due_at: { type: 'string', format: 'date-time', nullable: true },
-              assigned_to: { type: 'string', nullable: true },
-              position: { type: 'integer', minimum: 0 },
-            },
-          }),
-          responses: {
-            200: { description: 'The updated todo.', ...json(item(todoSchema)) },
-            422: { description: 'Invalid body.', ...json(errorSchema) },
-            ...commonResponses,
-          },
-        },
-        delete: {
-          summary: 'Delete a todo',
-          description: 'Soft delete. Frees a slot against `todosPerList`.',
-          responses: { 204: { description: 'Deleted.' }, ...commonResponses },
-        },
-      },
-
-      '/todos/{id}/complete': {
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        post: {
-          summary: 'Mark a todo complete',
-          description:
-            'Records who completed it and when. Idempotent — completing a done todo succeeds.',
-          responses: {
-            200: { description: 'The todo.', ...json(item(todoSchema)) },
-            ...commonResponses,
-          },
-        },
-      },
-
-      '/todos/{id}/uncomplete': {
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        post: {
-          summary: 'Mark a todo not complete',
-          responses: {
-            200: { description: 'The todo.', ...json(item(todoSchema)) },
-            ...commonResponses,
-          },
-        },
-      },
+      /**
+       * Whatever the features registered in `start/api.ts` document, after
+       * core's own endpoints.
+       */
+      ...openApi.paths(),
     },
 
     'x-rate-limits': {

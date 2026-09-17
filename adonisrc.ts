@@ -98,12 +98,13 @@ export default defineConfig({
     () => import('#start/validator'),
 
     /**
-     * The two feature registries, before the view layer: a rendered page
-     * reads plan usage and the Overview screen renders widgets, and both are
-     * whatever these files register.
+     * The feature registries, before the view layer: a rendered page reads
+     * plan usage, the Overview screen renders widgets, and the API's scopes
+     * and spec are whatever these files register.
      */
     () => import('#start/quotas'),
     () => import('#start/dashboard'),
+    () => import('#start/api'),
     () => import('#start/view'),
   ],
 

@@ -642,6 +642,38 @@ test.group('API — the published document', () => {
     }
   })
 
+  /**
+   * Schemas and the usage block are assembled rather than written out —
+   * features contribute schemas through the OpenAPI registry, and the
+   * `/organization` usage properties are built from the quota registry so
+   * that the document and `OrganizationTransformer` cannot disagree about
+   * which quotas exist. Both are pinned here, because a spec that quietly
+   * stops describing a payload is worse than one that never described it.
+   */
+  test('carries both core and feature schemas', async ({ client, assert }) => {
+    const response = await client.get('/openapi.json')
+
+    const schemas = Object.keys(response.body().components.schemas)
+
+    assert.includeMembers(schemas, ['Error', 'Member', 'Quota'], 'core')
+    assert.includeMembers(schemas, ['List', 'Todo'], 'contributed by the demo domain')
+  })
+
+  test('documents exactly the quotas the payload reports', async ({ client, assert }) => {
+    const response = await client.get('/openapi.json')
+
+    const usage =
+      response.body().paths['/organization'].get.responses['200'].content['application/json'].schema
+        .properties.data.properties.usage
+
+    assert.deepEqual(Object.keys(usage.properties).sort(), [
+      'lists',
+      'seats',
+      'storage_mb',
+      'todos_per_list',
+    ])
+  })
+
   test('says loudly that a 402 is not retryable', async ({ client, assert }) => {
     const response = await client.get('/openapi.json')
     const document = response.body()

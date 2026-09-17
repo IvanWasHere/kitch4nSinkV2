@@ -83,6 +83,7 @@ resources/views/emails/overdue_digest.edge
 resources/views/emails/overdue_digest_text.edge
 database/migrations/1788600000007_create_todo_lists_table.ts
 database/migrations/1788600000008_create_todos_table.ts
+database/todo_schema_rules.ts                       its two tables' column rules
 tests/functional/todos/
 tests/unit/position.spec.ts
 docs/lists-and-todos.md
@@ -107,6 +108,7 @@ than a rewrite — **there is nothing left in `app/` to edit.**
 |---|---|
 | `start/quotas.ts` | the `lists` and `todosPerList` registrations |
 | `start/dashboard.ts` | the three widget registrations |
+| `start/api.ts` | the demo-domain block: the scope loop and `openApi.register(listOpenApi)` |
 | `start/routes/web.ts` | the `lists.*` and `todos.*` route block |
 | `start/routes/api.ts` | the `/lists` and `/todos` route block |
 | `app/queue/registry.ts` | the three job imports and their `jobHandlers` entries |
@@ -121,6 +123,16 @@ table and its activity feed. The usage meters stay, because they are the page's 
 than a widget, and with nothing registered the page renders a hint instead of breaking —
 `tests/functional/dashboard.spec.ts` covers exactly that case. You will want to register widgets of
 your own; see below.
+
+Deleting the `start/api.ts` block removes `lists:*` and `todos:*` from the key-creation form, from
+the key validator's accepted values, and from `/openapi.json` and `/docs`. Because
+`app/todos/api_scopes.ts` carries the type augmentation that puts those scopes into `ApiScope`,
+deleting it is also what makes a leftover `requireScope(ctx, 'lists:read')` **fail to compile**
+rather than fail at runtime.
+
+There is one edit outside the registries: `config/database.ts` lists
+`#database/todo_schema_rules` in `schemaGeneration.rulesPaths` for both connections. Drop it when
+you delete that file.
 
 None of the files those registrations feed mentions a list.
 
@@ -140,28 +152,26 @@ override form in `resources/views/pages/admin/organizations/show.edge` re-popula
 server-side check in `AdminOrganizationController.overrideLimits` reads the same object, and
 `PlanLimitExceededException` takes its wording from `LIMIT_NOUNS`.
 
-**`app/api/scopes.ts`** — replace the `lists:*` and `todos:*` entries in `API_SCOPES`,
-`DEFAULT_SCOPES` and `SCOPE_DESCRIPTIONS` with your own. `database/schema_rules.ts` references the
-`ApiScope` type rather than restating the union, so `database/schema.ts` regenerates correctly with
-no edit. `members:read` is core.
+**`app/models/public_id.ts`** — remove the `todoList: 'lst'` and `todo: 'tdo'` prefixes and add
+your own. Deliberately a plain object rather than a registry: a model's `withPublicId('todoList')`
+runs when the class is defined, so a prefix registered by a preload could be missing at exactly the
+wrong moment and mint an `undefined_…` id. A constant is complete before any model loads, and it is
+what makes `tests/unit/public_id.spec.ts`'s exhaustive pass cover your resource.
 
-**`app/models/public_id.ts`** — remove the `todoList: 'lst'` and `todo: 'tdo'` prefixes and add your
-own. Adding a prefix here is what makes `tests/unit/public_id.spec.ts`'s exhaustive pass cover your
-resource too.
+And that is the whole of step 3. Everything else that used to be listed here is now registry-driven
+and needs **no** edit:
 
-**`database/schema_rules.ts`** — remove the `todo_lists` and `todos` table rules (the `color` and
-`priority` unions).
+| File | Why it no longer needs one |
+|---|---|
+| `app/api/scopes.ts` | holds what a scope *is*, not which ones exist — those come from `start/api.ts` |
+| `app/api/openapi.ts` | core paths plus `openApi.paths()`; the demo domain's are in `app/todos/openapi.ts` |
+| `app/validators/api.ts` | keeps `createApiKeyValidator`; the four list/todo bodies live in `#validators/todo` |
+| `database/schema_rules.ts` | core tables only; the `color` and `priority` unions are in `database/todo_schema_rules.ts` |
+| `app/transformers/organization_transformer.ts` | builds the usage payload from the quota registry |
+| `app/exceptions/plan_limit_exceeded_exception.ts` | takes its wording from `LIMIT_NOUNS` |
 
-**`app/api/openapi.ts`** — remove `listSchema`, `todoSchema`, the `/lists` and `/todos` path
-entries, and the sentence in `info.description` that names `POST /lists`.
-
-**`app/validators/api.ts`** — remove the four `apiCreateList` / `apiUpdateList` / `apiCreateTodo` /
-`apiUpdateTodo` validators. `createApiKeyValidator` is core.
-
-`app/transformers/organization_transformer.ts` needs **no** edit: it builds the usage payload from
-the quota registry, so dropping the registrations in step 2 drops the keys.
-`tests/functional/api/endpoints.spec.ts` asserts the exact key set, which is where you will be told
-the published API changed.
+`tests/functional/api/endpoints.spec.ts` asserts the document's schema list and the exact quota key
+set, which is where you will be told the published API changed.
 
 ---
 
@@ -254,6 +264,60 @@ which is what you want for something static.
 Every widget's `load` runs in parallel, but they all run on the screen a customer lands on after
 signing in. Keep each one to bounded, indexed queries — the dashboard is the easiest place in the
 application to accidentally put a table scan.
+
+---
+
+## Adding your resource to the API
+
+Three pieces: the scopes, the request bodies, and the spec.
+
+**1. Declare and describe the scopes.** The augmentation is what keeps `ApiScope` a closed union,
+so `requireScope` stays a compile-time check:
+
+```ts
+// app/projects/api_scopes.ts
+declare module '#api/scopes' {
+  interface ApiScopes {
+    'projects:read': true
+    'projects:write': true
+  }
+}
+
+export const projectApiScopes: [ApiScope, ScopeDefinition][] = [
+  ['projects:read', { description: 'Read projects', default: true }],
+  ['projects:write', { description: 'Create, rename and delete projects' }],
+]
+```
+
+`default: true` is what a key gets when the caller does not choose, so only ever put a read scope
+there — it is the safe default for something about to be pasted into a script.
+
+**2. Put the request bodies with the feature**, not in `#validators/api`. Keys are snake_case,
+matching what the transformers emit, so a client can `PATCH` back a field it just read.
+
+**3. Contribute the spec.** Import the shared fragments so your endpoints are documented the way
+core's are, and export one `OpenApiContribution`:
+
+```ts
+// app/projects/openapi.ts
+export const projectOpenApi: OpenApiContribution = {
+  schemas: { Project: projectSchema },
+  paths: {
+    '/projects': {
+      get: { summary: 'List projects', parameters: [...cursorParams], responses: { … } },
+      post: { summary: 'Create a project', responses: { …planLimitResponse, …commonResponses } },
+    },
+  },
+}
+```
+
+**Then register both** in `start/api.ts`, and add the routes to `start/routes/api.ts`.
+
+{: .warning }
+Anything that reads the scope registry must read it **lazily**. `createApiKeyValidator` uses
+`vine.enum(() => scopes.all())` rather than passing the array, because a validator defined at
+module load would capture the registry before `start/api.ts` filled it — and silently accept
+nothing.
 
 ---
 

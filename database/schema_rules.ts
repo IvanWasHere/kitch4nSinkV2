@@ -10,6 +10,12 @@ import { type SchemaRules } from '@adonisjs/lucid/types/schema_generator'
  *
  * This file is the reason `database/schema.ts` must never be hand-edited: it
  * is rewritten on every `migration:run`.
+ *
+ * A feature's own tables are declared in its own rules file, listed beside
+ * this one in `config/database.ts` under `schemaGeneration.rulesPaths` — the
+ * demo domain's are in `#database/todo_schema_rules`. The generator deep
+ * merges every file it is given, so a feature's tables arrive without this
+ * file naming them (docs/modules.md).
  */
 
 const encrypted = {
@@ -68,7 +74,7 @@ const bigIntCounter = {
  * A closed set of values stored as a string. Typing it as a union is what
  * turns a typo in `where('role', 'owners')` into a compile error.
  */
-const union = (...values: string[]) => ({
+export const union = (...values: string[]) => ({
   tsType: values.map((value) => `'${value}'`).join(' | '),
   imports: [],
   decorators: [{ name: '@column' }],
@@ -229,21 +235,6 @@ export default {
          * Which of the two nullable author columns is the populated one.
          */
         author_type: union('user', 'staff'),
-      },
-    },
-
-    todo_lists: {
-      columns: {
-        /**
-         * A design-token name — the `.card-stripe-*` palette — not a hex.
-         */
-        color: union('blue', 'green', 'orange', 'purple', 'red', 'gray'),
-      },
-    },
-
-    todos: {
-      columns: {
-        priority: union('low', 'normal', 'high'),
       },
     },
 

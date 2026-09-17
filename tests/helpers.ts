@@ -5,7 +5,7 @@ import type User from '#models/user'
 import type ApiKey from '#models/api_key'
 import type StaffUser from '#models/staff_user'
 import type Organization from '#models/organization'
-import { API_SCOPES, type ApiScope } from '#api/scopes'
+import apiScopes, { type ApiScope } from '#api/scopes'
 import registration from '#auth/registration_service'
 import twoFactor from '#auth/two_factor_service'
 import { CreemProvider } from '#billing/providers/creem'
@@ -449,7 +449,7 @@ export async function createApiWorkspace(
      * list behind. Narrow it per test when the scope *is* the thing under
      * test.
      */
-    scopes: options.scopes ?? [...API_SCOPES],
+    scopes: options.scopes ?? apiScopes.all(),
   })
 
   return {

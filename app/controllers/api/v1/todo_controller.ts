@@ -11,7 +11,7 @@ import { ApiNotFoundException, ApiValidationException } from '#api/errors'
 import { decodeCursor, pageSize, toCursorPage } from '#api/cursor'
 import { sendItem, sendPage } from '#api/responses'
 import TodoTransformer from '#transformers/todo_transformer'
-import { apiCreateTodoValidator, apiUpdateTodoValidator } from '#validators/api'
+import { apiCreateTodoValidator, apiUpdateTodoValidator } from '#validators/todo'
 
 /**
  * `/api/v1/…/todos` (plan §11).

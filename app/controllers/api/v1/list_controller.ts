@@ -7,7 +7,7 @@ import { ApiNotFoundException, ApiValidationException } from '#api/errors'
 import { decodeCursor, pageSize, toCursorPage } from '#api/cursor'
 import { sendItem, sendPage } from '#api/responses'
 import TodoListTransformer from '#transformers/todo_list_transformer'
-import { apiCreateListValidator, apiUpdateListValidator } from '#validators/api'
+import { apiCreateListValidator, apiUpdateListValidator } from '#validators/todo'
 
 /**
  * `/api/v1/lists` (plan §11).

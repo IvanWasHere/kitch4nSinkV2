@@ -7,7 +7,7 @@ import type User from '#models/user'
 import Organization from '#models/organization'
 import plans from '#billing/plan_service'
 import { generateApiKey, hashApiKey, type ApiKeyEnvironment } from '#api/keys'
-import { DEFAULT_SCOPES, normalizeScopes } from '#api/scopes'
+import scopes from '#api/scopes'
 
 export class ApiKeyError extends Error {
   constructor(
@@ -54,9 +54,9 @@ export class ApiKeyService {
       expiresAt?: DateTime | null
     }
   ): Promise<CreatedKey> {
-    const scopes = input.scopes === undefined ? DEFAULT_SCOPES : normalizeScopes(input.scopes)
+    const granted = input.scopes === undefined ? scopes.defaults() : scopes.normalize(input.scopes)
 
-    if (scopes.length === 0) {
+    if (granted.length === 0) {
       throw new ApiKeyError('Choose at least one thing this key may do.', 'no_scopes')
     }
 
@@ -73,7 +73,7 @@ export class ApiKeyService {
           name: input.name.trim(),
           prefix: generated.prefix,
           keyHash: generated.hash,
-          scopes,
+          scopes: granted,
           expiresAt: input.expiresAt ?? null,
           createdByUserId: actor.id,
         },
