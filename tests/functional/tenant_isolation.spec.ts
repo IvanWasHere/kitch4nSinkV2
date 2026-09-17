@@ -242,8 +242,23 @@ test.group('Tenant isolation', (group) => {
 
   /*
    |--------------------------------------------------------------------------
-   | Lists and todos (M3.5)
+   | Lists and todos (M3.5) — the demo domain
    |--------------------------------------------------------------------------
+   |
+   | Everything from here to the "Seats" banner below is the demo domain's
+   | half of this suite. Replacing that domain (docs/modules.md) means
+   | **porting** this block to your own resource rather than deleting it:
+   | these are not generic cases dressed up in list clothing, they are the
+   | specific ways a tenant-owned resource leaks — a foreign id in a path, a
+   | rename that reaches across, a child row claiming a parent in another
+   | workspace, an assignment to a stranger. A new domain with no equivalent
+   | is the easiest way to undo the value of this starter.
+   |
+   | They are not abstracted behind a table on purpose. A generic harness fed
+   | an endpoint list would flatten cases that are each making a different
+   | argument, and the coverage it cost would be exactly the coverage worth
+   | having.
+   |
    */
 
   test('the lists screen shows only your own', async ({ client, assert }) => {
@@ -415,6 +430,16 @@ test.group('Tenant isolation', (group) => {
     void TodoList
     void todoService
   })
+
+  /*
+   |--------------------------------------------------------------------------
+   | Seats, billing, files and the API — core
+   |--------------------------------------------------------------------------
+   |
+   | These stay whatever the domain is, though the API cases below reach for
+   | `createList` as the resource they act on.
+   |
+   */
 
   test('seat counts are per workspace', async ({ assert }) => {
     const { a, b } = await twoWorkspaces()

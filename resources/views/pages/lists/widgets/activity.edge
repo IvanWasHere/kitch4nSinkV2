@@ -1,0 +1,27 @@
+{{--
+  The activity feed on the Overview screen, from what has actually happened to
+  todos rather than from a separate event log.
+
+  Registered as a `panels` widget in `start/dashboard.ts`; `widget.data` is
+  `DashboardService.recentActivity`.
+--}}
+@let(activity = widget.data)
+
+@panel.root({ title: 'Recently finished' })
+  @if(activity.length)
+    @each(todo in activity)
+      <div class="activity-item">
+        <span class="activity-dot activity-dot-green"></span>
+        <div>
+          <p class="activity-text">
+            <strong>{{ todo.completedBy ? todo.completedBy.displayName : 'Someone' }}</strong>
+            finished {{ todo.title }} in {{ todo.todoList.name }}
+          </p>
+          <p class="activity-time">{{ todo.completedAt.toRelative() }}</p>
+        </div>
+      </div>
+    @end
+  @else
+    <p class="field-hint">Nothing finished yet. Ticking a todo will show up here.</p>
+  @end
+@end

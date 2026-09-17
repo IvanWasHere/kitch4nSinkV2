@@ -21,7 +21,12 @@ twenty minutes, and the test suite tells you when you are done.
 
 ## What is already independent
 
-Four things mean removal is smaller than it looks.
+Five things mean removal is smaller than it looks.
+
+**Nothing in `app/` imports the demo domain.** Not `PlanService`, not the dashboard controller, not
+a transformer or a template outside the domain's own screens. The only files that name it are the
+six registries in step 2, `commands/dev_seed.ts`, and the domain's own files. That is the property
+everything below rests on, and `grep -rl '#todos/' app/` is how you check it still holds.
 
 **Quotas are registered, not hardcoded.** `PlanService` owns the arithmetic — the amber-at-80% rule,
 the row lock inside a create, the `>=` that makes a downgraded workspace read as full — and knows
@@ -39,16 +44,16 @@ treat a missing `usage` as absent rather than as zero.
 `adonisrc.ts` rebuild `#generated/controllers` and `#generated/policies` by scanning
 `app/controllers/` and `app/policies/`. Delete the files and the barrels follow.
 
+**The Overview screen holds no queries.** `DashboardController` is four lines: it loads whatever
+`start/dashboard.ts` registers and hands it to the template, which renders each widget's partial
+through a dynamic `@include`. The screen names nothing it shows, so it survives its widgets being
+deleted.
+
 **The dependency direction is inward.** Everything under `app/todos/`, plus the domain's
 controllers, models, policies and transformers, imports *core* (`#billing/plan_service`,
-`#api/cursor`, `#models/organization`). Going the other way, exactly one file in `app/` that is
-**not** itself part of the domain imports it: `app/controllers/dashboard_controller.ts`. Everything
-else that does — the three jobs and the overdue-digest mail — is deleted in step 1 along with it.
-Outside `app/`, it is named by `start/quotas.ts`, the two route files, `app/queue/registry.ts`,
-`commands/schedule_run.ts` and `commands/dev_seed.ts`, and nowhere else.
-
-In particular `app/billing/plan_service.ts`, which used to import `#models/todo_list` in order to
-count lists, no longer knows the domain exists.
+`#api/cursor`, `#models/organization`) and never the other way about. In particular
+`app/billing/plan_service.ts`, which used to import `#models/todo_list` in order to count lists, no
+longer knows the domain exists.
 
 ---
 
@@ -73,7 +78,7 @@ app/queue/jobs/overdue_digest_job.ts                the three domain jobs
 app/queue/jobs/reconcile_counters_job.ts
 app/queue/jobs/normalize_positions_job.ts
 app/mail/mails/overdue_digest_notification.ts
-resources/views/pages/lists/
+resources/views/pages/lists/                         screens + dashboard widget partials
 resources/views/emails/overdue_digest.edge
 resources/views/emails/overdue_digest_text.edge
 database/migrations/1788600000007_create_todo_lists_table.ts
@@ -95,28 +100,29 @@ tables until you migrate them away — add a migration that drops them, rather t
 
 ## Step 2 — unregister it
 
-Five places name the domain. Each is an explicit registry, so each is a deletion rather than a
-rewrite.
+Six places name the domain. Every one is an explicit registry, so every one is a deletion rather
+than a rewrite — **there is nothing left in `app/` to edit.**
 
 | File | What to remove |
 |---|---|
 | `start/quotas.ts` | the `lists` and `todosPerList` registrations |
+| `start/dashboard.ts` | the three widget registrations |
 | `start/routes/web.ts` | the `lists.*` and `todos.*` route block |
 | `start/routes/api.ts` | the `/lists` and `/todos` route block |
 | `app/queue/registry.ts` | the three job imports and their `jobHandlers` entries |
 | `commands/schedule_run.ts` | the three imports and their entries in the schedule table |
 
-Deleting the `start/quotas.ts` lines is what removes the Lists meter from the dashboard, the
-billing screen and the back office, drops `lists` from the API's usage payload, and takes the
-`lists` case out of the at-cap banner. None of those files mentions a list.
+Deleting the `start/quotas.ts` lines removes the Lists meter from the dashboard, the billing screen
+and the back office, drops `lists` from the API's usage payload, and takes the `lists` case out of
+the at-cap banner.
 
-Then the one remaining reverse dependency, which needs more than a deletion:
+Deleting the `start/dashboard.ts` lines empties the Overview screen of its figures, its recent-todo
+table and its activity feed. The usage meters stay, because they are the page's own shell rather
+than a widget, and with nothing registered the page renders a hint instead of breaking —
+`tests/functional/dashboard.spec.ts` covers exactly that case. You will want to register widgets of
+your own; see below.
 
-**`app/controllers/dashboard_controller.ts`** imports `#todos/dashboard_service`, and
-`resources/views/pages/dashboard/index.edge` renders todo statistics beneath its meters. The
-Overview screen's stat cards, recent-todo table and activity feed are entirely the demo domain's
-numbers, so this is the one screen you have to rebuild rather than delete — or point the route at
-your own controller. Its usage meters need no change.
+None of the files those registrations feed mentions a list.
 
 ---
 
@@ -216,6 +222,41 @@ it.
 
 ---
 
+## Adding a dashboard widget
+
+The Overview screen is whatever its widgets say. There are two regions — `stats`, the row of
+figures across the top, and `panels`, the grid beneath the usage meters — and a widget is a loader
+plus a partial:
+
+```ts
+// start/dashboard.ts
+dashboard.register({
+  key: 'project_stats',
+  region: 'stats',
+  partial: 'pages/projects/widgets/stats',
+  load: (organization) => projects.statsFor(organization),
+})
+```
+
+The partial is rendered with the page's scope plus a `widget` local, so it reads its own data as
+`widget.data`:
+
+```edge
+@let(stats = widget.data)
+
+@!statCard({ label: 'Projects', value: stats.total, icon: 'folder', tone: 'blue' })
+```
+
+Registration order is render order within a region. A widget with no `load` gets `data: null`,
+which is what you want for something static.
+
+{: .warning }
+Every widget's `load` runs in parallel, but they all run on the screen a customer lands on after
+signing in. Keep each one to bounded, indexed queries — the dashboard is the easiest place in the
+application to accidentally put a table scan.
+
+---
+
 ## Step 4 — the tests
 
 `tests/functional/todos/` and `tests/unit/position.spec.ts` go with the domain. The rest use lists
@@ -231,15 +272,24 @@ lose the coverage instead of moving it:
 | `tests/unit/plan_service.spec.ts` | limits, overrides and the 402 details, all keyed on `lists` |
 | `tests/unit/api.spec.ts` | scope parsing, using `lists:read` and `todos:read` as the literals |
 | `tests/unit/public_id.spec.ts` | prefix parsing — iterates the registry, but also names `todo` and `todoList` directly in four assertions |
+| `tests/functional/dashboard.spec.ts` | that every registered widget renders — and that the screen still renders with none |
 | `tests/functional/admin/back_office.spec.ts`, `tests/functional/api/auth.spec.ts`, `tests/functional/billing/webhooks.spec.ts` | incidental — they create a list to have a row to act on |
 
-`tests/helpers.ts` exports `createList()` for these. Replace it with a factory for your own
-resource and most of the suites follow.
+**`tests/helpers.ts` exports `createList()`, and that is the seam.** Every suite above uses it as
+its tenant-owned resource. Rewrite that one function's body to create yours and most of the suites
+follow with no other edit — which is why it lives in the file they all already import rather than
+in a domain-specific helper file.
+
+`tests/functional/dashboard.spec.ts` asserts on widget *content*, so it needs your widget's copy
+rather than the demo domain's. Its second test — the screen with an empty registry — is core and
+should be kept as it is.
 
 {: .note }
-The isolation suite is the one to port rather than rewrite. It is the reason the tenancy claims in
-these docs are true, and a new domain with no equivalent is the single easiest way to undo the
-value of this starter.
+The isolation suite is the one to port rather than rewrite. Its demo-domain block is marked off by
+a section banner naming exactly where it starts and ends. Those cases are not generic cases in list
+clothing — each argues a different way a tenant-owned resource leaks — so they are deliberately
+not abstracted behind an endpoint table, and a new domain with no equivalent is the single easiest
+way to undo the value of this starter.
 
 ---
 

@@ -1,0 +1,62 @@
+{{--
+  Recent todos on the Overview screen (plan §13.6.2) — the mockup's "recent
+  orders" table.
+
+  Open ones only: the panel has a *Due* column and sits beside "recently
+  finished", so a completed todo listed here is both answered twice and asked
+  about once too often.
+
+  Registered as a `panels` widget in `start/dashboard.ts`; `widget.data` is
+  `DashboardService.recentTodos`.
+--}}
+@let(recent = widget.data)
+
+@panel.root({ title: 'Recent todos', flush: true })
+  @slot('actions')
+    @!link({ route: 'lists.index', text: 'All lists', class: 'btn-ghost' })
+  @end
+
+  @if(recent.length)
+    <div class="table-scroll">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Todo</th>
+            <th>List</th>
+            <th>Assignee</th>
+            <th>Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          @each(todo in recent)
+            <tr>
+              <td>
+                <a
+                  class="order-id"
+                  href="{{ urlFor('lists.show', { id: todo.todoList.publicId }) }}"
+                >{{ todo.title }}</a>
+              </td>
+              <td>{{ todo.todoList.name }}</td>
+              <td>{{ todo.assignedTo ? todo.assignedTo.displayName : 'Unassigned' }}</td>
+              <td>
+                @if(todo.dueAt)
+                  <span class="{{ todo.isOverdue ? 'nav-usage full' : '' }}">
+                    {{ todo.dueAt.setZone(organization.timezone).toFormat('d LLL') }}
+                  </span>
+                @else
+                  <span class="field-hint">—</span>
+                @end
+              </td>
+            </tr>
+          @end
+        </tbody>
+      </table>
+    </div>
+  @else
+    @!emptyState({
+      icon: 'list',
+      title: `Welcome to ${organization.name}`,
+      description: 'Create a list and everyone in the workspace can start adding to it.',
+    })
+  @end
+@end

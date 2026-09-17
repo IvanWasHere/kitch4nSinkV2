@@ -1,0 +1,26 @@
+{{--
+  The demo domain's figures on the Overview screen (plan §13.5).
+
+  The mockup's four stat cards become Lists / Open todos / Completed this
+  week / Overdue. "Completed this week" is free because completion is a
+  timestamp rather than a boolean (plan §5.6).
+
+  Registered as a `stats` widget in `start/dashboard.ts`; `widget.data` is
+  `DashboardService.statsFor`.
+--}}
+@let(stats = widget.data)
+
+@!statCard({ label: 'Lists', value: stats.lists, icon: 'list', tone: 'blue' })
+@!statCard({ label: 'Open todos', value: stats.openTodos, icon: 'package', tone: 'purple' })
+@!statCard({
+  label: 'Completed this week',
+  value: stats.completedThisWeek,
+  icon: 'check',
+  tone: 'green',
+})
+@!statCard({
+  label: 'Overdue',
+  value: stats.overdue,
+  icon: 'clock',
+  tone: stats.overdue > 0 ? 'red' : 'green',
+})

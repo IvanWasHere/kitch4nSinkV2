@@ -5,7 +5,7 @@ import type User from '#models/user'
 import type ApiKey from '#models/api_key'
 import type StaffUser from '#models/staff_user'
 import type Organization from '#models/organization'
-import type { ApiScope } from '#api/scopes'
+import { API_SCOPES, type ApiScope } from '#api/scopes'
 import registration from '#auth/registration_service'
 import twoFactor from '#auth/two_factor_service'
 import { CreemProvider } from '#billing/providers/creem'
@@ -62,6 +62,14 @@ export async function queuedMailsTo(email: string): Promise<QueuedMail[]> {
 /**
  * A list with some todos, through the real services so the counter and the
  * positions are built the way the application builds them.
+ *
+ * **This is the demo domain's factory, and the seam every other suite sits
+ * on.** Quotas, tenant isolation, the API's pagination and the dashboard all
+ * need *a* tenant-owned resource to act on, and this is the one they use.
+ * Replacing the demo domain (docs/modules.md) means rewriting this function's
+ * body to create your own resource — deliberately kept here, in the file
+ * every suite already imports, so that it is one function to rewrite and not
+ * an import to change in nine places.
  */
 export async function createList(
   organization: Organization,
@@ -434,13 +442,14 @@ export async function createApiWorkspace(
 
   const { apiKey, secret } = await apiKeys.create(organization, user, {
     name: options.name ?? 'test key',
-    scopes: options.scopes ?? [
-      'lists:read',
-      'lists:write',
-      'todos:read',
-      'todos:write',
-      'members:read',
-    ],
+    /**
+     * Every scope the application offers, read from the registry rather than
+     * written out — a test key should be able to reach whatever the API can
+     * do, and a scope added or removed with a feature must not leave this
+     * list behind. Narrow it per test when the scope *is* the thing under
+     * test.
+     */
+    scopes: options.scopes ?? [...API_SCOPES],
   })
 
   return {

@@ -1,24 +1,28 @@
+{{--
+  The Overview screen (plan §13.5).
+
+  Names nothing it shows. The figures and the panels are widgets registered
+  in `start/dashboard.ts`, and the meters are whatever `start/quotas.ts`
+  registers — so a feature added or removed changes this page without
+  touching it (docs/modules.md).
+
+  Each widget's partial is rendered with this scope plus the `widget` loop
+  variable, and reads its own data as `widget.data`.
+--}}
 @component('layouts/app', { title: 'Overview' })
   @slot('actions')
-    @!link({ route: 'lists.index', text: 'Lists', class: 'btn btn-outline btn-sm' })
+    @if(hasRoute('lists.index'))
+      @!link({ route: 'lists.index', text: 'Lists', class: 'btn btn-outline btn-sm' })
+    @end
   @end
 
-  <div class="stats-grid">
-    @!statCard({ label: 'Lists', value: stats.lists, icon: 'list', tone: 'blue' })
-    @!statCard({ label: 'Open todos', value: stats.openTodos, icon: 'package', tone: 'purple' })
-    @!statCard({
-      label: 'Completed this week',
-      value: stats.completedThisWeek,
-      icon: 'check',
-      tone: 'green',
-    })
-    @!statCard({
-      label: 'Overdue',
-      value: stats.overdue,
-      icon: 'clock',
-      tone: stats.overdue > 0 ? 'red' : 'green',
-    })
-  </div>
+  @if(widgets.stats.length)
+    <div class="stats-grid">
+      @each(widget in widgets.stats)
+        @include(widget.partial)
+      @end
+    </div>
+  @end
 
   {{--
     Plan usage (plan §7.4). Driven by the same PlanService numbers as
@@ -39,74 +43,21 @@
     </div>
   @end
 
-  <div class="panel-grid">
-    @panel.root({ title: 'Recent todos', flush: true })
-      @slot('actions')
-        @!link({ route: 'lists.index', text: 'All lists', class: 'btn-ghost' })
+  @if(widgets.panels.length)
+    <div class="panel-grid">
+      @each(widget in widgets.panels)
+        @include(widget.partial)
       @end
-
-      @if(recent.length)
-        <div class="table-scroll">
-          <table class="orders-table">
-            <thead>
-              <tr>
-                <th>Todo</th>
-                <th>List</th>
-                <th>Assignee</th>
-                <th>Due</th>
-              </tr>
-            </thead>
-            <tbody>
-              @each(todo in recent)
-                <tr>
-                  <td>
-                    <a
-                      class="order-id"
-                      href="{{ urlFor('lists.show', { id: todo.todoList.publicId }) }}"
-                    >{{ todo.title }}</a>
-                  </td>
-                  <td>{{ todo.todoList.name }}</td>
-                  <td>{{ todo.assignedTo ? todo.assignedTo.displayName : 'Unassigned' }}</td>
-                  <td>
-                    @if(todo.dueAt)
-                      <span class="{{ todo.isOverdue ? 'nav-usage full' : '' }}">
-                        {{ todo.dueAt.setZone(organization.timezone).toFormat('d LLL') }}
-                      </span>
-                    @else
-                      <span class="field-hint">—</span>
-                    @end
-                  </td>
-                </tr>
-              @end
-            </tbody>
-          </table>
-        </div>
-      @else
-        @!emptyState({
-          icon: 'list',
-          title: `Welcome to ${organization.name}`,
-          description: 'Create a list and everyone in the workspace can start adding to it.',
-        })
-      @end
-    @end
-
-    @panel.root({ title: 'Recently finished' })
-      @if(activity.length)
-        @each(todo in activity)
-          <div class="activity-item">
-            <span class="activity-dot activity-dot-green"></span>
-            <div>
-              <p class="activity-text">
-                <strong>{{ todo.completedBy ? todo.completedBy.displayName : 'Someone' }}</strong>
-                finished {{ todo.title }} in {{ todo.todoList.name }}
-              </p>
-              <p class="activity-time">{{ todo.completedAt.toRelative() }}</p>
-            </div>
-          </div>
-        @end
-      @else
-        <p class="field-hint">Nothing finished yet. Ticking a todo will show up here.</p>
-      @end
-    @end
-  </div>
+    </div>
+  @else
+    {{--
+      An application with no dashboard widgets registered. The meters above
+      are still worth the screen, so this is a hint rather than a whole empty
+      state.
+    --}}
+    <p class="field-hint">
+      Nothing else to show yet. Register a widget in <code>start/dashboard.ts</code> to fill this
+      screen.
+    </p>
+  @end
 @end
