@@ -6,6 +6,13 @@ import Organization from '#models/organization'
 /**
  * Words that would produce a slug colliding with an application route, so an
  * organisation can never claim `/admin` or `/api`.
+ *
+ * A hand-written list rather than one derived from the router, because the
+ * router is populated after this module loads and a reservation that arrived
+ * late would be a reservation that did not hold. So **a feature that adds a
+ * top-level route segment adds it here** — `lists` is the demo domain's
+ * (docs/modules.md). Leaving a stale word in costs a workspace one possible
+ * name; leaving a live one out lets a workspace shadow a route.
  */
 const RESERVED = new Set([
   'admin',

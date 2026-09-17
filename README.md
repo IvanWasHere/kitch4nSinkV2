@@ -443,9 +443,10 @@ app/
   billing/        💳 PaymentProvider, plans, webhooks, reconciliation
   notifications/  📣 the audience predicate and the feed
   storage/        📁 keys, MIME sniffing, quota accounting
-  todos/          📋 the demo domain
   queue/          ⚙️ the queue and its job handlers
   admin/          🧑‍💼 back-office services and the staff policy
+  modules/lists/  📋 the demo domain — one folder, deletable
+start/            quotas · dashboard · api · jobs · seeders — the registries a feature fills
 config/           plans.ts · payments.ts · drive.ts · limiter.ts · database.ts
 database/         migrations · seeders · generated schema types
 resources/views/  layouts · components · pages · emails

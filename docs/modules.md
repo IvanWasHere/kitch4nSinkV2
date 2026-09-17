@@ -21,7 +21,12 @@ mechanical job of about twenty minutes, and the test suite tells you when you ar
 
 ## What is already independent
 
-Six things mean removal is smaller than it looks.
+Seven things mean removal is smaller than it looks.
+
+**A test enforces all of it.** `tests/unit/modularity.spec.ts` asserts that nothing outside the
+registration points imports `#modules/…`, and that each registration point still registers
+something. The properties below are not conventions anyone has to remember — they fail the suite
+when they break.
 
 **It lives in one folder.** `app/modules/lists/` holds its models, services, controllers, policies,
 transformers, jobs, mails, validators, routes, API surface, schema rules and tests. Nothing else in
@@ -84,6 +89,7 @@ app/modules/lists/
   api_scopes.ts    the scopes, and the augmentation that types them
   openapi.ts       its half of the published spec
   routes.ts        registered from inside core's groups
+  seeder.ts        its share of `node ace dev:seed`
   schema_rules.ts  its two tables' column rules
   validators.ts    web and API request bodies
 ```
@@ -101,7 +107,9 @@ reason:
 Deleting the migrations only affects a database built from scratch. An existing one keeps both
 tables until you migrate them away — add a migration that drops them, rather than editing history.
 
-Also delete `docs/lists-and-todos.md`, and the demo-domain parts of `commands/dev_seed.ts`.
+Also delete `docs/lists-and-todos.md`. `commands/dev_seed.ts` needs **no** edit: the demo
+domain's share of the dataset is `app/modules/lists/seeder.ts`, registered in `start/seeders.ts`,
+so `dev:seed` keeps building a complete demo of everything core has.
 
 {: .note }
 Your own feature goes in the same shape: `app/modules/<name>/`, imported as `#modules/<name>/…`.
@@ -114,7 +122,7 @@ generated from the path — `app/modules/lists/policies/todo_policy.ts` becomes
 
 ## Step 2 — unregister it
 
-Seven places name the domain. Every one is an explicit registration, so every one is a deletion
+Eight places name the domain. Every one is an explicit registration, so every one is a deletion
 rather than a rewrite — **there is nothing left in `app/` outside the module to edit.**
 
 Each is a block plus the import that feeds it — drop both, or `tsc` will tell you about the unused
@@ -126,6 +134,7 @@ one.
 | `start/dashboard.ts` | the three widget registrations |
 | `start/api.ts` | the demo-domain block: the scope loop and `openApi.register(listOpenApi)` |
 | `start/jobs.ts` | the three job imports and registrations |
+| `start/seeders.ts` | the `listsDemoSeeder` registration and its import |
 | `start/routes/web.ts` | the `registerListWebRoutes()` call and its import |
 | `start/routes/api.ts` | the `registerListApiRoutes()` call and its import |
 | `config/database.ts` | `#modules/lists/schema_rules` in `rulesPaths`, on both connections |
@@ -366,6 +375,37 @@ Anything that reads the scope registry must read it **lazily**. `createApiKeyVal
 `vine.enum(() => scopes.all())` rather than passing the array, because a validator defined at
 module load would capture the registry before `start/api.ts` filled it — and silently accept
 nothing.
+
+---
+
+## Adding your own demo data
+
+`node ace dev:seed` builds the workspaces, the people, the subscriptions, the announcements and the
+operations rows. It does not know what your rows look like, so a feature fills them itself:
+
+```ts
+// app/modules/projects/seeder.ts
+export const projectsDemoSeeder: DemoSeeder = {
+  key: 'projects',
+
+  /**
+   * A meter is only worth showing near its ceiling, and a plan's real
+   * ceiling is usually too high to demonstrate against.
+   */
+  overrides: { free: { tasksPerProject: 12 } },
+
+  async seed({ free, pro }) {
+    await fill(free.organization, free.owner, free.members[0])
+    await fill(pro.organization, pro.owner, pro.members[0], pro.members[1])
+  },
+}
+```
+
+Register it in `start/seeders.ts`. You are handed two workspaces — `free` (Acme, deliberately at
+its caps) and `pro` (the one the demo is toured in) — each with its `organization`, `owner` and
+`members` in join order. Seeders run after every workspace and person exists, so you can assign a
+row to a member and know they are there; `overrides` are merged over whatever core already set,
+never replacing it.
 
 ---
 

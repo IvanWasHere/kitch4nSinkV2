@@ -42,7 +42,7 @@ The navigation is gated by role, so nobody is offered a screen that would then r
 
 | Page | What it covers |
 |---|---|
-| [Architecture](architecture.md) | How a request travels, where code lives, and the rules that keep SQLite and Postgres in agreement |
+| [Architecture](architecture.md) | How a request travels, where code lives, how a feature registers itself, and the rules that keep SQLite and Postgres in agreement |
 | [Tenancy](tenancy.md) | Workspaces, roles, invitations, and what stops one tenant seeing another |
 | [Authentication](authentication.md) | Sign-up, sessions, two-factor, OAuth, tokens and rate limits |
 | [Lists and todos](lists-and-todos.md) | The product itself |

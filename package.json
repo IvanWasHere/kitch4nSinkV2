@@ -47,6 +47,7 @@
     "#queue/*": "./app/queue/*.js",
     "#storage/*": "./app/storage/*.js",
     "#support/*": "./app/support/*.js",
+    "#seeding/*": "./app/seeding/*.js",
     "#app/*": "./app/*.js",
     "#modules/*": "./app/modules/*.js"
   },
