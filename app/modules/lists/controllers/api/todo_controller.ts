@@ -1,17 +1,17 @@
 import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 
-import Todo from '#models/todo'
+import Todo from '#modules/lists/models/todo'
 import User from '#models/user'
-import type TodoList from '#models/todo_list'
-import lists from '#todos/list_service'
-import todos, { TodoError } from '#todos/todo_service'
+import type TodoList from '#modules/lists/models/todo_list'
+import lists from '#modules/lists/services/list_service'
+import todos, { TodoError } from '#modules/lists/services/todo_service'
 import { requireScope } from '#middleware/api_key_auth'
 import { ApiNotFoundException, ApiValidationException } from '#api/errors'
 import { decodeCursor, pageSize, toCursorPage } from '#api/cursor'
 import { sendItem, sendPage } from '#api/responses'
-import TodoTransformer from '#transformers/todo_transformer'
-import { apiCreateTodoValidator, apiUpdateTodoValidator } from '#validators/todo'
+import TodoTransformer from '#modules/lists/transformers/todo_transformer'
+import { apiCreateTodoValidator, apiUpdateTodoValidator } from '#modules/lists/validators'
 
 /**
  * `/api/v1/…/todos` (plan §11).

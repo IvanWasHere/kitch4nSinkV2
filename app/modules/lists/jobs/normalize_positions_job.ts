@@ -1,8 +1,8 @@
 import logger from '@adonisjs/core/services/logger'
 
-import Todo from '#models/todo'
-import TodoList from '#models/todo_list'
-import { normalisedPositions, POSITION_GAP } from '#todos/position'
+import Todo from '#modules/lists/models/todo'
+import TodoList from '#modules/lists/models/todo_list'
+import { normalisedPositions, POSITION_GAP } from '#modules/lists/services/position'
 import type { JobHandler } from '#queue/contracts'
 
 /**

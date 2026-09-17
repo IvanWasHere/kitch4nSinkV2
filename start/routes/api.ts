@@ -20,6 +20,7 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
+import { registerListApiRoutes } from '#modules/lists/routes'
 
 router
   .group(() => {
@@ -28,24 +29,10 @@ router
       .as('api.organization.show')
     router.get('/members', [controllers.api.v1.Organization, 'members']).as('api.members.index')
 
-    router.get('/lists', [controllers.api.v1.List, 'index']).as('api.lists.index')
-    router.post('/lists', [controllers.api.v1.List, 'store']).as('api.lists.store')
-    router.get('/lists/:id', [controllers.api.v1.List, 'show']).as('api.lists.show')
-    router.patch('/lists/:id', [controllers.api.v1.List, 'update']).as('api.lists.update')
-    router.delete('/lists/:id', [controllers.api.v1.List, 'destroy']).as('api.lists.destroy')
-
-    router.get('/lists/:listId/todos', [controllers.api.v1.Todo, 'index']).as('api.todos.index')
-    router.post('/lists/:listId/todos', [controllers.api.v1.Todo, 'store']).as('api.todos.store')
-
-    router.get('/todos/:id', [controllers.api.v1.Todo, 'show']).as('api.todos.show')
-    router.patch('/todos/:id', [controllers.api.v1.Todo, 'update']).as('api.todos.update')
-    router
-      .post('/todos/:id/complete', [controllers.api.v1.Todo, 'complete'])
-      .as('api.todos.complete')
-    router
-      .post('/todos/:id/uncomplete', [controllers.api.v1.Todo, 'uncomplete'])
-      .as('api.todos.uncomplete')
-    router.delete('/todos/:id', [controllers.api.v1.Todo, 'destroy']).as('api.todos.destroy')
+    /**
+     * The demo domain's endpoints (D8) — two lines to remove with it.
+     */
+    registerListApiRoutes()
   })
   .prefix('/api/v1')
   .use([middleware.trackApiUsage(), middleware.apiKeyAuth(), middleware.apiRateLimit()])

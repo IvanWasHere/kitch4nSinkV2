@@ -1,9 +1,9 @@
 import { test } from '@japa/runner'
 import mail from '@adonisjs/mail/services/main'
 
-import Todo from '#models/todo'
-import TodoList from '#models/todo_list'
-import lists, { ListError } from '#todos/list_service'
+import Todo from '#modules/lists/models/todo'
+import TodoList from '#modules/lists/models/todo_list'
+import lists, { ListError } from '#modules/lists/services/list_service'
 import { addMember, createList, createWorkspace } from '#tests/helpers'
 
 test.group('Lists', (group) => {

@@ -24,8 +24,8 @@
 
 import scopes from '#api/scopes'
 import { openApi } from '#api/openapi'
-import { listApiScopes } from '#todos/api_scopes'
-import { listOpenApi } from '#todos/openapi'
+import { listApiScopes } from '#modules/lists/api_scopes'
+import { listOpenApi } from '#modules/lists/openapi'
 
 /**
  * The demo domain (D8) — delete with it.

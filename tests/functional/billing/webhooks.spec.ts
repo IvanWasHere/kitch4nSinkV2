@@ -274,7 +274,7 @@ test.group('Webhooks — applying an event', (group) => {
 
     await deliver(client, subscriptionWebhook({ organizationPublicId: organization.publicId }))
 
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
     for (const name of ['One', 'Two', 'Three', 'Four']) {
       await lists.create(organization, user, { name })
     }

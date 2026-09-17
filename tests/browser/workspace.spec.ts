@@ -2,7 +2,7 @@ import { test } from '@japa/runner'
 import mail from '@adonisjs/mail/services/main'
 
 import File from '#models/file'
-import TodoList from '#models/todo_list'
+import TodoList from '#modules/lists/models/todo_list'
 import {
   clearStorage,
   createWorkspace,

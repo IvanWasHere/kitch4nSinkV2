@@ -2,8 +2,8 @@ import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import mail from '@adonisjs/mail/services/main'
 
-import Todo from '#models/todo'
-import todos, { TodoError } from '#todos/todo_service'
+import Todo from '#modules/lists/models/todo'
+import todos, { TodoError } from '#modules/lists/services/todo_service'
 import { addMember, createList, createWorkspace } from '#tests/helpers'
 
 test.group('Todos', (group) => {
@@ -225,7 +225,7 @@ test.group('Todos', (group) => {
     const { user, organization } = await createWorkspace()
     const list = await createList(organization, user)
 
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
     await lists.archive(list)
 
     await client

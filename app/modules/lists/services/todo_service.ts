@@ -2,12 +2,12 @@ import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
-import Todo from '#models/todo'
+import Todo from '#modules/lists/models/todo'
 import User from '#models/user'
-import TodoList from '#models/todo_list'
+import TodoList from '#modules/lists/models/todo_list'
 import type Organization from '#models/organization'
 import plans from '#billing/plan_service'
-import { nextPosition, positionBetween } from '#todos/position'
+import { nextPosition, positionBetween } from '#modules/lists/services/position'
 
 export type Priority = 'low' | 'normal' | 'high'
 

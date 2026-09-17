@@ -77,8 +77,8 @@ export async function createList(
   name = 'Launch checklist',
   titles: string[] = []
 ) {
-  const { default: lists } = await import('#todos/list_service')
-  const { default: todos } = await import('#todos/todo_service')
+  const { default: lists } = await import('#modules/lists/services/list_service')
+  const { default: todos } = await import('#modules/lists/services/todo_service')
 
   const list = await lists.create(organization, owner, { name })
 

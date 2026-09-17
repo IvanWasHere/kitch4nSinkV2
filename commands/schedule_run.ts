@@ -27,45 +27,20 @@ export default class ScheduleRun extends BaseCommand {
 
   async run() {
     const { default: queue } = await import('#queue/queue_service')
-    const { default: expireInvitationsJob } = await import('#queue/jobs/expire_invitations_job')
-    const { default: overdueDigestJob } = await import('#queue/jobs/overdue_digest_job')
-    const { default: reconcileCountersJob } = await import('#queue/jobs/reconcile_counters_job')
-    const { default: normalizePositionsJob } = await import('#queue/jobs/normalize_positions_job')
-    const { default: syncBillingJob } = await import('#queue/jobs/sync_billing_job')
-    const { default: purgeDeletedFilesJob } = await import('#queue/jobs/purge_deleted_files_job')
-    const { default: rollupApiUsageJob } = await import('#queue/jobs/rollup_api_usage_job')
-    const { default: pruneAuditLogsJob } = await import('#queue/jobs/prune_audit_logs_job')
-    const { default: pruneNotificationsJob } = await import('#queue/jobs/prune_notifications_job')
+    const { default: jobs, isScheduleInterval } = await import('#queue/registry')
 
     /**
-     * Every recurring job the application has.
+     * What runs on this tick comes from the job registry (`start/jobs.ts`),
+     * so a job added or removed with a feature is dispatched — or not —
+     * without editing this command.
      */
-    const schedules: Record<
-      string,
-      { name: string; handler: Parameters<typeof queue.dispatch>[0] }[]
-    > = {
-      '5m': [],
-      'hourly': [],
-      'daily': [
-        { name: 'expire invitations', handler: expireInvitationsJob },
-        { name: 'overdue digests', handler: overdueDigestJob },
-        { name: 'reconcile todo counters', handler: reconcileCountersJob },
-        { name: 'normalize list positions', handler: normalizePositionsJob },
-        { name: 'reconcile billing', handler: syncBillingJob },
-        { name: 'purge deleted files', handler: purgeDeletedFilesJob },
-        { name: 'roll up API usage', handler: rollupApiUsageJob },
-        { name: 'prune audit logs', handler: pruneAuditLogsJob },
-        { name: 'prune deleted announcements', handler: pruneNotificationsJob },
-      ],
-    }
-
-    const due = schedules[this.interval]
-
-    if (!due) {
+    if (!isScheduleInterval(this.interval)) {
       this.logger.error(`Unknown interval "${this.interval}". Use 5m, hourly or daily.`)
       this.exitCode = 1
       return
     }
+
+    const due = jobs.due(this.interval)
 
     if (due.length === 0) {
       this.logger.info(`Nothing scheduled for "${this.interval}"`)
@@ -74,7 +49,7 @@ export default class ScheduleRun extends BaseCommand {
 
     for (const entry of due) {
       const job = await queue.dispatch(entry.handler)
-      this.logger.success(`dispatched ${entry.name} as #${job.id}`)
+      this.logger.success(`dispatched ${entry.label} as #${job.id}`)
     }
   }
 }

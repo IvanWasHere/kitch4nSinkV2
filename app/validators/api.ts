@@ -6,8 +6,9 @@ import scopes from '#api/scopes'
  * Request bodies for the organisation API (plan §11) that core owns.
  *
  * A feature's own API bodies live with the feature — the list and todo ones
- * are in `#validators/todo` — so that removing it takes its validators with
- * it (docs/modules.md). What stays here is the API's own surface.
+ * are in `#modules/lists/validators` — so that removing it takes its
+ * validators with it (docs/modules.md). What stays here is the API's own
+ * surface.
  */
 
 /**

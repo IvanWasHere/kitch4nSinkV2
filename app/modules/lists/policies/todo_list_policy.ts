@@ -2,7 +2,7 @@ import { BasePolicy } from '@adonisjs/bouncer'
 import { type AuthorizerResponse } from '@adonisjs/bouncer/types'
 
 import type User from '#models/user'
-import type TodoList from '#models/todo_list'
+import type TodoList from '#modules/lists/models/todo_list'
 import type Organization from '#models/organization'
 
 /**

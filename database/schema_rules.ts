@@ -13,7 +13,7 @@ import { type SchemaRules } from '@adonisjs/lucid/types/schema_generator'
  *
  * A feature's own tables are declared in its own rules file, listed beside
  * this one in `config/database.ts` under `schemaGeneration.rulesPaths` — the
- * demo domain's are in `#database/todo_schema_rules`. The generator deep
+ * demo domain's are in `#modules/lists/schema_rules`. The generator deep
  * merges every file it is given, so a feature's tables arrive without this
  * file naming them (docs/modules.md).
  */

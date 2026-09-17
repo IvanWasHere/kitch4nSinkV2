@@ -91,7 +91,7 @@
         <div class="plan-desc">
           {{ entry.plan.priceCents === 0
             ? 'Everything you need to try it with a couple of people.'
-            : entry.plan.limits.lists === null
+            : planHasUnlimited(entry.plan.limits)
               ? 'For teams that have stopped counting.'
               : 'For a team that has outgrown the free caps.' }}
         </div>
@@ -100,35 +100,21 @@
           <span class="plan-period">/mo</span>
         </div>
         <ul class="plan-features">
-          <li>
-            <span class="plan-check">&check;</span>
-            {{ entry.plan.limits.seats === null ? 'Unlimited' : entry.plan.limits.seats }} seats
-          </li>
           {{--
-            The two demo-domain limits. `undefined` — rather than `null`,
-            which means unlimited — is how a build without that module reads,
-            so each bullet is present only while its limit is.
+            The numbered limits come from `PLAN_CARD_LIMITS` in
+            `config/plans.ts`, in that list's order — so a limit that arrives
+            with a feature is advertised, and one that leaves with a feature
+            stops being, with no edit here (docs/modules.md).
+
+            The two below are features rather than numbers, and are named
+            because there are only ever a handful of them.
           --}}
-          @if(entry.plan.limits.lists !== undefined)
+          @each(line in planCardLines(entry.plan.limits))
             <li>
               <span class="plan-check">&check;</span>
-              {{ entry.plan.limits.lists === null ? 'Unlimited' : entry.plan.limits.lists }} lists
+              {{ line }}
             </li>
           @end
-          @if(entry.plan.limits.todosPerList !== undefined)
-            <li>
-              <span class="plan-check">&check;</span>
-              {{ entry.plan.limits.todosPerList === null
-                ? 'Unlimited'
-                : entry.plan.limits.todosPerList }} todos per list
-            </li>
-          @end
-          <li>
-            <span class="plan-check">&check;</span>
-            {{ entry.plan.limits.storageMb === null
-              ? 'Unlimited'
-              : `${entry.plan.limits.storageMb / 1000} GB` }} storage
-          </li>
           <li>
             <span class="plan-check {{ entry.plan.features.includes('api') ? '' : 'plan-empty' }}">
               {{ entry.plan.features.includes('api') ? '✓' : '–' }}

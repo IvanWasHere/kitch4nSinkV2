@@ -1,6 +1,6 @@
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
-import type TodoList from '#models/todo_list'
+import type TodoList from '#modules/lists/models/todo_list'
 
 /**
  * A list, as the API describes one (plan §11).

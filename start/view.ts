@@ -13,7 +13,7 @@ import router from '@adonisjs/core/services/router'
 
 import plans from '#billing/plan_service'
 import storage from '#storage/disk_storage'
-import type { LimitKey } from '#config/plans'
+import { hasUnlimitedLimit, planCardLines, type LimitKey, type PlanLimits } from '#config/plans'
 import { serverStatsEnabled } from '#start/dev_toolbar'
 
 /**
@@ -120,6 +120,18 @@ edge.global('andList', (items: string[]) => {
 
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
 })
+
+/**
+ * What a plan's card advertises, read from `config/plans.ts` (plan §7.3).
+ *
+ * Globals for the same reason `money` is one: these turn numbers into copy,
+ * and a controller that handed the view finished strings would be handing it
+ * something it cannot re-render. Reading the catalogue here is also what
+ * makes the grid follow a limit that arrives with a feature, or leaves with
+ * one, without an edit to the template (docs/modules.md).
+ */
+edge.global('planCardLines', (limits: PlanLimits) => planCardLines(limits))
+edge.global('planHasUnlimited', (limits: PlanLimits) => hasUnlimitedLimit(limits))
 
 /**
  * A URL for a public stored object — an avatar or a workspace logo (plan §10).

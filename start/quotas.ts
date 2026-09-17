@@ -26,7 +26,7 @@
 
 import quotas from '#billing/quotas'
 import plans from '#billing/plan_service'
-import lists from '#todos/list_service'
+import lists from '#modules/lists/services/list_service'
 import { seatUsage } from '#organizations/seats'
 
 /**

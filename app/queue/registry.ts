@@ -1,42 +1,88 @@
 import type { JobHandler } from '#queue/contracts'
 
-import sendMailJob from '#queue/jobs/send_mail_job'
-import expireInvitationsJob from '#queue/jobs/expire_invitations_job'
-import overdueDigestJob from '#queue/jobs/overdue_digest_job'
-import reconcileCountersJob from '#queue/jobs/reconcile_counters_job'
-import normalizePositionsJob from '#queue/jobs/normalize_positions_job'
-import processWebhookJob from '#queue/jobs/process_webhook_job'
-import syncBillingJob from '#queue/jobs/sync_billing_job'
-import purgeDeletedFilesJob from '#queue/jobs/purge_deleted_files_job'
-import rollupApiUsageJob from '#queue/jobs/rollup_api_usage_job'
-import pruneAuditLogsJob from '#queue/jobs/prune_audit_logs_job'
-import pruneNotificationsJob from '#queue/jobs/prune_notifications_job'
-
 /**
- * Every handler the worker knows how to run, keyed by the name stored in
- * `jobs.name`.
+ * The job registry (plan §9).
  *
- * An explicit map rather than directory scanning: a job whose handler has
- * silently disappeared should be a loud "unknown job" failure the admin panel
- * shows, not a job that is quietly never picked up.
+ * Two questions, one place: which handler runs a job named in `jobs.name`,
+ * and which jobs a given cron tick should dispatch.
  *
- * Every recurring job the application has is here; `schedule:run` is what
- * dispatches them.
+ * Registration is explicit rather than by directory scanning, and that has
+ * not changed — a job whose handler has silently disappeared should be a loud
+ * "unknown job" failure the admin panel shows, not a job that is quietly
+ * never picked up. What has changed is *where*: every job this application
+ * has is registered in `start/jobs.ts`, so a feature's jobs leave with the
+ * feature instead of being listed in core (docs/modules.md).
  */
-export const jobHandlers: Record<string, JobHandler<any>> = {
-  [sendMailJob.name]: sendMailJob,
-  [expireInvitationsJob.name]: expireInvitationsJob,
-  [overdueDigestJob.name]: overdueDigestJob,
-  [reconcileCountersJob.name]: reconcileCountersJob,
-  [normalizePositionsJob.name]: normalizePositionsJob,
-  [processWebhookJob.name]: processWebhookJob,
-  [syncBillingJob.name]: syncBillingJob,
-  [purgeDeletedFilesJob.name]: purgeDeletedFilesJob,
-  [rollupApiUsageJob.name]: rollupApiUsageJob,
-  [pruneAuditLogsJob.name]: pruneAuditLogsJob,
-  [pruneNotificationsJob.name]: pruneNotificationsJob,
+export const SCHEDULE_INTERVALS = ['5m', 'hourly', 'daily'] as const
+
+export type ScheduleInterval = (typeof SCHEDULE_INTERVALS)[number]
+
+export function isScheduleInterval(value: string): value is ScheduleInterval {
+  return (SCHEDULE_INTERVALS as readonly string[]).includes(value)
 }
 
+export interface JobSchedule {
+  /**
+   * Which cron tick dispatches it. System cron drives `schedule:run` once per
+   * interval (plan §9), so this is the whole of a job's scheduling.
+   */
+  interval: ScheduleInterval
+
+  /**
+   * What `schedule:run` prints — "reconcile todo counters", not the job's
+   * stable `name`, because the operator reading that output wants to know
+   * what ran rather than what it is keyed as.
+   */
+  label: string
+}
+
+export class JobRegistry {
+  #jobs = new Map<string, { handler: JobHandler<any>; schedule?: JobSchedule }>()
+
+  /**
+   * Register a handler, optionally on a schedule.
+   *
+   * Keyed on `handler.name` — the identifier stored in `jobs.name` — so
+   * registering twice under the same name replaces rather than duplicates.
+   */
+  register(handler: JobHandler<any>, schedule?: JobSchedule): this {
+    this.#jobs.set(handler.name, { handler, schedule })
+    return this
+  }
+
+  handlerFor(name: string): JobHandler<any> | null {
+    return this.#jobs.get(name)?.handler ?? null
+  }
+
+  names(): string[] {
+    return [...this.#jobs.keys()]
+  }
+
+  /**
+   * What a cron tick should dispatch, in registration order.
+   */
+  due(interval: ScheduleInterval): { label: string; handler: JobHandler<any> }[] {
+    return [...this.#jobs.values()]
+      .filter((entry) => entry.schedule?.interval === interval)
+      .map((entry) => ({ label: entry.schedule!.label, handler: entry.handler }))
+  }
+
+  reset(): this {
+    this.#jobs.clear()
+    return this
+  }
+}
+
+const registry = new JobRegistry()
+
+export default registry
+
+/**
+ * A function rather than the map it reads, because it is the one thing the
+ * worker (`commands/queue_work.ts`) and the test helper need, and a `null`
+ * for an unknown name is what turns a stranded job into a reported failure
+ * instead of a crash.
+ */
 export function handlerFor(name: string): JobHandler<any> | null {
-  return jobHandlers[name] ?? null
+  return registry.handlerFor(name)
 }

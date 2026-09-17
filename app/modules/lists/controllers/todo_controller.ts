@@ -1,11 +1,11 @@
 import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 
-import lists from '#todos/list_service'
-import todos, { TodoError } from '#todos/todo_service'
+import lists from '#modules/lists/services/list_service'
+import todos, { TodoError } from '#modules/lists/services/todo_service'
 import queue from '#queue/queue_service'
-import normalizePositionsJob from '#queue/jobs/normalize_positions_job'
-import { createTodoValidator, moveTodoValidator } from '#validators/todo'
+import normalizePositionsJob from '#modules/lists/jobs/normalize_positions_job'
+import { createTodoValidator, moveTodoValidator } from '#modules/lists/validators'
 
 export default class TodoController {
   async store({ params, request, response, session, auth, organization, bouncer }: HttpContext) {
@@ -16,7 +16,7 @@ export default class TodoController {
       return response.redirect().toRoute('lists.index')
     }
 
-    await bouncer.with('TodoPolicy').authorize('create', list)
+    await bouncer.with('ModulesListsTodoPolicy').authorize('create', list)
 
     const payload = await request.validateUsing(createTodoValidator)
 
@@ -47,7 +47,7 @@ export default class TodoController {
       return response.redirect().toRoute('lists.index')
     }
 
-    await bouncer.with('TodoPolicy').authorize('update', todo)
+    await bouncer.with('ModulesListsTodoPolicy').authorize('update', todo)
 
     const payload = await request.validateUsing(createTodoValidator)
 
@@ -84,7 +84,7 @@ export default class TodoController {
       return response.redirect().toRoute('lists.index')
     }
 
-    await bouncer.with('TodoPolicy').authorize('complete', todo)
+    await bouncer.with('ModulesListsTodoPolicy').authorize('complete', todo)
 
     if (todo.isComplete) {
       await todos.uncomplete(todo)
@@ -104,7 +104,7 @@ export default class TodoController {
       return response.redirect().toRoute('lists.index')
     }
 
-    await bouncer.with('TodoPolicy').authorize('delete', todo)
+    await bouncer.with('ModulesListsTodoPolicy').authorize('delete', todo)
     await todo.load('todoList')
     const listPublicId = todo.todoList.publicId
 
@@ -126,7 +126,7 @@ export default class TodoController {
       return response.status(404).json({ error: 'not_found' })
     }
 
-    await bouncer.with('TodoPolicy').authorize('update', todo)
+    await bouncer.with('ModulesListsTodoPolicy').authorize('update', todo)
 
     const { before, after } = await request.validateUsing(moveTodoValidator)
 

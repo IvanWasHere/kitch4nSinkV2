@@ -169,7 +169,7 @@ test.group('API scopes', (group) => {
       error: { code: 'insufficient_scope', details: { required_scope: 'lists:write' } },
     })
 
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
     assert.equal(await lists.count(organization), 0)
   })
 

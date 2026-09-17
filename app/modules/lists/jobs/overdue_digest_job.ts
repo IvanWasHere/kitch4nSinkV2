@@ -3,8 +3,8 @@ import logger from '@adonisjs/core/services/logger'
 import User from '#models/user'
 import Organization from '#models/organization'
 import mailer from '#mail/mailer_service'
-import todos from '#todos/todo_service'
-import OverdueDigestNotification from '#mail/mails/overdue_digest_notification'
+import todos from '#modules/lists/services/todo_service'
+import OverdueDigestNotification from '#modules/lists/mails/overdue_digest_notification'
 import type { JobHandler } from '#queue/contracts'
 
 /**

@@ -105,6 +105,7 @@ export default defineConfig({
     () => import('#start/quotas'),
     () => import('#start/dashboard'),
     () => import('#start/api'),
+    () => import('#start/jobs'),
     () => import('#start/view'),
   ],
 
@@ -119,13 +120,18 @@ export default defineConfig({
   */
   tests: {
     suites: [
+      /**
+       * Each suite also globs the matching directory under a feature
+       * module's own `tests` folder, so a module carries its tests and they
+       * run in the suite they belong to (docs/modules.md).
+       */
       {
-        files: ['tests/unit/**/*.spec.ts'],
+        files: ['tests/unit/**/*.spec.ts', 'app/modules/*/tests/unit/**/*.spec.ts'],
         name: 'unit',
         timeout: 2000,
       },
       {
-        files: ['tests/functional/**/*.spec.ts'],
+        files: ['tests/functional/**/*.spec.ts', 'app/modules/*/tests/functional/**/*.spec.ts'],
         name: 'functional',
         timeout: 30000,
       },
@@ -170,7 +176,50 @@ export default defineConfig({
   |
   */
   hooks: {
-    init: [indexEntities(), indexPolicies()],
+    /*
+    |------------------------------------------------------------------------
+    | Generated barrels
+    |------------------------------------------------------------------------
+    |
+    | Both indexes scan `app/` rather than `app/controllers` and
+    | `app/policies`, so a feature module under `app/modules/<name>/` is
+    | picked up alongside core (docs/modules.md). Three details make that
+    | work, and each was arrived at by trying the alternative:
+    |
+    |   importAlias '#app'  — the paths the index emits must resolve from
+    |                         `app/`, so `#controllers` cannot be it.
+    |   skipSegments        — drops `controllers` and `modules` from the keys,
+    |                         so a module's controller is
+    |                         `controllers.lists.List` rather than
+    |                         `controllers.modules.lists.List`.
+    |   the policy glob     — matched against the whole path, so it needs a
+    |                         leading globstar; and it names `policies` as a
+    |                         directory rather than matching every file, so
+    |                         that `app/admin/staff_policy.ts` stays out. A
+    |                         `StaffUser` policy in the tenant registry makes
+    |                         the map incompatible with a `User` actor and
+    |                         every tenant policy silently drops out of the
+    |                         type-level action list (see
+    |                         `app/admin/staff_policies.ts`). Negated patterns
+    |                         are not an option — a single excluding entry
+    |                         makes the whole set match everything.
+    |
+    */
+    init: [
+      indexEntities({
+        controllers: {
+          source: 'app',
+          importAlias: '#app',
+          glob: ['**/*_controller.ts'],
+          skipSegments: ['controllers', 'modules'],
+        },
+      }),
+      indexPolicies({
+        source: 'app',
+        importAlias: '#app',
+        glob: ['**/policies/*_policy.ts'],
+      }),
+    ],
     buildStarting: [() => import('@adonisjs/vite/build_hook')],
   },
 })

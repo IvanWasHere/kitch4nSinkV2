@@ -12,6 +12,7 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
+import { registerListWebRoutes } from '#modules/lists/routes'
 import { supportMessageThrottle, supportTicketThrottle } from '#start/limiter'
 
 router
@@ -51,22 +52,12 @@ router
       .as('settings.organization.leave')
 
     /**
-     * Lists and todos — the application itself (D8). Every route is scoped to
-     * the organisation by the middleware stack above; nothing here accepts an
-     * organisation id.
+     * Lists and todos — the demo domain (D8). Registered from the module so
+     * that removing it is two lines here (docs/modules.md), and registered
+     * *inside* this group so it inherits the same middleware stack as every
+     * other screen.
      */
-    router.get('/lists', [controllers.todos.List, 'index']).as('lists.index')
-    router.post('/lists', [controllers.todos.List, 'store']).as('lists.store')
-    router.get('/lists/:id', [controllers.todos.List, 'show']).as('lists.show')
-    router.post('/lists/:id', [controllers.todos.List, 'update']).as('lists.update')
-    router.post('/lists/:id/archive', [controllers.todos.List, 'archive']).as('lists.archive')
-    router.post('/lists/:id/delete', [controllers.todos.List, 'destroy']).as('lists.destroy')
-
-    router.post('/lists/:listId/todos', [controllers.todos.Todo, 'store']).as('todos.store')
-    router.post('/todos/:id', [controllers.todos.Todo, 'update']).as('todos.update')
-    router.post('/todos/:id/complete', [controllers.todos.Todo, 'complete']).as('todos.complete')
-    router.post('/todos/:id/delete', [controllers.todos.Todo, 'destroy']).as('todos.destroy')
-    router.post('/todos/:id/move', [controllers.todos.Todo, 'move']).as('todos.move')
+    registerListWebRoutes()
 
     /**
      * Files (plan §10). Uploading is open to every member; deleting is the

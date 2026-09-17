@@ -21,7 +21,7 @@
 */
 
 import dashboard from '#dashboard/widgets'
-import todos from '#todos/dashboard_service'
+import todos from '#modules/lists/services/dashboard_service'
 
 /**
  * The demo domain (D8) — delete with it.

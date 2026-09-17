@@ -1,10 +1,10 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 
-import Todo from '#models/todo'
-import TodoList from '#models/todo_list'
-import lists from '#todos/list_service'
-import todos from '#todos/todo_service'
+import Todo from '#modules/lists/models/todo'
+import TodoList from '#modules/lists/models/todo_list'
+import lists from '#modules/lists/services/list_service'
+import todos from '#modules/lists/services/todo_service'
 import PlanLimitExceededException from '#exceptions/plan_limit_exceeded_exception'
 import { addMember, createList, createWorkspace } from '#tests/helpers'
 

@@ -3,8 +3,10 @@ import testUtils from '@adonisjs/core/services/test_utils'
 
 import plans from '#billing/plan_service'
 import {
+  hasUnlimitedLimit,
   LIMIT_KEYS,
   LIMIT_NOUNS,
+  planCardLines,
   plans as catalogue,
   type LimitKey,
   type PlanKey,
@@ -48,6 +50,48 @@ test.group('PlanService — entitlements', () => {
         )
       }
     }
+  })
+
+  /**
+   * The pricing grid is built from `PLAN_CARD_LIMITS` rather than written out
+   * in the template, so these are the exact lines a customer reads. Pinned
+   * because the wording is the product's public promise — "0.1 GB storage"
+   * on Free is odd but it is what the page has always said, and a refactor
+   * quietly turning it into "100 MB of storage" is a change somebody should
+   * have to make on purpose.
+   */
+  test('the plan grid advertises each tier in its own words', ({ assert }) => {
+    assert.deepEqual(planCardLines(catalogue.free.limits), [
+      '2 seats',
+      '3 lists',
+      '50 todos per list',
+      '0.1 GB storage',
+    ])
+
+    assert.deepEqual(planCardLines(catalogue.pro.limits), [
+      '10 seats',
+      '25 lists',
+      '500 todos per list',
+      '5 GB storage',
+    ])
+
+    assert.deepEqual(planCardLines(catalogue.business.limits), [
+      '50 seats',
+      'Unlimited lists',
+      'Unlimited todos per list',
+      '100 GB storage',
+    ])
+  })
+
+  /**
+   * Which tier gets the "stopped counting" copy. Asked as "is anything
+   * unlimited" rather than by naming a limit, so the top plan's description
+   * does not depend on the demo domain existing.
+   */
+  test('only a tier with an unlimited limit reads as uncapped', ({ assert }) => {
+    assert.isFalse(hasUnlimitedLimit(catalogue.free.limits))
+    assert.isFalse(hasUnlimitedLimit(catalogue.pro.limits))
+    assert.isTrue(hasUnlimitedLimit(catalogue.business.limits))
   })
 
   /**
@@ -204,7 +248,7 @@ test.group('PlanService — usage', (group) => {
     const { user, organization } = await createWorkspace()
     const list = await createList(organization, user, 'One')
 
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
     await lists.archive(list)
 
     const usage = await plans.usage(organization)
@@ -215,7 +259,7 @@ test.group('PlanService — usage', (group) => {
     const { user, organization } = await createWorkspace()
     const list = await createList(organization, user, 'One')
 
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
     await lists.delete(list)
 
     const usage = await plans.usage(organization)

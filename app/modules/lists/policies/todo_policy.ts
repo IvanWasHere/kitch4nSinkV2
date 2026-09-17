@@ -1,9 +1,9 @@
 import { BasePolicy } from '@adonisjs/bouncer'
 import { type AuthorizerResponse } from '@adonisjs/bouncer/types'
 
-import type Todo from '#models/todo'
+import type Todo from '#modules/lists/models/todo'
 import type User from '#models/user'
-import type TodoList from '#models/todo_list'
+import type TodoList from '#modules/lists/models/todo_list'
 
 /**
  * Every member may create, edit, complete, assign and delete todos (plan §6).

@@ -4,7 +4,7 @@ import { belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 
 import User from '#models/user'
-import TodoList from '#models/todo_list'
+import TodoList from '#modules/lists/models/todo_list'
 import Organization from '#models/organization'
 import { TodoSchema } from '#database/schema'
 import { withPublicId } from '#models/mixins/with_public_id'

@@ -1,8 +1,8 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 
-import Todo from '#models/todo'
-import TodoList from '#models/todo_list'
+import Todo from '#modules/lists/models/todo'
+import TodoList from '#modules/lists/models/todo_list'
 import { decodeCursor } from '#api/cursor'
 import { addMember, createApiWorkspace, createList } from '#tests/helpers'
 
@@ -132,7 +132,7 @@ test.group('API — lists', (group) => {
     const archived = await createList(organization, user, 'Old')
     await createList(organization, user, 'Current')
 
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
     await lists.archive(archived)
 
     const live = await client.get('/api/v1/lists').headers(headers)

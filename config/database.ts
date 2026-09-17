@@ -37,7 +37,7 @@ const dbConfig = defineConfig({
        * JSON round-tripping and closed value sets.
        */
       schemaGeneration: {
-        rulesPaths: ['#database/schema_rules', '#database/todo_schema_rules'],
+        rulesPaths: ['#database/schema_rules', '#modules/lists/schema_rules'],
       },
       debug: app.inDev,
     },
@@ -70,7 +70,7 @@ const dbConfig = defineConfig({
        * JSON round-tripping and closed value sets.
        */
       schemaGeneration: {
-        rulesPaths: ['#database/schema_rules', '#database/todo_schema_rules'],
+        rulesPaths: ['#database/schema_rules', '#modules/lists/schema_rules'],
       },
       debug: app.inDev,
     },

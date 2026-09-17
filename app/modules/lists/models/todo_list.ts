@@ -2,7 +2,7 @@ import { compose } from '@adonisjs/core/helpers'
 import { belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 
-import Todo from '#models/todo'
+import Todo from '#modules/lists/models/todo'
 import User from '#models/user'
 import Organization from '#models/organization'
 import { TodoListSchema } from '#database/schema'

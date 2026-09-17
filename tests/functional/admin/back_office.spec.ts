@@ -5,7 +5,7 @@ import testUtils from '@adonisjs/core/services/test_utils'
 
 import AuditLog from '#models/audit_log'
 import StaffUser from '#models/staff_user'
-import TodoList from '#models/todo_list'
+import TodoList from '#modules/lists/models/todo_list'
 import { IMPERSONATION_SESSION_KEY } from '#middleware/impersonation'
 import { addMember, createStaff, createWorkspace, queuedMailsTo } from '#tests/helpers'
 

@@ -2,12 +2,12 @@ import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import mail from '@adonisjs/mail/services/main'
 
-import Todo from '#models/todo'
+import Todo from '#modules/lists/models/todo'
 import queue from '#queue/queue_service'
-import todos from '#todos/todo_service'
-import overdueDigestJob from '#queue/jobs/overdue_digest_job'
-import reconcileCountersJob from '#queue/jobs/reconcile_counters_job'
-import normalizePositionsJob from '#queue/jobs/normalize_positions_job'
+import todos from '#modules/lists/services/todo_service'
+import overdueDigestJob from '#modules/lists/jobs/overdue_digest_job'
+import reconcileCountersJob from '#modules/lists/jobs/reconcile_counters_job'
+import normalizePositionsJob from '#modules/lists/jobs/normalize_positions_job'
 import { addMember, createList, createWorkspace, queuedMailsTo, runQueue } from '#tests/helpers'
 
 test.group('Todo domain jobs', (group) => {
@@ -170,7 +170,7 @@ test.group('Todo domain jobs', (group) => {
       assignedToPublicId: user.publicId,
     })
 
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
     await lists.delete(list)
 
     await queue.dispatch(overdueDigestJob)

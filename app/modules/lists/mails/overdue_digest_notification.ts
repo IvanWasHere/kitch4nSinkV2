@@ -2,7 +2,7 @@ import { BaseMail } from '@adonisjs/mail'
 import router from '@adonisjs/core/services/router'
 import env from '#start/env'
 
-import type Todo from '#models/todo'
+import type Todo from '#modules/lists/models/todo'
 import type User from '#models/user'
 import type Organization from '#models/organization'
 

@@ -1,13 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
-import TodoList from '#models/todo_list'
-import lists, { ListError } from '#todos/list_service'
+import TodoList from '#modules/lists/models/todo_list'
+import lists, { ListError } from '#modules/lists/services/list_service'
 import { requireScope } from '#middleware/api_key_auth'
 import { ApiNotFoundException, ApiValidationException } from '#api/errors'
 import { decodeCursor, pageSize, toCursorPage } from '#api/cursor'
 import { sendItem, sendPage } from '#api/responses'
-import TodoListTransformer from '#transformers/todo_list_transformer'
-import { apiCreateListValidator, apiUpdateListValidator } from '#validators/todo'
+import TodoListTransformer from '#modules/lists/transformers/todo_list_transformer'
+import { apiCreateListValidator, apiUpdateListValidator } from '#modules/lists/validators'
 
 /**
  * `/api/v1/lists` (plan §11).

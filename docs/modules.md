@@ -13,20 +13,31 @@ They are not meant to be your product.
 This page is the removal path: what to delete, what to edit, and what is deliberately left alone.
 
 {: .note }
-Nothing here is a plugin system. The demo domain is ordinary application code that happens to be
-confined to a known set of files, and this page is the map. Removing it is a mechanical job of about
-twenty minutes, and the test suite tells you when you are done.
+Nothing here is a plugin system. The demo domain is ordinary application code that lives in one
+folder and registers itself in seven explicit places, and this page is the map. Removing it is a
+mechanical job of about twenty minutes, and the test suite tells you when you are done.
 
 ---
 
 ## What is already independent
 
-Five things mean removal is smaller than it looks.
+Six things mean removal is smaller than it looks.
 
-**Nothing in `app/` imports the demo domain.** Not `PlanService`, not the dashboard controller, not
-a transformer or a template outside the domain's own screens. The only files that name it are the
-six registries in step 2, `commands/dev_seed.ts`, and the domain's own files. That is the property
-everything below rests on, and `grep -rl '#todos/' app/` is how you check it still holds.
+**It lives in one folder.** `app/modules/lists/` holds its models, services, controllers, policies,
+transformers, jobs, mails, validators, routes, API surface, schema rules and tests. Nothing else in
+`app/` is part of it.
+
+**Nothing in core imports it.** Not `PlanService`, not the dashboard controller, not a transformer
+or a template outside its own screens. The only files that name it are the seven registration
+points in step 2, `commands/dev_seed.ts`, and its own files. That is the property everything below
+rests on, and `grep -rl '#modules/lists' app start config database commands` is how you check it
+still holds.
+
+**The generated barrels find it.** `indexEntities` and `indexPolicies` in `adonisrc.ts` scan `app/`
+rather than `app/controllers` and `app/policies`, so a module's controllers and policies are indexed
+alongside core's — `controllers.lists.List`, `controllers.lists.api.List`. That configuration has
+three non-obvious details, explained in a comment there; the important one is that the policy glob
+names `policies` as a directory so `app/admin/staff_policy.ts` stays out of the tenant registry.
 
 **Quotas are registered, not hardcoded.** `PlanService` owns the arithmetic — the amber-at-80% rule,
 the row lock inside a create, the `>=` that makes a downgraded workspace read as full — and knows
@@ -49,70 +60,75 @@ treat a missing `usage` as absent rather than as zero.
 through a dynamic `@include`. The screen names nothing it shows, so it survives its widgets being
 deleted.
 
-**The dependency direction is inward.** Everything under `app/todos/`, plus the domain's
-controllers, models, policies and transformers, imports *core* (`#billing/plan_service`,
-`#api/cursor`, `#models/organization`) and never the other way about. In particular
-`app/billing/plan_service.ts`, which used to import `#models/todo_list` in order to count lists, no
-longer knows the domain exists.
+**The dependency direction is inward.** Everything in `app/modules/lists/` imports *core*
+(`#billing/plan_service`, `#api/cursor`, `#models/organization`) and never the other way about. In
+particular `app/billing/plan_service.ts`, which used to import `#models/todo_list` in order to
+count lists, no longer knows the domain exists.
 
 ---
 
-## Step 1 — delete the files
+## Step 1 — delete the module
 
-Every file here exists only for lists and todos. None of them is imported by anything outside this
-list except through the registrations in step 2.
+Almost all of it is one folder:
 
 ```
-app/todos/                                          the domain services
-app/models/todo.ts
-app/models/todo_list.ts
-app/controllers/todos/                              the web screens
-app/controllers/api/v1/list_controller.ts           the API endpoints
-app/controllers/api/v1/todo_controller.ts
-app/policies/todo_list_policy.ts
-app/policies/todo_policy.ts
-app/transformers/todo_list_transformer.ts
-app/transformers/todo_transformer.ts
-app/validators/todo.ts
-app/queue/jobs/overdue_digest_job.ts                the three domain jobs
-app/queue/jobs/reconcile_counters_job.ts
-app/queue/jobs/normalize_positions_job.ts
-app/mail/mails/overdue_digest_notification.ts
-resources/views/pages/lists/                         screens + dashboard widget partials
-resources/views/emails/overdue_digest.edge
-resources/views/emails/overdue_digest_text.edge
-database/migrations/1788600000007_create_todo_lists_table.ts
-database/migrations/1788600000008_create_todos_table.ts
-database/todo_schema_rules.ts                       its two tables' column rules
-tests/functional/todos/
-tests/unit/position.spec.ts
-docs/lists-and-todos.md
+app/modules/lists/
+  models/          todo_list, todo
+  services/        list, todo, dashboard, position
+  controllers/     the web screens, and api/ for /api/v1
+  policies/        todo_list, todo
+  transformers/    todo_list, todo
+  jobs/            overdue_digest, reconcile_counters, normalize_positions
+  mails/           overdue_digest_notification
+  tests/           unit/ and functional/, run by the matching suite
+  api_scopes.ts    the scopes, and the augmentation that types them
+  openapi.ts       its half of the published spec
+  routes.ts        registered from inside core's groups
+  schema_rules.ts  its two tables' column rules
+  validators.ts    web and API request bodies
 ```
 
-The two migrations sit in the middle of the sequence, which is safe: nothing after them references
-either table. `files.attachable_type` is `User | Organization | SupportMessage`, so no upload points
-at a todo.
+`rm -rf app/modules/lists` is the bulk of the removal. Three things live outside it, each for a
+reason:
+
+| Outside the module | Why |
+|---|---|
+| `resources/views/pages/lists/` — its screens, emails and dashboard widget partials | Edge resolves templates from `resources/views`; a second root would mean renaming every `view.render` call for no real gain. It is one folder to delete. |
+| `resources/views/emails/overdue_digest*.edge` | Same. |
+| `database/migrations/…_create_todo_lists_table.ts` and `…_create_todos_table.ts` | **Do not move these.** Lucid records a migration by its *path* (`database/migrations/1788600000007_create_todo_lists_table`), so relocating a file makes it look like a new migration and re-runs it against a database that already has the table. Tests would stay green — they migrate from scratch — while every existing install broke. |
 
 {: .warning }
 Deleting the migrations only affects a database built from scratch. An existing one keeps both
 tables until you migrate them away — add a migration that drops them, rather than editing history.
 
+Also delete `docs/lists-and-todos.md`, and the demo-domain parts of `commands/dev_seed.ts`.
+
+{: .note }
+Your own feature goes in the same shape: `app/modules/<name>/`, imported as `#modules/<name>/…`.
+The barrels pick up its controllers and policies automatically, its tests join the existing suites,
+and the sections below are the seven places it registers itself. Its bouncer policy keys are
+generated from the path — `app/modules/lists/policies/todo_policy.ts` becomes
+`ModulesListsTodoPolicy` — which is verbose but generated, and TypeScript completes it.
+
 ---
 
 ## Step 2 — unregister it
 
-Six places name the domain. Every one is an explicit registry, so every one is a deletion rather
-than a rewrite — **there is nothing left in `app/` to edit.**
+Seven places name the domain. Every one is an explicit registration, so every one is a deletion
+rather than a rewrite — **there is nothing left in `app/` outside the module to edit.**
+
+Each is a block plus the import that feeds it — drop both, or `tsc` will tell you about the unused
+one.
 
 | File | What to remove |
 |---|---|
 | `start/quotas.ts` | the `lists` and `todosPerList` registrations |
 | `start/dashboard.ts` | the three widget registrations |
 | `start/api.ts` | the demo-domain block: the scope loop and `openApi.register(listOpenApi)` |
-| `start/routes/web.ts` | the `lists.*` and `todos.*` route block |
-| `start/routes/api.ts` | the `/lists` and `/todos` route block |
-| `app/queue/registry.ts` | the three job imports and their `jobHandlers` entries |
-| `commands/schedule_run.ts` | the three imports and their entries in the schedule table |
+| `start/jobs.ts` | the three job imports and registrations |
+| `start/routes/web.ts` | the `registerListWebRoutes()` call and its import |
+| `start/routes/api.ts` | the `registerListApiRoutes()` call and its import |
+| `config/database.ts` | `#modules/lists/schema_rules` in `rulesPaths`, on both connections |
 
 Deleting the `start/quotas.ts` lines removes the Lists meter from the dashboard, the billing screen
 and the back office, drops `lists` from the API's usage payload, and takes the `lists` case out of
@@ -126,13 +142,21 @@ your own; see below.
 
 Deleting the `start/api.ts` block removes `lists:*` and `todos:*` from the key-creation form, from
 the key validator's accepted values, and from `/openapi.json` and `/docs`. Because
-`app/todos/api_scopes.ts` carries the type augmentation that puts those scopes into `ApiScope`,
+`app/modules/lists/api_scopes.ts` carries the type augmentation that puts those scopes into `ApiScope`,
 deleting it is also what makes a leftover `requireScope(ctx, 'lists:read')` **fail to compile**
 rather than fail at runtime.
 
-There is one edit outside the registries: `config/database.ts` lists
-`#database/todo_schema_rules` in `schemaGeneration.rulesPaths` for both connections. Drop it when
-you delete that file.
+Deleting the `start/jobs.ts` block stops the worker accepting those three jobs and stops
+`schedule:run` dispatching them. `tests/unit/jobs.spec.ts` reads `app/queue/jobs/` from disk and
+asserts every handler there is registered, so a job file left behind without its registration fails
+a test rather than sitting in the queue forever.
+
+The routes live in `app/modules/lists/routes.ts` and are exported as functions that core calls from
+*inside* its own groups. That is deliberate: both groups carry a middleware stack — a verified
+tenant session for the web, key auth plus usage tracking and rate limiting for the API — and the
+uniformity of those stacks is what makes it impossible to add a screen or an endpoint that forgets
+to scope itself to an organisation. A module registering its own group could get that wrong
+privately.
 
 None of the files those registrations feed mentions a list.
 
@@ -143,7 +167,9 @@ None of the files those registrations feed mentions a list.
 These compile without the domain, but leave `lists` and `todos` in core forever if you skip them.
 
 **`config/plans.ts`** — drop `lists` and `todosPerList` from `PlanLimits`, from all three plan
-tiers, and from `LIMIT_NOUNS`, then add whatever your product actually meters. `LIMIT_NOUNS` is
+tiers, from `LIMIT_NOUNS` and from `PLAN_CARD_LIMITS`, then add whatever your product actually
+meters. `PLAN_CARD_LIMITS` is what the pricing grid lists, in its order; a limit left out of it is
+still enforced, just not advertised as a number — `apiKeys` is sold as the `api` feature instead. `LIMIT_NOUNS` is
 typed as an exhaustive `Record<LimitKey, string>`, so a limit you add without a word for it is a
 compile error rather than a `402` that reads "you have used all 5 projects".
 
@@ -164,11 +190,14 @@ and needs **no** edit:
 | File | Why it no longer needs one |
 |---|---|
 | `app/api/scopes.ts` | holds what a scope *is*, not which ones exist — those come from `start/api.ts` |
-| `app/api/openapi.ts` | core paths plus `openApi.paths()`; the demo domain's are in `app/todos/openapi.ts` |
+| `app/api/openapi.ts` | core paths plus `openApi.paths()`; the demo domain's are in `app/modules/lists/openapi.ts` |
 | `app/validators/api.ts` | keeps `createApiKeyValidator`; the four list/todo bodies live in `#validators/todo` |
-| `database/schema_rules.ts` | core tables only; the `color` and `priority` unions are in `database/todo_schema_rules.ts` |
+| `database/schema_rules.ts` | core tables only; the `color` and `priority` unions are in `app/modules/lists/schema_rules.ts` |
 | `app/transformers/organization_transformer.ts` | builds the usage payload from the quota registry |
 | `app/exceptions/plan_limit_exceeded_exception.ts` | takes its wording from `LIMIT_NOUNS` |
+| `app/queue/registry.ts` | owns the lookup and the schedule filter, not the list of jobs |
+| `commands/schedule_run.ts` | asks the registry what is due on this tick |
+| `resources/views/pages/billing/index.edge` | the plan grid's numbered bullets come from `PLAN_CARD_LIMITS` |
 
 `tests/functional/api/endpoints.spec.ts` asserts the document's schema list and the exact quota key
 set, which is where you will be told the published API changed.
@@ -267,6 +296,25 @@ application to accidentally put a table scan.
 
 ---
 
+## Adding a background job
+
+Write the handler in `app/queue/jobs/`, then register it in `start/jobs.ts`:
+
+```ts
+jobs.register(rebuildProjectIndexJob, { interval: 'daily', label: 'rebuild project index' })
+```
+
+Omit the schedule for a job your own code dispatches rather than cron. The `label` is what
+`schedule:run` prints, so write it for the operator reading that output, not as the job's key.
+
+{: .warning }
+Delivery is **at-least-once** — a worker that crashes after doing the work but before marking the
+job done will run it again. Every handler must be idempotent. And `handler.name` is stored in
+`jobs.name`, so renaming one strands the rows already queued under the old name: treat it as
+permanent.
+
+---
+
 ## Adding your resource to the API
 
 Three pieces: the scopes, the request bodies, and the spec.
@@ -275,7 +323,7 @@ Three pieces: the scopes, the request bodies, and the spec.
 so `requireScope` stays a compile-time check:
 
 ```ts
-// app/projects/api_scopes.ts
+// app/modules/projects/api_scopes.ts
 declare module '#api/scopes' {
   interface ApiScopes {
     'projects:read': true
@@ -299,7 +347,7 @@ matching what the transformers emit, so a client can `PATCH` back a field it jus
 core's are, and export one `OpenApiContribution`:
 
 ```ts
-// app/projects/openapi.ts
+// app/modules/projects/openapi.ts
 export const projectOpenApi: OpenApiContribution = {
   schemas: { Project: projectSchema },
   paths: {
@@ -323,9 +371,12 @@ nothing.
 
 ## Step 4 — the tests
 
-`tests/functional/todos/` and `tests/unit/position.spec.ts` go with the domain. The rest use lists
-as their worked example, so they need the example **replaced** rather than deleted — otherwise you
-lose the coverage instead of moving it:
+The module's own tests are in `app/modules/lists/tests/`, and each suite in `adonisrc.ts` globs the
+matching directory under a module, so they run as `unit` and `functional` exactly as core's do.
+They go when the folder goes.
+
+The suites below are core's, and they use lists as their worked example — so they need the example
+**replaced** rather than deleted, or you lose the coverage instead of moving it:
 
 | Suite | What it asserts through lists |
 |---|---|
@@ -334,6 +385,7 @@ lose the coverage instead of moving it:
 | `tests/functional/billing/quotas.spec.ts` | the row-locked create at the cap, and the at-cap banner |
 | `tests/browser/workspace.spec.ts` | the real-browser walk through the app |
 | `tests/unit/plan_service.spec.ts` | limits, overrides and the 402 details, all keyed on `lists` |
+| `tests/unit/seats.spec.ts` | uses `lists` as the limit it overrides while testing seats |
 | `tests/unit/api.spec.ts` | scope parsing, using `lists:read` and `todos:read` as the literals |
 | `tests/unit/public_id.spec.ts` | prefix parsing — iterates the registry, but also names `todo` and `todoList` directly in four assertions |
 | `tests/functional/dashboard.spec.ts` | that every registered widget renders — and that the screen still renders with none |
@@ -384,6 +436,11 @@ npm run lint
 node ace test          # the suite is the real answer
 node ace migration:fresh --seed
 ```
+
+Done properly, `npm run typecheck` after the removal reports errors in **only two places**:
+`commands/dev_seed.ts`, which needs rewriting for your domain, and the core test suites listed
+above, which need their worked example replaced. Nothing in `app/`, `start/` or `config/` should
+fail — if something does, it is a coupling this page has missed.
 
 `commands/dev_seed.ts` builds the demo workspaces out of lists and todos, so it needs rewriting for
 your domain before `node ace dev:seed` will run. `database/seeders/test_accounts_seeder.ts` is core

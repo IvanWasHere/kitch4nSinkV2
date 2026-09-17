@@ -25,7 +25,7 @@ test.group('Dashboard', (group) => {
 
     const list = await createList(organization, user, 'Launch checklist', ['Ship the thing'])
 
-    const { default: todos } = await import('#todos/todo_service')
+    const { default: todos } = await import('#modules/lists/services/todo_service')
     const [open] = await todos.forList(list)
     await todos.complete(open, user)
 

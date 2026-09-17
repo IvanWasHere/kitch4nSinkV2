@@ -125,6 +125,65 @@ export function nounFor(limit: string): string {
 }
 
 /**
+ * The limits the plan grid lists, in the order it lists them.
+ *
+ * Separate from `LIMIT_NOUNS` because the two are read in different
+ * sentences: a `402` says "your plan allows 500 todos in a list", while a
+ * pricing card says "500 todos per list". A limit absent from here is
+ * enforced and metered without being advertised — `apiKeys` is sold as the
+ * `api` feature rather than as a number.
+ *
+ * Typed on `LimitKey`, so a limit that leaves with its feature makes the
+ * entry here a compile error instead of a card that renders `undefined`.
+ */
+export const PLAN_CARD_LIMITS: readonly {
+  key: LimitKey
+  /**
+   * The words after the number, e.g. `todos per list`.
+   */
+  label: string
+  /**
+   * How the number reads, where it is not simply the number. Storage is
+   * stored in megabytes because that is the resolution it is enforced at, and
+   * shown in gigabytes because that is how it is sold.
+   */
+  format?: (value: number) => string
+}[] = [
+  { key: 'seats', label: 'seats' },
+  { key: 'lists', label: 'lists' },
+  { key: 'todosPerList', label: 'todos per list' },
+  { key: 'storageMb', label: 'storage', format: (mb) => `${mb / 1000} GB` },
+]
+
+/**
+ * One line per limit the grid advertises and this plan declares.
+ *
+ * A limit the plan does not declare at all is skipped rather than shown as
+ * zero: a build with a feature removed should show a shorter card, not a card
+ * offering none of something nobody sells.
+ */
+export function planCardLines(limits: PlanLimits): string[] {
+  return PLAN_CARD_LIMITS.filter(({ key }) => limits[key] !== undefined).map(
+    ({ key, label, format }) => {
+      const value = limits[key]
+      const amount = value === null ? 'Unlimited' : format ? format(value) : String(value)
+
+      return `${amount} ${label}`
+    }
+  )
+}
+
+/**
+ * Whether any of a plan's limits is unlimited — the "stopped counting" tier.
+ *
+ * Asked this way rather than by naming a limit, so the top plan's copy does
+ * not depend on the demo domain declaring `lists: null`.
+ */
+export function hasUnlimitedLimit(limits: PlanLimits): boolean {
+  return Object.values(limits).some((value) => value === null)
+}
+
+/**
  * The plan for an organisation, falling back to Free for an unrecognised key
  * — a plan removed from this file must not lock a customer out of their data.
  */

@@ -1,6 +1,11 @@
 import { test } from '@japa/runner'
 
-import { nextPosition, normalisedPositions, positionBetween, POSITION_GAP } from '#todos/position'
+import {
+  nextPosition,
+  normalisedPositions,
+  positionBetween,
+  POSITION_GAP,
+} from '#modules/lists/services/position'
 
 /**
  * Sparse ordering (plan §5.6): positions 100 apart, so dropping a row between

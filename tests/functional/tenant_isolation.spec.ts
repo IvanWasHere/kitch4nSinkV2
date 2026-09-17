@@ -5,9 +5,9 @@ import User from '#models/user'
 import Invitation from '#models/invitation'
 import Organization from '#models/organization'
 import invitations from '#organizations/invitation_service'
-import Todo from '#models/todo'
-import TodoList from '#models/todo_list'
-import todoService from '#todos/todo_service'
+import Todo from '#modules/lists/models/todo'
+import TodoList from '#modules/lists/models/todo_list'
+import todoService from '#modules/lists/services/todo_service'
 import SupportMessage from '#models/support_message'
 import support from '#support/support_service'
 import { addMember, createList, createWorkspace } from '#tests/helpers'
@@ -418,7 +418,7 @@ test.group('Tenant isolation', (group) => {
     await createList(a.organization, a.user, 'Belongs to A', ['One'])
     await createList(b.organization, b.user, 'Belongs to B', ['One', 'Two', 'Three'])
 
-    const { default: dashboard } = await import('#todos/dashboard_service')
+    const { default: dashboard } = await import('#modules/lists/services/dashboard_service')
     const stats = await dashboard.statsFor(a.organization)
 
     assert.equal(stats.lists, 1)

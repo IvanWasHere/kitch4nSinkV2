@@ -1,9 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 
 import plans from '#billing/plan_service'
-import lists, { ListError } from '#todos/list_service'
-import todos from '#todos/todo_service'
-import { createListValidator } from '#validators/todo'
+import lists, { ListError } from '#modules/lists/services/list_service'
+import todos from '#modules/lists/services/todo_service'
+import { createListValidator } from '#modules/lists/validators'
 
 /**
  * The Lists screen and everything that changes a list.
@@ -13,7 +13,7 @@ import { createListValidator } from '#validators/todo'
  */
 export default class ListController {
   async index({ view, organization, request, bouncer }: HttpContext) {
-    await bouncer.with('TodoListPolicy').authorize('viewAny', organization)
+    await bouncer.with('ModulesListsTodoListPolicy').authorize('viewAny', organization)
 
     const includeArchived = request.input('archived') === '1'
 
@@ -37,7 +37,7 @@ export default class ListController {
       return response.redirect().toRoute('lists.index')
     }
 
-    await bouncer.with('TodoListPolicy').authorize('view', list)
+    await bouncer.with('ModulesListsTodoListPolicy').authorize('view', list)
 
     const filter = ['open', 'done'].includes(request.input('filter'))
       ? (request.input('filter') as 'open' | 'done')
@@ -60,7 +60,7 @@ export default class ListController {
   }
 
   async store({ request, response, session, auth, organization, bouncer }: HttpContext) {
-    await bouncer.with('TodoListPolicy').authorize('create', organization)
+    await bouncer.with('ModulesListsTodoListPolicy').authorize('create', organization)
 
     const payload = await request.validateUsing(createListValidator)
 
@@ -90,7 +90,7 @@ export default class ListController {
       return response.redirect().toRoute('lists.index')
     }
 
-    await bouncer.with('TodoListPolicy').authorize('update', list)
+    await bouncer.with('ModulesListsTodoListPolicy').authorize('update', list)
 
     const payload = await request.validateUsing(createListValidator)
 
@@ -125,7 +125,7 @@ export default class ListController {
       return response.redirect().toRoute('lists.index')
     }
 
-    await bouncer.with('TodoListPolicy').authorize('archive', list)
+    await bouncer.with('ModulesListsTodoListPolicy').authorize('archive', list)
 
     if (list.isArchived) {
       await lists.unarchive(list)
@@ -149,7 +149,7 @@ export default class ListController {
       return response.redirect().toRoute('lists.index')
     }
 
-    await bouncer.with('TodoListPolicy').authorize('delete', list)
+    await bouncer.with('ModulesListsTodoListPolicy').authorize('delete', list)
     await lists.delete(list)
 
     session.flash('success', `"${list.name}" and its todos were deleted.`)

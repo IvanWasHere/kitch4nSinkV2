@@ -325,7 +325,7 @@ export default class DevSeed extends BaseCommand {
   private async seedProWorkspace(organization: Organization, owner: User) {
     const { DateTime } = await import('luxon')
     const { default: invitations } = await import('#organizations/invitation_service')
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
 
     const joining = await invitations.invite({
       organization,
@@ -803,7 +803,7 @@ export default class DevSeed extends BaseCommand {
     actor: User,
     data: { name: string; description?: string; color?: string }
   ) {
-    const { default: lists } = await import('#todos/list_service')
+    const { default: lists } = await import('#modules/lists/services/list_service')
 
     return lists.create(organization, actor, data as never)
   }
@@ -820,7 +820,7 @@ export default class DevSeed extends BaseCommand {
       assignee?: User
     }
   ) {
-    const { default: todos } = await import('#todos/todo_service')
+    const { default: todos } = await import('#modules/lists/services/todo_service')
 
     return todos.create(organization, list, actor, {
       title: data.title,
@@ -841,7 +841,7 @@ export default class DevSeed extends BaseCommand {
     actor: User,
     title: string
   ) {
-    const { default: todos } = await import('#todos/todo_service')
+    const { default: todos } = await import('#modules/lists/services/todo_service')
 
     const todo = await this.todo(organization, list, actor, { title })
     await todos.complete(todo, actor)
