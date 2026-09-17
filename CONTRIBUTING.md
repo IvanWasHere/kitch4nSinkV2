@@ -21,6 +21,12 @@ npm run typecheck
 npm test
 ```
 
+`.adonisjs/server/` is **committed** codegen — the controller and policy barrels and the route-name
+types. The assembler rewrites it on `serve`, `test` and `build`, so it appears in a diff whenever
+controllers move or routes change. `tsc` alone does not regenerate it, which is why a stale barrel
+shows up as "property does not exist on type" for a controller you can see on disk; run the suite
+once and look again. Never hand-edit it.
+
 ## Database portability rules (plan §5.1)
 
 The app runs on SQLite locally and Postgres when deployed, on **identical application code**.
@@ -49,7 +55,69 @@ enforced at the migration layer, and these rules are checked in review.
 CI runs the full suite against **both** engines on every push. A rule that is only exercised on
 SQLite is not enforced, so a migration that cannot run on Postgres fails the build.
 
-## The domain: lists and todos
+## Feature modules
+
+The demo domain lives in `app/modules/lists/` and **registers itself**. Core never imports a
+module — `tests/unit/modularity.spec.ts` fails if anything outside a registration point imports
+`#modules/…`, which is what keeps that property true rather than aspirational.
+
+A module owns its own models, services, controllers, policies, transformers, jobs, mails,
+validators, routes, API surface, schema rules, demo seeder and tests. To add one, create
+`app/modules/<name>/` — imported as `#modules/<name>/…` — and register what it contributes:
+
+| What it contributes | Register it in |
+|---|---|
+| plan limits it counts | `start/quotas.ts` |
+| Overview screen widgets | `start/dashboard.ts` |
+| API scopes, and its slice of the OpenAPI document | `start/api.ts` |
+| background jobs, and their cron interval | `start/jobs.ts` |
+| demo data for `dev:seed` | `start/seeders.ts` |
+| routes | `start/routes/web.ts`, `start/routes/api.ts` |
+| column types for its tables | `config/database.ts`, under `schemaGeneration.rulesPaths` |
+
+Controllers and policies need no registration: `indexEntities` and `indexPolicies` scan `app/`, so
+a module's land in the generated barrels beside core's as `controllers.<name>.…`.
+
+Five rules that are easy to get wrong:
+
+- **Routes register *inside* core's group.** A module exports a function; `start/routes/web.ts`
+  calls it within the existing `router.group`. Both groups carry a middleware stack — verified
+  tenant session for the web, key auth plus usage tracking and rate limiting for the API — and the
+  uniformity of those stacks is what makes it impossible to add a screen that forgets to scope
+  itself to an organisation. A module that opened its own group could get that wrong privately.
+- **Anything that reads a registry must read it lazily.** Registries are filled by preloads, so a
+  value captured at module load is captured empty. `createApiKeyValidator` uses
+  `vine.enum(() => scopes.all())` for exactly this reason; passing the array would have silently
+  accepted nothing.
+- **An API scope needs a type augmentation as well as a registration.** `ApiScope` stays a closed
+  union through `declare module '#api/scopes'`, so `requireScope(ctx, 'lists:read')` is still a
+  compile-time check. Registering a scope the augmentation does not declare will not compile —
+  which is the point.
+- **Views and migrations stay outside the module.** Templates go in
+  `resources/views/pages/<name>/`, because Edge resolves from a single root. Migrations go in
+  `database/migrations/`, because Lucid records a migration by its **path** — moving a file makes it
+  look new and re-runs it against a database that already has the table, and the suite, which always
+  migrates from scratch, would not notice.
+- **A module's policy keys carry its path.** `bouncer.with('ModulesListsTodoPolicy')`, not
+  `'TodoPolicy'`, because the generated index derives the key from where the file lives.
+
+Its tests go in `app/modules/<name>/tests/unit/` and `.../tests/functional/`. Both suites in
+`adonisrc.ts` glob the matching directory under a module, so they run as `unit` and `functional`
+exactly as core's do, and they leave with the folder.
+
+What does **not** move into a module is the cross-cutting coverage that happens to use it as its
+worked example — tenant isolation, API pagination, the row-locked quota tests. Those stay where they
+are and are ported to whatever replaces the domain; `createList()` in `tests/helpers.ts` is the one
+function they all sit on, which is why it lives in the file every suite already imports rather than
+in a module of its own.
+
+Removing a module is the reverse, and [`docs/modules.md`](./docs/modules.md) is the file-by-file
+procedure.
+
+## The demo domain: lists and todos
+
+The worked example of the above, and deliberately small — it exists to exercise tenancy, quotas and
+the API, not to be the product.
 
 Lists belong to the **organisation**, not to whoever created one (D8). Every member sees every
 list; `createdByUserId` is provenance for the UI and must never appear in an access check.
@@ -131,14 +199,34 @@ list; `createdByUserId` is provenance for the UI and must never appear in an acc
    with "x is not defined" — not at parse. Derive the value in a controller or middleware and share
    it instead; a shell with no logic of its own cannot get it wrong on one screen and right on
    another.
+12. **Lucid records a migration by its path, not its filename.** `adonis_schema.name` is
+   `database/migrations/1788600000007_create_todo_lists_table`, so *moving* a migration file makes
+   it look like a new one and re-runs it against a database that already has the table. The suite
+   would not catch it: tests always migrate from scratch, so they stay green while every existing
+   install breaks. This is why a feature module's migrations stay in `database/migrations/`.
+13. **One negated pattern in an assembler `glob` makes the whole set match everything.** Passing
+   `['**/*_policy.ts', '!admin/**']` to `indexPolicies` indexed every file under `app/` as a policy
+   — models, middleware, validators and `staff_policy.ts` included. Exclude by naming the directory
+   you *do* want instead, as `adonisrc.ts` does. Those globs are matched against the whole path, so
+   a source-relative pattern silently matches nothing at all.
+14. **A registry read at module load is read empty.** The registries are filled by preloads, which
+   run after a module is evaluated, so anything capturing their contents at import time captures
+   nothing. `createApiKeyValidator` takes `vine.enum(() => scopes.all())` rather than the array for
+   exactly this reason — and the failure is silent, because an empty enum simply accepts nothing.
+15. **`*/` inside a block comment ends it.** Documenting a glob — `**/*_controller.ts` — inside a
+   `/* … */` or `/** … */` comment closes the comment at the `*/` and turns the rest into a syntax
+   error. `adonisrc.ts` describes its globs in prose for this reason.
 
 ## Adding a table
 
 1. Write the migration following the rules above. Migration order matters — see plan §5.3.
 2. Run `node ace migration:run`. This regenerates `database/schema.ts`; **do not edit that file**.
-   To change how a column is typed or decorated, edit `database/schema_rules.ts` instead.
-3. Create the model in `app/models/`, composing the generated schema class with the mixins it
-   needs, e.g. `compose(TodoListSchema, withPublicId('todoList'))`.
+   To change how a column is typed or decorated, edit `database/schema_rules.ts` instead — or, for a
+   feature module's table, its own rules file listed in `config/database.ts` under
+   `schemaGeneration.rulesPaths`. The generator deep-merges every path it is given.
+3. Create the model in `app/models/` — or `app/modules/<name>/models/` — composing the generated
+   schema class with the mixins it needs, e.g.
+   `compose(TodoListSchema, withPublicId('todoList'))`.
 4. If the table carries a `public_id`, register its prefix in `app/models/public_id.ts`.
 
 ## Background jobs
@@ -161,9 +249,15 @@ node ace queue:work            # worker — nothing is delivered without it
 the work but before marking the job done will run it again when the reservation is reclaimed
 (5 minutes). That is not a nicety — it is the only contract the queue can actually keep.
 
-Handlers live in `app/queue/jobs/` and must be listed in `app/queue/registry.ts`. A job whose name
-is not in the registry fails immediately rather than being retried five times, because no amount of
-waiting will make the code exist.
+Handlers live in `app/queue/jobs/` — or `app/modules/<name>/jobs/` — and must be registered in
+`start/jobs.ts`, with an interval if cron should dispatch them. A job whose name is not in the
+registry fails immediately rather than being retried five times, because no amount of waiting will
+make the code exist.
+
+`app/queue/registry.ts` owns the lookup and the schedule filter and knows nothing about which jobs
+exist, so `schedule:run` needs no edit when one is added or removed. The registry cannot report a
+handler that *stopped* being registered, so `tests/unit/jobs.spec.ts` reads every job directory from
+disk and asserts each handler it finds is registered.
 
 Two queues, on purpose: `mail` carries sends, `default` carries scans that *produce* mail. Putting a
 nightly sweep over every user on the same queue as the sends lets it sit in front of somebody's
@@ -193,8 +287,20 @@ inline upsell, the `402` and the row-locked check inside the create transaction 
 lists are you using" will eventually disagree, and the day they do a customer is either blocked
 below their limit or billed for a plan they are exceeding.
 
+Which quotas exist is a **registry**, not a list inside `PlanService`. A quota is a limit key from
+`config/plans.ts` plus a label and a counter, registered in `start/quotas.ts`; `PlanService` owns the
+arithmetic and never learns what it is counting. That inversion is why the billing layer no longer
+imports the demo domain's model in order to count lists.
+
 `require_organization` shares `usage` with every rendered page, which is what the sidebar and the
-`withinLimit()` Edge global read.
+`withinLimit()` Edge global read. It carries:
+
+- `usage.quotas.<key>` — one quota by name, for a screen that owns it (`usage.quotas.lists`).
+  Optional, because a quota exists only while whatever registered it does; a shared screen must
+  guard, a feature's own screen may not need to.
+- `usage.meters` — every counted quota in registration order, which is what the three meter grids
+  iterate so that adding or removing one touches no template.
+- `usage.atCap` — the ones that are full, which is what the at-cap banner names.
 
 ### Enforcing a count limit
 
@@ -203,7 +309,7 @@ exactly one place, **inside the transaction that does the insert, behind a row l
 
 | Limit | Where | Locks |
 |---|---|---|
-| `lists` | `ListService.create` | the `organizations` row, via `PlanService.lockAndAssertLimit` |
+| `lists` | `ListService.create`, counting through `ListService.count` — the same counter the registry holds | the `organizations` row, via `PlanService.lockAndAssertLimit` |
 | `todosPerList` | `TodoService.create` | the `todo_lists` row (whose `todos_count` is the counter) |
 | `seats` | `InvitationService.invite` and `.accept` | the `organizations` row |
 
@@ -444,10 +550,17 @@ SHA-256 unsalted and fast, deliberately. A key is 32 random characters, so there
 to attack and nothing for a salt to defend; a slow hash would instead put its cost on **every
 authenticated request**.
 
-A key is **not a user**. It carries explicit scopes (`lists:read`, `lists:write`, `todos:read`,
-`todos:write`, `members:read`) rather than inheriting the role of whoever created it — so promoting
-that person does not silently widen what an integration can do, and removing them does not break
-it. The web app's owner-only list deletion is mirrored as "needs `lists:write`".
+A key is **not a user**. It carries explicit scopes rather than inheriting the role of whoever
+created it — so promoting that person does not silently widen what an integration can do, and
+removing them does not break it. The web app's owner-only list deletion is mirrored as "needs
+`lists:write`".
+
+Which scopes exist is registered in `start/api.ts`: `members:read` is core, and `lists:*` /
+`todos:*` come from the demo module. The list stays **closed and typed** all the same — each feature
+augments the `ApiScopes` interface, so `ApiScope` is a literal union assembled across files and
+`requireScope(ctx, 'lists:write')` still fails to compile on a typo. `database/schema.ts` types the
+`scopes` column as `ApiScope[]` by importing that type rather than restating the union, so the
+generated schema never names a scope the application does not serve.
 
 Keys are owner-only (D4): one can spend the workspace's entire monthly allowance and be granted
 write access to everything, which makes it billing-adjacent rather than a member-level setting.
@@ -533,10 +646,20 @@ at-least-once and an incrementing aggregate doubles on its second run.
 ### Documentation
 
 `/docs` and `/openapi.json` are public — somebody deciding whether to build against this reads them
-before they have a key. The document is hand-written in `app/api/openapi.ts` rather than generated
-by reflection: a generated spec silently changes shape when somebody adds a column, which is the
-exact failure the transformers exist to prevent. `tests/functional/api/endpoints.spec.ts` asserts
-the document still describes the routes that exist.
+before they have a key. The document is hand-written rather than generated by reflection: a
+generated spec silently changes shape when somebody adds a column, which is the exact failure the
+transformers exist to prevent.
+
+`app/api/openapi.ts` holds the document's shape, core's own endpoints, and the shared fragments —
+the cursor parameters, the envelope helpers, the common error responses, the `402`. A feature
+contributes its schemas and paths through `openApi.register(...)` and reuses those fragments, so its
+endpoints are documented the same way core's are. The `/organization` response's usage block is
+built from the quota registry, which is what stops the spec and `OrganizationTransformer` disagreeing
+about which quotas exist.
+
+`tests/functional/api/endpoints.spec.ts` asserts the document still describes the routes that exist,
+that both core and contributed schemas are present, and that its quota keys match the payload's
+exactly.
 
 ## The back-office
 
@@ -571,10 +694,17 @@ the route, so a support agent sees a screen **without its dangerous buttons** in
 `ctx.bouncer` is typed against the tenant `User`; `ctx.staffBouncer` against `StaffUser`. They are
 separate because one Bouncer cannot be typed against both — registering a `StaffUser` policy on the
 tenant map makes the whole map incompatible, at which point **every** tenant policy silently drops
-out of the type-level action list and `bouncer.with('TodoPolicy')` stops compiling.
+out of the type-level action list and `bouncer.with('ModulesListsTodoPolicy')` stops
+compiling.
 
-That is also why `StaffPolicy` lives in `app/admin/` rather than `app/policies/`: that directory is
-scanned to build `#generated/policies`.
+That is also why `StaffPolicy` lives in `app/admin/` rather than in any `policies/` directory. The
+policy index scans `app/` so that a feature module's policies are found too, and it matches
+`policies` **as a directory** precisely so `app/admin/staff_policy.ts` stays out of the tenant map.
+Negated glob patterns are not an alternative — a single excluding entry makes the whole set match
+every file in `app/`.
+
+Because the generated key follows the file's path, a module's policies are keyed
+`ModulesListsTodoPolicy` rather than `TodoPolicy`.
 
 ### Impersonation
 
@@ -887,6 +1017,13 @@ the one chance to see it. Development only: the command refuses to run unless
 
 The screenshots in the README are captured from exactly this dataset, which is the point of it: if a
 screen looks empty here, it will look empty for whoever clones the repository.
+
+The command owns the workspaces, the people, the subscriptions, the announcements and the operations
+rows. It does **not** know what a feature's rows look like: each one registers a seeder in
+`start/seeders.ts`, is handed the workspaces core built, and fills them itself. A seeder may also
+declare limit overrides — the demo domain drops `todosPerList` to 12, because a meter is only worth
+showing near its ceiling and the plan's own 50 is too high to demonstrate against. Without any
+seeders registered, `dev:seed` still produces a complete demo of everything core has.
 
 It wants a fresh database — it registers `jane@example.com` first thing, so a second run stops on
 the unique index rather than half-seeding. `node ace migration:fresh --force && node ace db:seed &&
