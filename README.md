@@ -30,7 +30,8 @@ usually get skipped and then bite in month three — are the parts that are actu
 - 🕵️ Staff impersonation is time-boxed, read-only for support, and audited with **both** actor ids.
 
 The demo domain is deliberately small — shared to-do lists — because it exists to exercise tenancy,
-quotas and the API, not to be the product. Swap it for yours.
+quotas and the API, not to be the product. Swap it for yours:
+[`docs/modules.md`](./docs/modules.md) is the removal path, file by file.
 
 📓 [`plan.md`](./plan.md) is the full design document and the source of truth for scope.
 🛠️ [`CONTRIBUTING.md`](./CONTRIBUTING.md) has the rules that keep it working — read it before

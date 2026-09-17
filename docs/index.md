@@ -55,6 +55,7 @@ The navigation is gated by role, so nobody is offered a screen that would then r
 | [Development](development.md) | Running it, seeding it, testing it |
 | [Deployment](deployment.md) | Putting it somewhere |
 | [Security](security.md) | What it defends against, and what it leaves to you |
+| [Replacing the demo domain](modules.md) | Removing lists and todos, and putting your own product in |
 
 ---
 

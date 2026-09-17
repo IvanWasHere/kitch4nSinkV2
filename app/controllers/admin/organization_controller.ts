@@ -8,7 +8,7 @@ import audit, { AUDIT_ACTIONS } from '#audit/audit_service'
 import billing from '#billing/billing_service'
 import search from '#admin/search_service'
 import memberships from '#organizations/membership_service'
-import { plans as planCatalogue, type PlanKey } from '#config/plans'
+import { LIMIT_KEYS, plans as planCatalogue, type PlanKey } from '#config/plans'
 
 /**
  * Organisations in the back-office (plan §12).
@@ -71,6 +71,7 @@ export default class AdminOrganizationController {
       canManage,
       canOverride,
       planKeys: Object.keys(planCatalogue),
+      limitKeys: LIMIT_KEYS,
     })
   }
 

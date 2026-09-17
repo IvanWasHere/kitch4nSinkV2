@@ -34,7 +34,14 @@
   </div>
 
   <div class="usage-grid" style="margin-bottom: 22px">
-    @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
+    {{--
+      Guarded: `lists` is a quota the demo domain contributes, and a build
+      with that module removed has no such key (see docs/modules.md). Seats
+      and storage are core and are always there.
+    --}}
+    @if(usage.lists)
+      @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
+    @end
     @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
     @!usageMeter({ label: 'Storage (MB)', current: usage.storage.current, limit: usage.storage.limit })
   </div>
@@ -225,7 +232,7 @@
           @field.root({ name: 'limit' })
             @!field.label({ text: 'Limit' })
             @!select.control({
-              options: ['seats', 'lists', 'todosPerList', 'storageMb', 'apiKeys', 'apiCallsPerMonth'].map((key) => ({ value: key, name: key })),
+              options: limitKeys.map((key) => ({ value: key, name: key })),
             })
           @end
           @field.root({ name: 'value' })

@@ -86,6 +86,16 @@ export type FeatureKey = (typeof plans)[PlanKey]['features'][number]
 export const DEFAULT_PLAN: PlanKey = 'free'
 
 /**
+ * Every limit key, in the order `PlanLimits` declares them.
+ *
+ * Derived from the catalogue rather than written out a second time. The staff
+ * override form and `overrideLimits`' own `limit in plans.free.limits` check
+ * then read the same list, so a limit that arrives with a feature — or leaves
+ * with one — cannot leave the form offering a key the controller rejects.
+ */
+export const LIMIT_KEYS = Object.keys(plans[DEFAULT_PLAN].limits) as LimitKey[]
+
+/**
  * The plan for an organisation, falling back to Free for an unrecognised key
  * — a plan removed from this file must not lock a customer out of their data.
  */

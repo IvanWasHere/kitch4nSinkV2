@@ -364,6 +364,37 @@ test.group('Quotas — how a block is presented', (group) => {
     response.assertTextIncludes('disabled')
   })
 
+  /**
+   * The at-cap banner reads its quotas through a guard rather than
+   * dereferencing them, because `lists` is contributed by the demo domain and
+   * a build without that module has no such key (see docs/modules.md). These
+   * two tests are what stops that guard being "simplified" back into
+   * `usage.lists.isFull`, which would throw on every screen in the app.
+   */
+  test('the at-cap banner names the full quota for the owner', async ({ client }) => {
+    const { user, organization } = await createWorkspace()
+
+    for (const name of ['One', 'Two', 'Three']) {
+      await createList(organization, user, name)
+    }
+
+    const response = await client.get('/dashboard').loginAs(user).withCsrfToken()
+
+    response.assertStatus(200)
+    response.assertTextIncludes('You are using all 3 of your lists.')
+  })
+
+  test('the at-cap banner stays away below the cap', async ({ client, assert }) => {
+    const { user, organization } = await createWorkspace()
+
+    await createList(organization, user, 'One')
+
+    const response = await client.get('/dashboard').loginAs(user).withCsrfToken()
+
+    response.assertStatus(200)
+    assert.notInclude(response.text(), 'of your lists.')
+  })
+
   test('a blocked create over JSON is a 402 with a machine-readable limit', async ({ client }) => {
     const { user, organization } = await createWorkspace()
 

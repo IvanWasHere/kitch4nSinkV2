@@ -31,6 +31,24 @@ const json = (tsType: string) => ({
 })
 
 /**
+ * A JSON column whose type is declared elsewhere and imported by name.
+ *
+ * `json('Foo[]')` can only inline a type; spelling a closed set out here
+ * copies it, and a copy inside a generated file is a copy nobody edits when
+ * the original changes. This pulls the real type in as a `import type`, which
+ * erases at runtime, so `database/schema.ts` stays free of any vocabulary it
+ * does not own.
+ */
+const jsonRef = (tsType: string, source: string, typeImports: string[]) => ({
+  tsType,
+  imports: [
+    { source: '#database/columns', namedImports: ['jsonColumn'] },
+    { source, typeImports },
+  ],
+  decorators: [{ name: '@jsonColumn' }],
+})
+
+/**
  * SQLite stores booleans as 0/1 and Postgres as real booleans, so every
  * boolean column is read through a cast (portability rule 7).
  */
@@ -172,10 +190,14 @@ export default {
         /**
          * The closed set from plan §11. A scope that is not in this union is
          * a compile error at every call site that checks one.
+         *
+         * Referenced rather than restated: `ApiScope` is assembled in
+         * `#api/scopes`, which is where a feature module adds or removes the
+         * scopes it serves. Inlining the union here meant the generated
+         * schema named `lists:read` forever, whatever the application
+         * actually offered.
          */
-        scopes: json(
-          "('lists:read' | 'lists:write' | 'todos:read' | 'todos:write' | 'members:read')[]"
-        ),
+        scopes: jsonRef('ApiScope[]', '#api/scopes', ['ApiScope']),
       },
     },
 

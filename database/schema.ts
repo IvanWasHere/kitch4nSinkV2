@@ -7,6 +7,7 @@
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 import { jsonColumn, bigIntColumn, encryptedColumn, encryptedJsonColumn, booleanColumn } from '#database/columns'
+import type { ApiScope } from '#api/scopes'
 
 export class ApiKeySchema extends BaseModel {
   static $columns = ['createdAt', 'createdByUserId', 'expiresAt', 'id', 'keyHash', 'lastUsedAt', 'name', 'organizationId', 'prefix', 'publicId', 'revokedAt', 'scopes', 'updatedAt'] as const
@@ -34,7 +35,7 @@ export class ApiKeySchema extends BaseModel {
   @column.dateTime()
   declare revokedAt: DateTime | null
   @jsonColumn()
-  declare scopes: ('lists:read' | 'lists:write' | 'todos:read' | 'todos:write' | 'members:read')[]
+  declare scopes: ApiScope[]
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

@@ -55,7 +55,14 @@
   --}}
   @panel.root({ title: 'Usage on this plan' })
     <div class="usage-grid">
-      @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
+      {{--
+        `lists` is a quota the demo domain contributes; seats and storage are
+        core. Guarded so a build with that module removed renders the two it
+        still has rather than failing (see docs/modules.md).
+      --}}
+      @if(usage.lists)
+        @!usageMeter({ label: 'Lists', current: usage.lists.current, limit: usage.lists.limit })
+      @end
       @!usageMeter({ label: 'Seats', current: usage.seats.current, limit: usage.seats.limit })
       @!usageMeter({
         label: 'Storage (MB)',
@@ -63,10 +70,12 @@
         limit: usage.storage.limit,
       })
     </div>
-    <p class="field-hint" style="margin-top: 12px">
-      Archived lists still count — archiving hides a list, it does not free a slot. Deleting one
-      does.
-    </p>
+    @if(usage.lists)
+      <p class="field-hint" style="margin-top: 12px">
+        Archived lists still count — archiving hides a list, it does not free a slot. Deleting one
+        does.
+      </p>
+    @end
   @end
 
   <div style="margin: 28px 0 8px">
@@ -101,16 +110,25 @@
             <span class="plan-check">&check;</span>
             {{ entry.plan.limits.seats === null ? 'Unlimited' : entry.plan.limits.seats }} seats
           </li>
-          <li>
-            <span class="plan-check">&check;</span>
-            {{ entry.plan.limits.lists === null ? 'Unlimited' : entry.plan.limits.lists }} lists
-          </li>
-          <li>
-            <span class="plan-check">&check;</span>
-            {{ entry.plan.limits.todosPerList === null
-              ? 'Unlimited'
-              : entry.plan.limits.todosPerList }} todos per list
-          </li>
+          {{--
+            The two demo-domain limits. `undefined` — rather than `null`,
+            which means unlimited — is how a build without that module reads,
+            so each bullet is present only while its limit is.
+          --}}
+          @if(entry.plan.limits.lists !== undefined)
+            <li>
+              <span class="plan-check">&check;</span>
+              {{ entry.plan.limits.lists === null ? 'Unlimited' : entry.plan.limits.lists }} lists
+            </li>
+          @end
+          @if(entry.plan.limits.todosPerList !== undefined)
+            <li>
+              <span class="plan-check">&check;</span>
+              {{ entry.plan.limits.todosPerList === null
+                ? 'Unlimited'
+                : entry.plan.limits.todosPerList }} todos per list
+            </li>
+          @end
           <li>
             <span class="plan-check">&check;</span>
             {{ entry.plan.limits.storageMb === null
