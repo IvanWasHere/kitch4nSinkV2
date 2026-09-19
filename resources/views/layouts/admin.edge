@@ -10,7 +10,11 @@
   Props:
     title    — page <title> and the header's page label
   Slots:
-    main, actions
+    main
+
+  No `actions` slot, for the same reason the tenant shell has none: a page's
+  buttons belong in the page, not on the line that says which application
+  this is. See `layouts/app.edge`.
 --}}
 @component('layouts/base', { title: $props.get('title') ? `${$props.get('title')} · Admin` : 'Admin' })
   <div class="dash-shell" x-data="sidebar">
@@ -32,13 +36,9 @@
       <h1 class="dash-topbar-title">{{ $props.get('title') ?? '' }}</h1>
 
       <div class="dash-topbar-actions">
-        @if($slots.actions)
-          {{{ await $slots.actions() }}}
-        @end
-
         {{--
-          Signing out lives here rather than in each page's `actions` slot,
-          which is how it ended up on two back-office screens out of twelve.
+          Signing out lives in the shell rather than on each page, which is
+          how it ended up on two back-office screens out of twelve.
         --}}
         @if(staff)
           <details class="dropdown" x-data="menu" @click.outside="close" @keydown.escape="close">

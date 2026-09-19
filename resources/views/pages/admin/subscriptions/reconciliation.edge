@@ -3,8 +3,10 @@
   demand (plan §7.5) — so an operator sees exactly what cron would have.
 --}}
 @component('layouts/admin', { title: 'Reconciliation' })
-  @slot('actions')
-    @!link({ route: 'admin.subscriptions.index', text: 'Subscriptions', class: 'btn btn-outline btn-sm' })
+  @pageHeader()
+    @slot('actions')
+      @!link({ route: 'admin.subscriptions.index', text: 'Subscriptions', class: 'btn btn-outline btn-sm' })
+    @end
   @end
 
   <div class="info-box">

@@ -100,6 +100,9 @@ test.group('Billing screen', (group) => {
     response.assertTextIncludes('Pro plan — monthly')
     response.assertTextIncludes('$29.00')
     response.assertTextIncludes('Paid')
+
+    /* The portal button lives on the card that names the subscription. */
+    response.assertTextIncludes('Manage payment')
   })
 })
 

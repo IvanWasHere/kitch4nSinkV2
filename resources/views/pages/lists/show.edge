@@ -7,49 +7,47 @@
   the rule for every interaction here (plan §13.3).
 --}}
 @component('layouts/app', { title: list.name })
-  @slot('actions')
-    @form({ route: 'lists.archive', routeParams: { id: list.publicId }, method: 'POST' })
-      @!button({
-        text: list.isArchived ? 'Unarchive' : 'Archive',
-        variant: 'outline',
-        size: 'sm',
-        type: 'submit',
-      })
+  @pageHeader({
+    description: list.description || 'Everyone in this workspace can see and edit these.',
+  })
+    @slot('heading')
+      {{ list.name }}
+      @if(list.isArchived)
+        @!badge({ text: 'Archived', tone: 'neutral' })
+      @end
     @end
-    @if(auth.user.isOwner)
-      @form({ route: 'lists.destroy', routeParams: { id: list.publicId }, method: 'POST' })
-        @!button({ text: 'Delete list', variant: 'danger', size: 'sm', type: 'submit' })
+
+    @slot('actions')
+      <div class="pillset">
+        <a
+          class="pill {{ filter === 'all' ? 'active' : '' }}"
+          href="{{ urlFor('lists.show', { id: list.publicId }) }}"
+        >All</a>
+        <a
+          class="pill {{ filter === 'open' ? 'active' : '' }}"
+          href="{{ urlFor('lists.show', { id: list.publicId }) }}?filter=open"
+        >Open</a>
+        <a
+          class="pill {{ filter === 'done' ? 'active' : '' }}"
+          href="{{ urlFor('lists.show', { id: list.publicId }) }}?filter=done"
+        >Done</a>
+      </div>
+
+      {{--
+        Archiving is reversible and any member may do it, so it sits with the
+        list it acts on. Deleting is neither, and lives in the danger zone at
+        the foot of the page.
+      --}}
+      @form({ route: 'lists.archive', routeParams: { id: list.publicId }, method: 'POST' })
+        @!button({
+          text: list.isArchived ? 'Unarchive' : 'Archive',
+          variant: 'outline',
+          size: 'sm',
+          type: 'submit',
+        })
       @end
     @end
   @end
-
-  <div class="page-header">
-    <div>
-      <h2 class="section-title">
-        {{ list.name }}
-        @if(list.isArchived)
-          @!badge({ text: 'Archived', tone: 'neutral' })
-        @end
-      </h2>
-      <p class="section-desc" style="margin-bottom: 0">
-        {{ list.description || 'Everyone in this workspace can see and edit these.' }}
-      </p>
-    </div>
-    <div class="pillset">
-      <a
-        class="pill {{ filter === 'all' ? 'active' : '' }}"
-        href="{{ urlFor('lists.show', { id: list.publicId }) }}"
-      >All</a>
-      <a
-        class="pill {{ filter === 'open' ? 'active' : '' }}"
-        href="{{ urlFor('lists.show', { id: list.publicId }) }}?filter=open"
-      >Open</a>
-      <a
-        class="pill {{ filter === 'done' ? 'active' : '' }}"
-        href="{{ urlFor('lists.show', { id: list.publicId }) }}?filter=done"
-      >Done</a>
-    </div>
-  </div>
 
   {{--
     The per-list cap (plan §7.4). At the ceiling the form is replaced by the
@@ -199,5 +197,26 @@
         description: 'Todos added here are visible to everyone in the workspace.',
       })
     @end
+  @end
+
+  {{--
+    Deleting the list (plan §7.4, docs/lists-and-todos.md). Owner-only, and
+    at the foot of the page rather than beside Archive: the two read as a
+    pair of buttons and are not one — archiving hides a list and keeps its
+    plan slot, deleting takes the todos with it and hands the slot back.
+  --}}
+  @if(auth.user.isOwner)
+    <div class="settings-card danger-zone">
+      <h2 class="section-title">Delete this list</h2>
+      <p class="section-desc">
+        Removes "{{ list.name }}" and its
+        {{ list.todosCount }} {{ list.todosCount === 1 ? 'todo' : 'todos' }}
+        for everyone in the workspace. This frees a list slot on your plan; archiving does not.
+      </p>
+
+      @form({ route: 'lists.destroy', routeParams: { id: list.publicId }, method: 'POST' })
+        @!button({ text: 'Delete list', variant: 'danger', size: 'sm', type: 'submit' })
+      @end
+    </div>
   @end
 @end

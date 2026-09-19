@@ -5,14 +5,11 @@
   until now. A member sees their own; an owner sees the workspace's (§21.4).
 --}}
 @component('layouts/app', { title: 'Support' })
-  @slot('actions')
-    <a class="btn btn-primary btn-sm" href="{{ urlFor('support.create') }}">New ticket</a>
-  @end
-
   @if(tickets.length)
     <div class="ticket-list" style="max-height: none">
       <div class="ticket-list-header">
         <h3>Your tickets</h3>
+        <a class="btn btn-primary btn-sm" href="{{ urlFor('support.create') }}">New ticket</a>
       </div>
 
       <div class="ticket-list-body">

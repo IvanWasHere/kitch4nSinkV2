@@ -7,14 +7,42 @@
   it to resources/views/components.
 --}}
 @component('layouts/app', { title: 'Styleguide' })
-  @slot('actions')
-    @!button({ text: 'Action', variant: 'outline', size: 'sm' })
-  @end
-
-  <p class="section-desc" style="margin-bottom: 28px">
+  <p class="section-desc">
     Every component in <code class="mono">resources/views/components</code>, rendered against the
     tokens in <code class="mono">resources/css/tokens.css</code>. Development only.
   </p>
+
+  <h2 class="section-title">Page header</h2>
+  <p class="section-desc">
+    Where a screen names itself and where its buttons go. Page actions do not go in the shell's
+    topbar — that line is chrome, and a page action in it belongs to no page in particular.
+  </p>
+  <div class="settings-card">
+    @pageHeader({
+      title: 'Lists',
+      description: 'Lists are shared with everyone in the workspace.',
+    })
+      @slot('actions')
+        @!button({ text: 'New list', size: 'sm' })
+      @end
+    @end
+
+    {{-- A title that carries markup goes through the `heading` slot instead. --}}
+    @pageHeader({ description: 'Everyone in this workspace can see and edit these.' })
+      @slot('heading')
+        Launch checklist
+        @!badge({ text: 'Archived', tone: 'neutral' })
+      @end
+      @slot('actions')
+        <div class="pillset">
+          <a class="pill active" href="#">All</a>
+          <a class="pill" href="#">Open</a>
+          <a class="pill" href="#">Done</a>
+        </div>
+        @!button({ text: 'Unarchive', variant: 'outline', size: 'sm' })
+      @end
+    @end
+  </div>
 
   <h2 class="section-title">Stat cards</h2>
   <p class="section-desc">The dashboard's four headline numbers.</p>
@@ -133,7 +161,7 @@
     one server-set value is a percentage.
   </p>
 
-  <div class="page-header" style="align-items: center; margin-bottom: 14px">
+  <div class="page-header" style="align-items: center">
     <p class="section-desc" style="margin-bottom: 0">
       Money cards carry a sparkline and a comparison; the segmented control beside them is a row
       of links, so the range is in the URL.
@@ -145,7 +173,7 @@
     </div>
   </div>
 
-  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px">
+  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr)">
     @!moneyCard({
       label: 'Gross volume',
       amount: '$48,210',
@@ -197,7 +225,7 @@
     </div>
   @end
 
-  <div class="panel-grid" style="margin-top: 16px">
+  <div class="panel-grid">
     @panel.root({ title: 'Workspaces registered' })
       <div class="bars-wrap">
         <div class="bars">
@@ -340,7 +368,7 @@
     </a>
   </div>
 
-  <h2 class="section-title" style="margin-top: 28px">Empty state</h2>
+  <h2 class="section-title">Empty state</h2>
   @panel.root()
     @!emptyState({
       icon: 'list',
@@ -407,7 +435,7 @@
       Your subscription is active.
     </div>
   </div>
-  <div class="banner banner-warning" style="border-radius: var(--radius); margin-bottom: 12px">
+  <div class="banner banner-warning" style="border-radius: var(--radius)">
     <span>Payment failed — update your card to keep your plan.</span>
     @!button({ text: 'Update card', variant: 'outline', size: 'xs' })
   </div>
@@ -416,7 +444,7 @@
     <button type="button" class="btn-ghost">Stop impersonating</button>
   </div>
 
-  <h2 class="section-title" style="margin-top: 28px">Copy to clipboard</h2>
+  <h2 class="section-title">Copy to clipboard</h2>
   <p class="section-desc">Used for a secret shown exactly once.</p>
   <div class="settings-card">
     @!copyField({ label: 'Your new API key', value: 'sk_test_3f9a1c8e42b7d05619cfa87d3e2b6104' })

@@ -5,7 +5,7 @@
   not happen, so the events that never applied belong at the top.
 --}}
 @component('layouts/admin', { title: 'Webhook ledger' })
-  <div class="pillset" style="margin-bottom: 16px">
+  <div class="pillset">
     @each(one in [
       { key: 'unprocessed', label: 'Never applied' },
       { key: 'failed', label: 'Failed with an error' },

@@ -5,15 +5,15 @@
   staff account can grant themselves everything else in here.
 --}}
 @component('layouts/admin', { title: 'Staff' })
-  @slot('actions')
-    @!button({
-      text: 'New staff account',
-      size: 'sm',
-      '@click': "document.getElementById('new-staff').showModal()",
-    })
-  @end
+  @panel.root({ title: 'Staff accounts', flush: true })
+    @slot('actions')
+      @!button({
+        text: 'New staff account',
+        size: 'sm',
+        '@click': "document.getElementById('new-staff').showModal()",
+      })
+    @end
 
-  @panel.root({ flush: true })
     <div class="table-scroll">
       <table class="tx-table">
         <thead>

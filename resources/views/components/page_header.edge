@@ -1,0 +1,45 @@
+{{--
+  A page's own header: what the screen is, and the buttons that act on it.
+
+  Page actions used to live in the shell's topbar, on one line with the
+  workspace name, the announcements bell and the account menu. That line is
+  chrome — it says which application you are in — and a "Delete list" button
+  sitting in it is a page action pretending to be chrome. The actions live
+  here instead: in the page, above the thing they act on, scrolling with it.
+
+  Reuses `.page-header`, which several screens were already hand-rolling.
+
+  Props:
+    title       — optional heading, when it is plain text
+    description — optional line under it
+  Slots:
+    heading     — replaces the heading's text, for a title that carries markup
+                  (a status badge, say). Use instead of `title`, not with it.
+    main        — optional extra content below the description
+    actions     — the buttons, right-aligned
+--}}
+<div {{ $props.except(['title', 'description', 'heading', 'actions']).merge({ class: ['page-header'] }).toAttrs() }}>
+  <div>
+    @if($slots.heading || $props.has('title'))
+      <h2 class="section-title">
+        @if($slots.heading)
+          {{{ await $slots.heading() }}}
+        @else
+          {{ $props.get('title') }}
+        @end
+      </h2>
+    @end
+
+    @if($props.has('description'))
+      <p class="section-desc" style="margin-bottom: 0">{{ $props.get('description') }}</p>
+    @end
+
+    {{{ await $slots.main() }}}
+  </div>
+
+  @if($slots.actions)
+    <div class="btn-row" style="margin-top: 0; align-items: center">
+      {{{ await $slots.actions() }}}
+    </div>
+  @end
+</div>

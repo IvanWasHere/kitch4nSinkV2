@@ -6,8 +6,10 @@
   is the way round the ported CSS already draws them.
 --}}
 @component('layouts/app', { title: 'Support' })
-  @slot('actions')
-    <a class="btn btn-outline btn-sm" href="{{ urlFor('support.index') }}">All tickets</a>
+  @pageHeader()
+    @slot('actions')
+      <a class="btn btn-outline btn-sm" href="{{ urlFor('support.index') }}">All tickets</a>
+    @end
   @end
 
   <div class="conversation-panel">

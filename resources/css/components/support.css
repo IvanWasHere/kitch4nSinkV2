@@ -25,9 +25,17 @@
   flex-direction: column;
 }
 
+/*
+| Titles the list and carries the one action that adds to it, the same shape
+| as `.panel-header` — the ticket list is a panel in everything but its CSS.
+*/
 .ticket-list-header {
   padding: 15px 16px;
   border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .ticket-list-header h3 {
