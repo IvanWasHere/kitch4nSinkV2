@@ -62,45 +62,43 @@
     @end
   @end
 
-  <div style="margin-top: 18px">
-    @panel.root({ title: 'Queue', flush: true })
-      @if(pending.length)
-        <div class="table-scroll">
-          <table class="orders-table">
-            <thead>
+  @panel.root({ title: 'Queue', flush: true })
+    @if(pending.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Queue</th>
+              <th>Status</th>
+              <th>Runs</th>
+              <th>Worker</th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(job in pending)
               <tr>
-                <th>Job</th>
-                <th>Queue</th>
-                <th>Status</th>
-                <th>Runs</th>
-                <th>Worker</th>
+                <td><span class="order-id">{{ job.name }} #{{ job.id }}</span></td>
+                <td>{{ job.queue }}</td>
+                <td>
+                  @!badge({
+                    text: job.status === 'running' ? 'Running' : job.status === 'due' ? 'Due' : 'Scheduled',
+                    tone: job.status === 'running' ? 'accent' : job.status === 'due' ? 'info' : 'neutral',
+                  })
+                </td>
+                <td>{{ job.availableAt.toRelative() }}</td>
+                <td><span class="field-hint">{{ job.reservedBy ?? '' }}</span></td>
               </tr>
-            </thead>
-            <tbody>
-              @each(job in pending)
-                <tr>
-                  <td><span class="order-id">{{ job.name }} #{{ job.id }}</span></td>
-                  <td>{{ job.queue }}</td>
-                  <td>
-                    @!badge({
-                      text: job.status === 'running' ? 'Running' : job.status === 'due' ? 'Due' : 'Scheduled',
-                      tone: job.status === 'running' ? 'accent' : job.status === 'due' ? 'info' : 'neutral',
-                    })
-                  </td>
-                  <td>{{ job.availableAt.toRelative() }}</td>
-                  <td><span class="field-hint">{{ job.reservedBy ?? '' }}</span></td>
-                </tr>
-              @end
-            </tbody>
-          </table>
-        </div>
-      @else
-        @!emptyState({
-          icon: 'clock',
-          title: 'The queue is empty',
-          description: 'Run `node ace queue:work` to process jobs as they arrive.',
-        })
-      @end
+            @end
+          </tbody>
+        </table>
+      </div>
+    @else
+      @!emptyState({
+        icon: 'clock',
+        title: 'The queue is empty',
+        description: 'Run `node ace queue:work` to process jobs as they arrive.',
+      })
     @end
-  </div>
+  @end
 @end

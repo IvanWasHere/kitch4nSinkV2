@@ -5,15 +5,7 @@
   again" and "tell them to stop" — never "edit our copy".
 --}}
 @component('layouts/admin', { title: 'Subscriptions' })
-  @slot('actions')
-    @!link({
-      route: 'admin.subscriptions.reconciliation',
-      text: 'Run reconciliation',
-      class: 'btn btn-outline btn-sm',
-    })
-  @end
-
-  <div class="pillset" style="margin-bottom: 16px">
+  <div class="pillset">
     <a class="pill {{ status === '' ? 'active' : '' }}" href="{{ urlFor('admin.subscriptions.index') }}">All</a>
     @each(one in statuses)
       <a
@@ -23,7 +15,19 @@
     @end
   </div>
 
-  @panel.root({ flush: true })
+  @panel.root({ title: 'Subscriptions', flush: true })
+    {{--
+      Reconciliation reads this same table against the provider, so it sits
+      on it rather than in the shell.
+    --}}
+    @slot('actions')
+      @!link({
+        route: 'admin.subscriptions.reconciliation',
+        text: 'Run reconciliation',
+        class: 'btn btn-outline btn-sm',
+      })
+    @end
+
     @if(subscriptions.length)
       <div class="table-scroll">
         <table class="tx-table">

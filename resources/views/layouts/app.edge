@@ -15,10 +15,13 @@
 
   Slots:
     main      — the page
-    actions   — optional buttons for the right of the header, placed before
-                the notification bell and the profile menu
     banner    — optional extra banner. The billing-state and impersonation
                 banners are rendered by this layout and need no slot.
+
+  There is deliberately no `actions` slot. The header is chrome — which
+  workspace, which page, the bell, the account menu — and a page's own
+  buttons go in the page, with the thing they act on: `@pageHeader`, a
+  panel's `actions` slot, or a `.danger-zone` card for the destructive ones.
 --}}
 @component('layouts/base', { title: $props.get('title') })
   <div class="dash-shell" x-data="sidebar">
@@ -60,10 +63,6 @@
       <h1 class="dash-topbar-title">{{ $props.get('title') ?? '' }}</h1>
 
       <div class="dash-topbar-actions">
-        @if($slots.actions)
-          {{{ await $slots.actions() }}}
-        @end
-
         {{--
           The announcements bell (plan §20.5). A permanent entry point with a
           red dot when there is something unread — the dot is the feature, the

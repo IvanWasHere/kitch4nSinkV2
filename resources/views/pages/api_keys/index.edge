@@ -5,26 +5,6 @@
   Owner-only; the route group enforces that, so nothing here re-checks it.
 --}}
 @component('layouts/app', { title: 'API Keys' })
-  @slot('actions')
-    @if(keyUsage.limit === 0)
-      {{-- Free has `apiKeys: 0`, which means "not on this plan", not "none yet" --}}
-      @!button({ text: 'New key', size: 'sm', disabled: true, title: 'The API is not included in your plan.' })
-    @elseif(keyUsage.isFull)
-      @!button({
-        text: 'New key',
-        size: 'sm',
-        disabled: true,
-        title: `Your plan allows ${keyUsage.limit} keys. Revoke one to free a slot.`,
-      })
-    @else
-      @!button({
-        text: 'New key',
-        size: 'sm',
-        '@click': "document.getElementById('new-api-key').showModal()",
-      })
-    @end
-  @end
-
   {{--
     The secret, shown once and never again. Rendered first and loudly,
     because a customer who scrolls past it has to mint another key.
@@ -53,7 +33,7 @@
     </div>
   @end
 
-  <div class="usage-grid" style="margin-bottom: 22px">
+  <div class="usage-grid">
     @!usageMeter({ label: 'Keys', current: keyUsage.current, limit: keyUsage.limit })
     @!usageMeter({
       label: 'API calls this month',
@@ -63,6 +43,26 @@
   </div>
 
   @panel.root({ title: 'Keys', flush: true })
+    @slot('actions')
+      @if(keyUsage.limit === 0)
+        {{-- Free has `apiKeys: 0`, which means "not on this plan", not "none yet" --}}
+        @!button({ text: 'New key', size: 'sm', disabled: true, title: 'The API is not included in your plan.' })
+      @elseif(keyUsage.isFull)
+        @!button({
+          text: 'New key',
+          size: 'sm',
+          disabled: true,
+          title: `Your plan allows ${keyUsage.limit} keys. Revoke one to free a slot.`,
+        })
+      @else
+        @!button({
+          text: 'New key',
+          size: 'sm',
+          '@click': "document.getElementById('new-api-key').showModal()",
+        })
+      @end
+    @end
+
     @if(keys.length)
       <div class="table-scroll">
         <table class="tx-table">

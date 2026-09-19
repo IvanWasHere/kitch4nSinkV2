@@ -1,14 +1,4 @@
 @component('layouts/app', { title: 'Members' })
-  @slot('actions')
-    @if(auth.user.isOwner && !usage.isFull)
-      @!button({
-        text: 'Invite member',
-        size: 'sm',
-        '@click': "document.getElementById('invite-member').showModal()",
-      })
-    @end
-  @end
-
   <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr)">
     <div class="stat-card">
       @!usageMeter({ label: 'Seats', current: usage.used, limit: usage.limit })
@@ -22,8 +12,8 @@
   </div>
 
   {{--
-    At the cap the invite button is disabled with the reason attached, rather
-    than failing after the click (plan §7.4).
+    At the cap the reason is on the page and the invite button is gone, rather
+    than the click failing after the form is filled in (plan §7.4).
   --}}
   @if(auth.user.isOwner && usage.isFull)
     <div class="info-box info-box-warning">
@@ -33,6 +23,21 @@
   @end
 
   @panel.root({ title: 'Members', flush: true })
+    {{--
+      Inviting sits on the table it adds a row to. At the cap there is no
+      button at all — the info-box above says why, and a disabled control
+      with the same explanation twice is noise.
+    --}}
+    @slot('actions')
+      @if(auth.user.isOwner && !usage.isFull)
+        @!button({
+          text: 'Invite member',
+          size: 'sm',
+          '@click': "document.getElementById('invite-member').showModal()",
+        })
+      @end
+    @end
+
     <div class="table-scroll">
       <table class="orders-table">
         <thead>
@@ -78,46 +83,44 @@
   @end
 
   @if(auth.user.isOwner && (pendingInvitations.length || expiredInvitations.length))
-    <div style="margin-top: 18px">
-      @panel.root({ title: 'Invitations', flush: true })
-        <div class="table-scroll">
-          <table class="orders-table">
-            <thead>
+    @panel.root({ title: 'Invitations', flush: true })
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Invited by</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(invitation in pendingInvitations.concat(expiredInvitations))
               <tr>
-                <th>Email</th>
-                <th>Invited by</th>
-                <th>Status</th>
-                <th></th>
+                <td>{{ invitation.email }}</td>
+                <td>{{ invitation.invitedBy ? invitation.invitedBy.displayName : 'Someone' }}</td>
+                <td>
+                  @!badge({
+                    text: invitation.status === 'expired' ? 'Expired' : 'Pending',
+                    tone: invitation.status === 'expired' ? 'danger' : 'warning',
+                  })
+                </td>
+                <td>
+                  <div class="table-actions">
+                    @form({ route: 'invitations.resend', routeParams: { id: invitation.publicId }, method: 'POST' })
+                      @!button({ text: 'Resend', variant: 'outline', size: 'xs', type: 'submit' })
+                    @end
+                    @form({ route: 'invitations.revoke', routeParams: { id: invitation.publicId }, method: 'POST' })
+                      @!button({ text: 'Revoke', variant: 'danger', size: 'xs', type: 'submit' })
+                    @end
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              @each(invitation in pendingInvitations.concat(expiredInvitations))
-                <tr>
-                  <td>{{ invitation.email }}</td>
-                  <td>{{ invitation.invitedBy ? invitation.invitedBy.displayName : 'Someone' }}</td>
-                  <td>
-                    @!badge({
-                      text: invitation.status === 'expired' ? 'Expired' : 'Pending',
-                      tone: invitation.status === 'expired' ? 'danger' : 'warning',
-                    })
-                  </td>
-                  <td>
-                    <div class="table-actions">
-                      @form({ route: 'invitations.resend', routeParams: { id: invitation.publicId }, method: 'POST' })
-                        @!button({ text: 'Resend', variant: 'outline', size: 'xs', type: 'submit' })
-                      @end
-                      @form({ route: 'invitations.revoke', routeParams: { id: invitation.publicId }, method: 'POST' })
-                        @!button({ text: 'Revoke', variant: 'danger', size: 'xs', type: 'submit' })
-                      @end
-                    </div>
-                  </td>
-                </tr>
-              @end
-            </tbody>
-          </table>
-        </div>
-      @end
-    </div>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @end
   @end
 
   @if(auth.user.isOwner)

@@ -6,8 +6,10 @@
   to them.
 --}}
 @component('layouts/admin', { title: organization.name })
-  @slot('actions')
-    @!link({ route: 'admin.organizations.index', text: 'All organisations', class: 'btn btn-outline btn-sm' })
+  @pageHeader()
+    @slot('actions')
+      @!link({ route: 'admin.organizations.index', text: 'All organisations', class: 'btn btn-outline btn-sm' })
+    @end
   @end
 
   <div class="billing-current">
@@ -34,7 +36,7 @@
   </div>
 
   {{-- Whatever `start/quotas.ts` registers, in that file's order. --}}
-  <div class="usage-grid" style="margin-bottom: 22px">
+  <div class="usage-grid">
     @each(meter in usage.meters)
       @!usageMeter({ label: meter.label, current: meter.current, limit: meter.limit })
     @end

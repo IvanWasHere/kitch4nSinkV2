@@ -3,8 +3,10 @@
   we applied it, and what went wrong if we did not (plan §7.5, §12).
 --}}
 @component('layouts/admin', { title: event.eventType })
-  @slot('actions')
-    @!link({ route: 'admin.webhooks.index', text: 'Ledger', class: 'btn btn-outline btn-sm' })
+  @pageHeader()
+    @slot('actions')
+      @!link({ route: 'admin.webhooks.index', text: 'Ledger', class: 'btn btn-outline btn-sm' })
+    @end
   @end
 
   @if(event.hasFailed)

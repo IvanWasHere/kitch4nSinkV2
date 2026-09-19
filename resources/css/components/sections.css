@@ -1,0 +1,52 @@
+/*
+| The vertical rhythm of the content column.
+|
+| Every block at the top level of `.dash-content` is a section of the page —
+| a header, a grid of stat cards, a panel, a settings card, an upsell box —
+| and the gap between any two of them is the same.
+|
+| The spacing is owned here rather than by the components, because a
+| component that carries its own bottom margin has an opinion about what
+| comes after it and is wrong as often as it is right. `.panel` had no margin
+| at all, so a bare panel sat flush against the block below it while every
+| other section kept 16px; `.stats-grid`, `.panel-grid`, `.settings-card` and
+| `.billing-current` each declared their own 16px; `.page-header` and
+| `.info-box` declared 20px; and pages made up the difference with inline
+| styles and wrapper divs that existed only to hold a margin.
+|
+| Loaded after every component stylesheet, so these win on cascade order
+| without needing `!important`. The reset is scoped to direct children of
+| `.dash-content`: the same components keep their own margins inside a panel,
+| a modal, a grid, or the auth and marketing shells, where nothing else is
+| providing the gap.
+*/
+
+.dash-content > * {
+  margin-bottom: 0;
+}
+
+.dash-content > * + * {
+  margin-top: var(--section-gap);
+}
+
+/*
+| A heading that opens a group of sections, and the line of prose under it,
+| belong to what follows rather than to what came before: extra air above the
+| heading, and the description stays tucked under it.
+*/
+.dash-content > * + .section-title {
+  margin-top: var(--section-gap-heading);
+}
+
+.dash-content > .section-title + .section-desc {
+  margin-top: 4px;
+}
+
+/*
+| A footnote that explains the section above it — the line under a stat grid
+| saying how its numbers are counted. It belongs to that block, so it stays
+| tucked under it rather than floating a full section gap away.
+*/
+.dash-content > .section-note {
+  margin-top: 6px;
+}

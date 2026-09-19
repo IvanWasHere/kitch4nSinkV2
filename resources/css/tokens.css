@@ -183,4 +183,20 @@
    * get. They are independent numbers.
    */
   --content-max-width: 1180px;
+
+  /**
+   * The vertical rhythm of the content column: the gap between one section
+   * of a page and the next. It matches the 16px gap inside every grid
+   * (`.stats-grid`, `.panel-grid`, `.card-grid`, `.rail`), so a row of panels
+   * is spaced from the block below it exactly as its panels are from each
+   * other. Sections do not set their own bottom margins — see sections.css.
+   */
+  --section-gap: 16px;
+
+  /**
+   * The air above a heading that opens a new group of sections. Deliberately
+   * larger than `--section-gap`: at the same 16px a group heading reads as
+   * another section rather than as the line that divides two of them.
+   */
+  --section-gap-heading: 28px;
 }

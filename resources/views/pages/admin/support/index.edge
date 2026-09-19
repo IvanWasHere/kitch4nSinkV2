@@ -6,7 +6,7 @@
   every row says which workspace it came from and links there.
 --}}
 @component('layouts/admin', { title: 'Support' })
-  <div class="pillset" style="margin-bottom: 16px">
+  <div class="pillset">
     @each(one in statuses)
       <a
         class="pill {{ status === one ? 'active' : '' }}"

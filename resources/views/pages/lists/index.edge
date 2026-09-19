@@ -3,25 +3,27 @@
   `.product-card` shape, with the stock pill carrying a todo count instead.
 --}}
 @component('layouts/app', { title: 'Lists' })
-  @slot('actions')
-    {{--
-      Disabled at the cap, with the reason in the tooltip: the ceiling has to
-      be visible *before* the click, not discovered by losing a filled-in form
-      to a redirect (plan §7.4).
-    --}}
-    @if(withinLimit('lists'))
-      @!button({
-        text: 'New list',
-        size: 'sm',
-        '@click': "document.getElementById('new-list').showModal()",
-      })
-    @else
-      @!button({
-        text: 'New list',
-        size: 'sm',
-        disabled: true,
-        title: `Your plan allows ${usage.quotas.lists.limit} lists. Delete one, or upgrade for more.`,
-      })
+  @pageHeader({ description: 'Lists are shared with everyone in the workspace.' })
+    @slot('actions')
+      {{--
+        Disabled at the cap, with the reason in the tooltip: the ceiling has to
+        be visible *before* the click, not discovered by losing a filled-in form
+        to a redirect (plan §7.4).
+      --}}
+      @if(withinLimit('lists'))
+        @!button({
+          text: 'New list',
+          size: 'sm',
+          '@click': "document.getElementById('new-list').showModal()",
+        })
+      @else
+        @!button({
+          text: 'New list',
+          size: 'sm',
+          disabled: true,
+          title: `Your plan allows ${usage.quotas.lists.limit} lists. Delete one, or upgrade for more.`,
+        })
+      @end
     @end
   @end
 
@@ -31,7 +33,7 @@
     carries the same numbers the API returns as a 402.
   --}}
   @if(usage.quotas.lists.isFull || flashMessages.has('planLimit'))
-    <div class="info-box info-box-warning" style="margin-bottom: 18px">
+    <div class="info-box info-box-warning">
       <p>
         <strong>
           {{ flashMessages.get('planLimit')
@@ -90,7 +92,7 @@
       @!emptyState({
         icon: 'list',
         title: includeArchived ? 'Nothing here' : 'No lists yet',
-        description: 'Lists belong to the workspace, so everyone on your team sees them and can add to them.',
+        description: 'The first one you create shows up on this page for the whole team.',
       })
       @if(withinLimit('lists'))
         <div class="btn-row" style="justify-content: center">
@@ -104,7 +106,7 @@
     @end
   @end
 
-  <div class="btn-row" style="margin-top: 18px">
+  <div class="btn-row">
     @if(includeArchived)
       <a class="btn btn-outline btn-sm" href="{{ urlFor('lists.index') }}">Hide archived</a>
     @else
