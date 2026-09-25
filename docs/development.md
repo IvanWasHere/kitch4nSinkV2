@@ -57,12 +57,12 @@ the only chance to see it.
 
 | Account | Password | Where |
 |---|---|---|
-| `jane@example.com` | `correct-horse-battery` | Owner of a free workspace |
-| `sam@example.com` | `correct-horse-battery` | Member of it |
-| `owner-pro@example.com` | `correct-horse-battery` | Owner on Pro, two-factor on |
-| `owner-northwind@example.com` | `correct-horse-battery` | Past due, dunning banner |
-| `admin@example.com` | `Admin12345` | `/admin/login`, staff admin |
-| `support@example.com` | `Support12345` | `/admin/login`, staff support |
+| `jane@example.com` | `Example12345` | Owner of a free workspace |
+| `sam@example.com` | `Example12345` | Member of it |
+| `owner-pro@example.com` | `Example12345` | Owner on Pro, two-factor on |
+| `owner-northwind@example.com` | `Example12345` | Past due, dunning banner |
+| `admin@example.com` | `Example12345` | `/admin/login`, staff admin |
+| `support@example.com` | `Example12345` | `/admin/login`, staff support |
 
 For two-factor, `DEV_TWO_FACTOR_CODE=123456` is accepted in development, or
 `node ace dev:totp admin@example.com` prints a real one.

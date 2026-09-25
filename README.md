@@ -99,10 +99,10 @@ a staff address is rejected at `/login` exactly as a stranger would be.
 
 | Account | Password | Signs in at | Role |
 |---|---|---|---|
-| 🛡️ `admin@example.com` | `Admin12345` | `/admin/login` | Staff — **admin** |
-| 🎧 `support@example.com` | `Support12345` | `/admin/login` | Staff — **support** |
-| 👑 `user-manager@example.com` | `Manager12345` | `/login` | Workspace **owner** |
-| 👤 `user@example.com` | `User12345` | `/login` | Workspace **member** |
+| 🛡️ `admin@example.com` | `Example12345` | `/admin/login` | Staff — **admin** |
+| 🎧 `support@example.com` | `Example12345` | `/admin/login` | Staff — **support** |
+| 👑 `user-manager@example.com` | `Example12345` | `/login` | Workspace **owner** |
+| 👤 `user@example.com` | `Example12345` | `/login` | Workspace **member** |
 
 > 🔢 Staff two-factor is mandatory. In development enter **`123456`** (see `DEV_TWO_FACTOR_CODE`),
 > or run `node ace dev:totp admin@example.com` for a real code.

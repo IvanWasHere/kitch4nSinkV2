@@ -975,10 +975,10 @@ workspace.
 
 | Account | Password | Signs in at | Role |
 |---|---|---|---|
-| `admin@example.com` | `Admin12345` | `/admin/login` | Staff — admin |
-| `support@example.com` | `Support12345` | `/admin/login` | Staff — support |
-| `user-manager@example.com` | `Manager12345` | `/login` | Owner of "Example Workspace" |
-| `user@example.com` | `User12345` | `/login` | Member of the same workspace |
+| `admin@example.com` | `Example12345` | `/admin/login` | Staff — admin |
+| `support@example.com` | `Example12345` | `/admin/login` | Staff — support |
+| `user-manager@example.com` | `Example12345` | `/login` | Owner of "Example Workspace" |
+| `user@example.com` | `Example12345` | `/login` | Member of the same workspace |
 
 **Employees and customers are different tables behind different logins** (D5). A staff address is
 rejected at `/login` exactly as a stranger would be, and vice versa — the two guards do not know
