@@ -130,6 +130,50 @@ export class AuthTokenSchema extends BaseModel {
   declare userId: number
 }
 
+export class ContentEntrySchema extends BaseModel {
+  static $columns = ['body', 'createdAt', 'createdByStaffId', 'excerpt', 'id', 'publicId', 'publishedAt', 'slug', 'status', 'title', 'type', 'updatedAt', 'updatedByStaffId'] as const
+  $columns = ContentEntrySchema.$columns
+  @column()
+  declare body: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare createdByStaffId: number | null
+  @column()
+  declare excerpt: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare publicId: string
+  @column.dateTime()
+  declare publishedAt: DateTime | null
+  @column()
+  declare slug: string
+  @column()
+  declare status: 'draft' | 'published' | 'archived'
+  @column()
+  declare title: string
+  @column()
+  declare type: 'post' | 'page'
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare updatedByStaffId: number | null
+}
+
+export class ContentSlugRedirectSchema extends BaseModel {
+  static $columns = ['contentEntryId', 'createdAt', 'id', 'oldSlug'] as const
+  $columns = ContentSlugRedirectSchema.$columns
+  @column()
+  declare contentEntryId: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare oldSlug: string
+}
+
 export class FileSchema extends BaseModel {
   static $columns = ['attachableId', 'attachableType', 'checksum', 'createdAt', 'deletedAt', 'disk', 'id', 'key', 'mimeType', 'organizationId', 'originalName', 'publicId', 'sizeBytes', 'updatedAt', 'userId', 'visibility'] as const
   $columns = FileSchema.$columns
