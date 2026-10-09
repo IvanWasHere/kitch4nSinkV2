@@ -107,6 +107,7 @@ export default defineConfig({
     () => import('#start/api'),
     () => import('#start/jobs'),
     () => import('#start/seeders'),
+    () => import('#start/settings'),
     () => import('#start/view'),
   ],
 

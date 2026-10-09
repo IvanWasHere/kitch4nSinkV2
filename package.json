@@ -48,6 +48,7 @@
     "#storage/*": "./app/storage/*.js",
     "#support/*": "./app/support/*.js",
     "#seeding/*": "./app/seeding/*.js",
+    "#settings/*": "./app/settings/*.js",
     "#app/*": "./app/*.js",
     "#modules/*": "./app/modules/*.js"
   },

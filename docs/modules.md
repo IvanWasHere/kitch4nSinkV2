@@ -1,6 +1,6 @@
 ---
 title: Replacing the demo domain
-nav_order: 15
+nav_order: 16
 ---
 
 # Replacing the demo domain
@@ -406,6 +406,69 @@ its caps) and `pro` (the one the demo is toured in) — each with its `organizat
 `members` in join order. Seeders run after every workspace and person exists, so you can assign a
 row to a member and know they are there; `overrides` are merged over whatever core already set,
 never replacing it.
+
+---
+
+## Adding a runtime setting
+
+A setting is a value an administrator changes without a deploy, stored in `site_settings`. Declare
+the key by augmentation, so `get` is typed and a typo does not compile:
+
+```ts
+// app/modules/projects/settings.ts
+declare module '#settings/settings_service' {
+  interface SiteSettings {
+    projects_public_by_default: boolean
+  }
+}
+```
+
+then give it a default before anything reads it — `settings.define('projects_public_by_default',
+false)` — and read it with `await settings.get('projects_public_by_default')`. An absent row reads
+as the default, so a fresh install needs no seeding. `settings.set(key, value, ctx)` writes it and
+records `settings.changed` with the value before and after, attributed to the signed-in staff member.
+
+{: .warning }
+Settings are not cached. The web server and the worker are separate processes, so a cached value
+would need invalidating across both; one primary-key read is cheaper than getting that wrong.
+
+## Adding audit actions
+
+Core's actions are the `AUDIT_ACTIONS` object in `app/audit/audit_service.ts`. A feature does
+**not** add to it — it augments `AuditActions`, so its actions leave with it:
+
+```ts
+declare module '#audit/audit_service' {
+  interface AuditActions {
+    'projects.archived': true
+  }
+}
+```
+
+`audit.recordStaffAction(ctx, { action: 'projects.archived', … })` then type-checks, and stops
+type-checking the moment the module is deleted.
+
+## Who may register
+
+`registrationGate` (`app/auth/registration_gate.ts`) answers whether a new account may be created.
+With nothing registered it answers **yes**. A feature that wants to close signup registers the
+answer:
+
+```ts
+registrationGate.decideWith(() => settings.get('registration_enabled'))
+```
+
+It is enforced inside `RegistrationService.register()`, which both `/signup` and a first-time
+social sign-in reach, and `/signup` checks it again before validating so a closed form cannot be
+used to ask whether an address has an account. A refusal throws `RegistrationClosedException`,
+which redirects to the route named `waitlist.create` when one exists and to the signup page — which
+then says registration is closed — when none does. Accepting an invitation is deliberately not
+gated: an owner adding a colleague is not public registration.
+
+Because the default is *open*, removing the feature that closes registration reopens it. There is
+no setting to remember to reset.
+[Registration control](registration-control.md) is the module that does this, and its page is a
+worked example of removing a module end to end.
 
 ---
 

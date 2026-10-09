@@ -1,0 +1,119 @@
+{{--
+  Admin → Waiting list (plan §22.5). Support and admin.
+
+  Every action is a form POST, audited, and lands back on the same filter and
+  page. Delete asks first: unlike cancel, it cannot be undone.
+--}}
+@let(labels = {
+  pending_confirmation: 'Pending confirmation',
+  confirmed: 'Confirmed',
+  converted: 'Converted',
+  cancelled: 'Cancelled',
+})
+@let(tones = {
+  pending_confirmation: 'warning',
+  confirmed: 'success',
+  converted: 'info',
+  cancelled: 'neutral',
+})
+
+@component('layouts/admin', { title: 'Waiting list' })
+  @!pageHeader({
+    title: 'Waiting list',
+    description: 'People who asked to be told when registration opens. Joining and confirming are public; everything on this screen is audited.',
+  })
+
+  <div class="pillset">
+    <a class="pill {{ status === null ? 'active' : '' }}" href="{{ urlFor('admin.waitlist.index') }}">
+      All
+      <span class="pill-count">{{ counts.all }}</span>
+    </a>
+    @each(one in statuses)
+      <a
+        class="pill {{ status === one ? 'active' : '' }}"
+        href="{{ urlFor('admin.waitlist.index') }}?status={{ one }}"
+      >
+        {{ labels[one] }}
+        <span class="pill-count">{{ counts[one] }}</span>
+      </a>
+    @end
+  </div>
+
+  @panel.root({ flush: true })
+    @if(entries.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Confirmed</th>
+              <th>Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(entry in entries)
+              <tr>
+                <td>
+                  {{ entry.email }}
+                  <div class="field-hint">{{ entry.publicId }}</div>
+                </td>
+                <td>
+                  @!badge({ text: labels[entry.status], tone: tones[entry.status] })
+                  @if(!entry.doubleOptInRequired)
+                    <div class="field-hint">joined without double opt-in</div>
+                  @end
+                </td>
+                <td>{{ entry.createdAt.toFormat('d LLL yyyy, HH:mm') }}</td>
+                <td>{{ entry.confirmedAt ? entry.confirmedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
+                <td>{{ entry.updatedAt ? entry.updatedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
+                <td>
+                  <div class="btn-row" style="margin-top: 0">
+                    @if(entry.status === 'pending_confirmation' && entry.doubleOptInRequired)
+                      @form({ route: 'admin.waitlist.resend', routeParams: { id: entry.publicId }, method: 'POST' })
+                        @!button({ text: 'Resend link', variant: 'outline', size: 'xs', type: 'submit' })
+                      @end
+                    @end
+                    @if(entry.status === 'pending_confirmation' || entry.status === 'confirmed')
+                      @form({ route: 'admin.waitlist.convert', routeParams: { id: entry.publicId }, method: 'POST' })
+                        @!button({ text: 'Mark converted', variant: 'outline', size: 'xs', type: 'submit' })
+                      @end
+                    @end
+                    @if(entry.status !== 'cancelled')
+                      @form({ route: 'admin.waitlist.cancel', routeParams: { id: entry.publicId }, method: 'POST' })
+                        @!button({ text: 'Cancel', variant: 'outline', size: 'xs', type: 'submit' })
+                      @end
+                    @end
+                    @form({
+                      route: 'admin.waitlist.destroy',
+                      routeParams: { id: entry.publicId },
+                      method: 'POST',
+                      'x-data': '',
+                      '@submit': "if (!confirm('Delete this entry? This cannot be undone.')) $event.preventDefault()",
+                    })
+                      @!button({ text: 'Delete', variant: 'danger', size: 'xs', type: 'submit' })
+                    @end
+                  </div>
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+
+      @!pagination({ summary, prevUrl, nextUrl })
+    @else
+      @!emptyState({
+        icon: 'clock',
+        title: status ? 'Nobody in this state' : 'Nobody on the waiting list yet',
+      })
+    @end
+  @end
+
+  <p class="field-hint">
+    Cancel keeps the row and stops the address joining again; delete removes it, and the address
+    can join afterwards. Mark converted once the person has an account.
+  </p>
+@end

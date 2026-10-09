@@ -43,9 +43,30 @@ export const AUDIT_ACTIONS = {
   userVerificationResent: 'user.verification_resent',
   userVerified: 'user.verified_by_staff',
   userTwoFactorReset: 'user.two_factor_reset',
+
+  settingsChanged: 'settings.changed',
 } as const
 
-export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS]
+/**
+ * A feature's own actions, added by augmentation rather than by editing the
+ * list above (plan §22.4, D12) — the same shape as `#api/scopes`:
+ *
+ * ```ts
+ * declare module '#audit/audit_service' {
+ *   interface AuditActions {
+ *     'content.published': true
+ *   }
+ * }
+ * ```
+ *
+ * Removing the feature removes its actions from `AuditAction`, so a leftover
+ * call recording one fails to compile instead of writing an action string
+ * that nothing filters on any more.
+ */
+export interface AuditActions {}
+
+export type AuditAction =
+  (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS] | (keyof AuditActions & string)
 
 export interface AuditEntry {
   action: AuditAction

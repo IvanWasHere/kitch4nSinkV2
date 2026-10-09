@@ -99,9 +99,15 @@ export default class SocialAuthController {
           accessToken: profile.token.token,
         })
       } else {
+        /**
+         * A first-time identity is a new account, so a closed registration
+         * gate refuses it here (plan §22.2) — `RegistrationClosedException`
+         * handles its own response. A returning identity never reaches this
+         * branch: that is a sign-in, and stays open.
+         */
         const registered = await db.transaction(async (trx) => {
           const created = await registration.register(
-            { fullName: profile.name ?? null, email, password: null },
+            { fullName: profile.name ?? null, email, password: null, via: 'social' },
             trx
           )
 

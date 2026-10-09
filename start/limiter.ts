@@ -51,7 +51,7 @@ import { twoFactorChallengeSubject } from '#auth/two_factor_challenge'
  * Normalised first, or `Ada@example.com` and `ada@example.com` would be two
  * separate budgets for one account.
  */
-function accountKey(email: unknown): string {
+export function accountKey(email: unknown): string {
   const normalised = typeof email === 'string' ? email.trim().toLowerCase() : ''
 
   return createHash('sha256').update(normalised).digest('hex').slice(0, 32)
@@ -66,7 +66,7 @@ function accountKey(email: unknown): string {
  * single shared bucket for the whole internet — it is worth checking once,
  * per environment.
  */
-function addressKey(ctx: HttpContext): string {
+export function addressKey(ctx: HttpContext): string {
   return ctx.request.ip()
 }
 

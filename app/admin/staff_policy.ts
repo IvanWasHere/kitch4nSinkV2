@@ -98,6 +98,15 @@ export default class StaffPolicy extends BasePolicy {
   }
 
   /**
+   * Changing a runtime setting (plan §22.3) — closing registration, say.
+   * Admin only: a setting changes what every customer, or every would-be
+   * customer, experiences at once.
+   */
+  manageSettings(staff: StaffUser): AuthorizerResponse {
+    return !staff.isDisabled && staff.isAdmin
+  }
+
+  /**
    * Admin only, and the reason: anyone who can create a staff account can
    * grant themselves everything above.
    */

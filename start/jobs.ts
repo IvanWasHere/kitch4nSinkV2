@@ -37,6 +37,8 @@ import overdueDigestJob from '#modules/lists/jobs/overdue_digest_job'
 import reconcileCountersJob from '#modules/lists/jobs/reconcile_counters_job'
 import normalizePositionsJob from '#modules/lists/jobs/normalize_positions_job'
 
+import markWaitingListConvertedJob from '#modules/registration_control/jobs/mark_waiting_list_converted_job'
+
 /**
  * Dispatched by application code, not by cron.
  */
@@ -65,3 +67,11 @@ jobs.register(pruneNotificationsJob, {
 jobs.register(overdueDigestJob, { interval: 'daily', label: 'overdue digests' })
 jobs.register(reconcileCountersJob, { interval: 'daily', label: 'reconcile todo counters' })
 jobs.register(normalizePositionsJob, { interval: 'daily', label: 'normalize list positions' })
+
+/**
+ * Registration Control (plan §22.5) — delete with it.
+ */
+jobs.register(markWaitingListConvertedJob, {
+  interval: 'daily',
+  label: 'mark waiting-list entries converted',
+})

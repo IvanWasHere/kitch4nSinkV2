@@ -58,7 +58,7 @@ const jsonRef = (tsType: string, source: string, typeImports: string[]) => ({
  * SQLite stores booleans as 0/1 and Postgres as real booleans, so every
  * boolean column is read through a cast (portability rule 7).
  */
-const boolean = {
+export const boolean = {
   tsType: 'boolean',
   imports: [{ source: '#database/columns', namedImports: ['booleanColumn'] }],
   decorators: [{ name: '@booleanColumn' }],
@@ -188,6 +188,16 @@ export default {
       columns: {
         actor_type: union('user', 'staff', 'api_key', 'system'),
         metadata: json('Record<string, any>'),
+      },
+    },
+
+    /**
+     * Typed per key by `SettingsService`, not here — the column holds every
+     * key's value, so the most this file can honestly say is "some JSON".
+     */
+    site_settings: {
+      columns: {
+        value: json('unknown'),
       },
     },
 

@@ -22,6 +22,10 @@ notice with a resend button (limited to three per hour).
 Verification links last 48 hours. Following one verifies the address and signs the user in if they
 are not already, on the grounds that possession of the link is stronger proof than a password.
 
+{: .note }
+Signup can be closed at runtime by an administrator, which also refuses first-time social sign-in
+and sends people to a waiting list instead. See [Registration control](registration-control.md).
+
 ---
 
 ## Signing in

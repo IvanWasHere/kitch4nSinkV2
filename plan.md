@@ -68,6 +68,11 @@ These were checked against current docs rather than assumed, because several are
 | **D7** | **Bouncer policies** for all authorisation | One place to answer "can this actor do this?", unit-testable, reusable from web controllers and API alike. |
 | **D8** | **Demo domain = shared to-do lists**, org-scoped | The original brief says a member has access to their organisation's data, so lists belong to the **organisation**, not to the member who made them. Gives us three natural, differently-shaped quotas (§7.3) and the worked resource for the v1 API (§11). |
 | **D9** | **Over-limit orgs soft-lock: keep everything, block creation** | Chosen by owner. A lapsed card must never destroy customer work. Existing rows stay readable *and editable*; only `create` is gated, so enforcement lives in one guard per resource and re-upgrading is instant with no restore job. |
+| **D10** | **Registration gate is core, closed only by a registered resolver** (§22.2) | Signup, social sign-in and the Landing CTA all need "is registration open?", and none may import a module. Core asks a one-slot registry that answers *open* when empty, so deleting Registration Control reopens signup instead of leaving a switch nobody can flip back. |
+| **D11** | **Runtime settings are a core `site_settings` key/value table with a typed key registry** (§22.3) | Nothing like it exists yet, and env vars cannot change without a deploy. Typed keys keep it from becoming a junk drawer; modules declare theirs the way they declare API scopes. |
+| **D12** | **Modules declare audit actions and privacy data by augmentation/registry, never by editing core lists** (§22.4) | `AUDIT_ACTIONS` is a closed const in core today; four modules adding to it would make core name them. Same shape as `#api/scopes`. |
+| **D13** | **CMS pages at `/:slug`, matched last; reserved slugs derived from the live route table** (§22.6) | Matches the PRD's URLs and lets an admin publish `/about` without a deploy. Deriving the reserved list from the router means a new core route can never be shadowed and nobody maintains a hand list. |
+| **D14** | **A user is never physically deleted: their personal data is overwritten (`deleted.user.<id>@email.com`). Billing is never touched. Lists/todos go only when the user was the workspace's last member. Every deletion needs admin approval.** (§22.8) | Chosen by owner. Keeping the row keeps every FK (todos, tickets, audit logs) valid with no cascade. Billing rows are accounting records. A colleague's shared work (D8) must not vanish because someone else left, but a one-person workspace's lists are only that person's data. |
 
 ---
 
@@ -1085,6 +1090,43 @@ existing `files` table, private disk behind an authorising route · reply email 
 *Ordered after M9 because it reuses that milestone's mail path and the same back-office shell, and
 because M8's rate-limit work is what a public-facing contact surface leans on.*
 
+**M11 — Module seams** *(§22.2–22.4 — core only, no feature)* — **built**
+`site_settings` + `SettingsService` (typed keys by augmentation, every change audited) ·
+`registrationGate` (open when empty), enforced in `RegistrationService.register()` and before
+validation on `POST /signup`, with `RegistrationClosedException` · `AuditActions` augmentation +
+core `settings.changed` · modularity test: no module→module imports · docs/modules.md sections.
+*Moved out of M11, deliberately:* the new route registration points, `start/privacy.ts` and the
+public-id prefixes each arrive with the first module that uses them — the modularity suite
+requires every registration point to actually register a module, so an empty one would fail it.
+The `privacyData` registry and core's contributors move to M15 with it. The deleted-user-session
+fix turned out to exist already (`auth_middleware.ts` signs out a soft-deleted user).
+
+**M12 — Registration control & waiting list** *(§22.5)* — module `registration_control` — **built**.
+*In progress.* Built: `registration_enabled` / `waiting_list_double_opt_in` settings and the gate
+resolver (`start/settings.ts`, new registration point), `/admin/settings/registration` behind
+`StaffPolicy.manageSettings` (admin only), admin-sidebar *Settings* item, audit per changed key.
+`start/routes/admin.ts` is now a registration point. **Also built:** the public waiting list —
+`waiting_list_entries`, `/waitlist` (closed signup redirects here; open registration redirects
+away), double opt-in email with a hashed 48 h single-use link, `/waitlist/confirm/:token`,
+per-address and per-mailbox throttles. `start/routes/auth.ts` is now a registration point.
+**Also built:** `/admin/waitlist` (support + admin) — status filter pills with counts, 50 per
+page, cancel / mark converted / resend link / delete (delete asks first), each audited via the
+module's `AuditActions` augmentation. **Also built:** `mark_waiting_list_converted`, daily in
+`start/jobs.ts` — pending *and* confirmed entries whose address now has an account become
+`converted` (cancelled ones are never overruled), one system audit entry each, idempotent.
+**Docs:** `docs/registration-control.md`, including removal steps verified by a drill — with the
+module deleted as written there, the suite passed (682, the pre-M12 count) and typecheck was clean.
+**M12 done.** Next: M13 (Content CMS) or M14 (Landing).
+
+**M13 — Content CMS** *(§22.6)* — module `content`. Adds `markdown-it`.
+
+**M14 — Landing** *(§22.7)* — module `landing`; extracts today's `pages/home.edge`.
+*Can swap with M13: the reserved-slug check reads the route table, so order does not matter.*
+
+**M15 — Privacy data requests** *(§22.8)* — module `privacy`. Adds a zip writer.
+*Last: it is the one that needs every other module's `privacyData` contribution to exist, and the
+§19 Q2 / Q7 answers to be in.*
+
 ---
 
 ## 18. Risks
@@ -1102,6 +1144,12 @@ because M8's rate-limit work is what a public-facing contact surface leans on.*
 | `todos_count` drifts and quotas silently break | Only ever mutated inside the insert/delete transaction; nightly `ReconcileCountersJob` alerts on drift rather than repairing it; randomised-sequence test in the quota suite |
 | Quota bypassed by a race (two parallel creates at cap-1) | Row lock inside the create transaction (§5.5) + an explicit concurrent-request test (§15) |
 | Soft-lock (D9) reads as a bug to customers | Usage shown in the nav and on meters *before* the cap is hit; disabled buttons with tooltips; `402` carries `allowed`/`current`/`upgradeUrl` |
+| Registration "disabled" but social sign-in or a direct POST still creates accounts | Gate sits in `RegistrationService.register()`, the one call both signup and Ally reach (§22.2); tests hit both paths with the gate closed |
+| `/:slug` catch-all shadows a route added later, or a later route silently shadows a published page | Catch-all registered last; reserved set read from the router; a boot-time check logs every published page whose slug is now a route (§22.6) |
+| Stored XSS through the CMS | Markdown only, `markdown-it` with `html: false`, link-scheme allowlist; no raw-HTML field exists to misuse; XSS fixtures in the suite |
+| Privacy export leaks a secret or another user's data | Each table's contributor is an allowlist of columns, not a `serialize()`; a test asserts no export contains any `*_hash`, `*_secret`, `password`, `recovery_codes` or `access_token` key |
+| Privacy deletion half-runs and leaves a user both gone and loggable-in | Contributors are idempotent; the request is only `completed` after all succeed; the user row is anonymised *first*, so a partial run has already revoked access |
+| Mail sent to an anonymised `deleted.user.<id>@email.com` address | `email.com` is a real, deliverable domain. `MailerService` refuses any recipient matching `deleted.user.*@email.com` and logs it; covered by a test |
 
 ---
 
@@ -1111,7 +1159,9 @@ because M8's rate-limit work is what a public-facing contact surface leans on.*
 2. Organisation deletion — hard delete after a grace period, or soft-delete forever?
 3. Are the limit numbers in §7.3 (Free 3 lists / 50 todos / 2 seats · Pro 25 / 500 / 10 ·
    Business ∞ / ∞ / 50) the ones you want, or placeholders to tune once the UI exists?
-4. Does the marketing site (landing/pricing/legal) live in this app, or separately?
+4. ~~Does the marketing site (landing/pricing/legal) live in this app, or separately?~~
+   **Answered: in this app, as a removable module** — §22.7 (M14). Pricing stays on the billing
+   screen; the landing page links to it.
 5. ~~The mockup's **notification dropdown** is fully designed but has no backend here — drop it
    from v1, or add a `notifications` table?~~ **Answered: build it.** Staff-authored one-way
    announcements, audience by plan / owners / named users, in M9 — see §20. Its own open questions
@@ -1122,6 +1172,31 @@ because M8's rate-limit work is what a public-facing contact surface leans on.*
    §21. Three calls are still open inside it and are marked there: who inside a workspace may read
    a ticket (§21.4), whether attachments are exempt from the storage cap (§21.3), and whether
    anything emails staff on a new ticket (§21.7).
+7. **Modules PRD (§22)** — the PRD's own §18 list, with a recommendation each. The rest are
+   defaults we build unless told otherwise.
+   - **a.** ~~Which records are retained vs anonymised?~~ **Answered (D14):** the user row is
+     overwritten, never deleted; billing data is never touched; lists and todos go only when the
+     user was the workspace's last member. §22.8.4 records the result. Still open inside it:
+     audit-log IP/user-agent, and whether the last member's avatar/files go too.
+   - **b.** ~~Is deleting a sole owner also workspace deletion?~~ **Partly answered:** if the user
+     is the workspace's last member, their lists and todos are deleted. The `organizations` row
+     and its billing stay. **Still open:** what happens to an *active subscription* on a
+     workspace with no remaining member? It keeps billing unless somebody cancels it. Suggestion:
+     the approving admin sees a warning and cancels it by hand from the existing subscription
+     screen, which leaves "billing is never touched" true for the deletion job itself.
+   - **c.** ~~Admin approval for every deletion?~~ **Answered: yes, every deletion.** There is no
+     automatic path.
+   - **d.** Double opt-in default on → **yes**.
+   - **e.** Waiting list informational only → **yes**; no invite/convert flow beyond "mark
+     converted" and a nightly auto-match (§22.5).
+   - **f.** Post URL `/posts/:slug`, page URL `/:slug` → **yes** (D13).
+   - **g.** Editor → **textarea + Markdown**.
+   - **h.** Old slugs redirect → **yes**, 301 via `content_slug_redirects`.
+   - **i.** Legal pages shipped → **privacy + terms** only.
+   - **j.** Export includes file **contents** → **no, metadata only** in v1; files are workspace-
+     owned (D8) and a user's export is not the way to bulk-download a workspace.
+   - **k.** 48 h export retention → **yes**, as a typed setting.
+   - **l.** Role split → §22.9's table.
 
 ---
 
@@ -1511,3 +1586,391 @@ Then update §13.5's table row, §13.6.6, and §19 Q6 — done in the same commi
 - **A ticket opened from a specific context** — "help with this failed payment" prefilled from
   the billing screen. Cheap once the tables exist, and genuinely useful; it is not in slice 1
   because the plumbing has to work first.
+
+---
+
+## 22. Registration control, Content, Landing & Privacy (M11–M15)
+
+Source: *PRD — Admin Content, Registration Control, Landing Pages & Privacy Modules* (proposed).
+This section is that PRD checked against the code as it stands, not restated. Where the PRD says
+"confirm X" or "if the repository already has Y", the answer is written down here; where it is
+silent about something the code makes unavoidable, that is called out as **Gap**.
+
+### 22.1 Verdict on the PRD
+
+Sound in intent, and its central rule — *modules use core, core never depends on a module* — is
+already this codebase's rule, enforced by `tests/unit/modularity.spec.ts`. What it gets wrong or
+leaves open is almost entirely about **seams**: the PRD assumes integration points that do not
+exist yet.
+
+| PRD assumes | Reality | Consequence |
+|---|---|---|
+| "Add or reuse the existing settings abstraction" | There is none. No `settings` table, no service. | New core piece (D11, §22.3). |
+| Modules register routes "at an explicit integration point" | Only `start/routes/web.ts` and `api.ts` are registration points, and both are the *tenant/API* stacks. Nothing covers guest/auth, public, or admin routes. | Three new registration points (§22.4). |
+| "Use the existing audit infrastructure" | `AUDIT_ACTIONS` in `app/audit/audit_service.ts` is a closed const in core. | Modules cannot add actions without editing core → augmentation (D12). |
+| "Server must enforce the setting at the account-creation boundary" | There are **three** creation paths: `/signup`, Ally social sign-in (`social_auth_controller.ts:103`), and invitation accept (`invitation_service.ts:174`, which calls `User.create` directly). | **Gap.** The PRD names only the first. §22.2 decides each. |
+| `/` "falls back to the existing authentication/signup entry point" | `/` is `router.on('/').render('pages/home')` in core `start/routes.ts`, rendering a core marketing page. There is no other entry point to fall back to. | Landing is an *extraction*, and the fallback has to be defined (§22.7). |
+| CMS pages at `/privacy`, `/terms` **and** Landing owns `/privacy`, `/terms` | Both PRD sections claim the same paths. | **Gap.** Resolved by D13's route-table reservation (§22.6). |
+| "A user whose deletion is complete must no longer be able to authenticate" | Password sign-in rejects soft-deleted users (`User.verifyActiveCredentials`) and `auth_middleware.ts` ends an open session on the next request. | Already covered; M15 only has to set `deleted_at`. |
+| Deletion "where technically appropriate" | One org per user (D1); the owner cannot leave (`MembershipService.leave`); org deletion is soft and §19 Q2 is still open. | Settled by D14: overwrite the user, never touch billing, delete lists/todos only for the last member. Only the orphaned active subscription is still open (Q7b). |
+| Export "includes user-owned content" | That content lives in `app/modules/lists` (and core support/files). A privacy module that queries it imports another module. | **Gap.** `privacyData` registry (§22.4). |
+| Markdown "rendered safely" | No Markdown or sanitiser dependency installed. | Add `markdown-it` (§22.6). |
+| Export as `export.zip` | No zip dependency installed. | Add one (`yazl` — small, streaming, no native code). |
+
+Things the PRD asks for that already exist and need **no** work: admin nav is already
+`hasRoute`-guarded (`layouts/admin.edge`), so module admin screens appear and vanish by route;
+`StaffPolicy` already draws the support/admin line; private disk + authorise-then-sign download is
+the support-attachment pattern (§21.3); limiter DB store, durable queue, `MailerService`, seeder
+and job registries all exist.
+
+Module names: `registration_control`, `content`, `landing`, `privacy` under `app/modules/`, as
+the PRD suggests and docs/modules.md prescribes. Migrations stay in `database/migrations/` (Lucid
+records them by path — docs/modules.md explains why they cannot live in the module). Views stay in
+`resources/views/pages/<module>/` and emails in `resources/views/emails/`, same reason.
+
+### 22.2 The registration gate (D10)
+
+**Where it sits.** `RegistrationService.register()` — the single function `/signup` and Ally both
+call. A check in the controller would leave social sign-in open; a check in middleware would leave
+the service callable from anywhere else that grows later.
+
+```ts
+// app/auth/registration_gate.ts — core
+export const registrationGate = {
+  resolver: null as null | (() => Promise<boolean>),
+  use(resolver: () => Promise<boolean>) { this.resolver = resolver },
+  async isOpen() { return this.resolver ? this.resolver() : true },
+}
+```
+
+Registration Control registers the resolver (reading `registration_enabled` from settings). Remove
+the module and the slot is empty → open. That is the whole of the PRD's
+`RegistrationAvailabilityService`, and Landing reads the same object.
+
+**Per path, when closed:**
+
+| Path | Behaviour |
+|---|---|
+| `GET /signup` | Redirect to `waitlist.create` if that route exists, else render the core signup page's "registration is closed" state. Core names the route only through `hasRoute`. |
+| `POST /signup` | `RegistrationClosedError` from the service → same redirect, nothing written. Logged as `registration.blocked`. |
+| Ally, **new** identity | Same error → waitlist with the provider email prefilled. Existing identities sign in as normal — that is login, not registration. |
+| Invitation accept | **Not gated.** An owner adding a colleague to a paying workspace is not public registration, and seats already gate it. Stated in the admin settings copy so nobody is surprised. |
+| Staff creating staff | Not gated; different table (D5). |
+
+Login, password reset, verification, 2FA and every existing session are untouched — the gate is
+consulted in exactly one function.
+
+### 22.3 Runtime settings (D11)
+
+**`site_settings`** — `key` (unique string), `value` (json), `updated_by_staff_id` (nullable),
+`updated_at`. One row per key, absent row = default.
+
+`SettingsService.get(key)` / `set(key, value, staff)`; keys are a declaration-merged
+`interface SiteSettings { registration_enabled: boolean; … }` with a default per key, so a typo is a
+compile error and `get` is typed. Every `set` writes an audit entry (`settings.changed`, with key,
+old and new value).
+
+No cache in v1: web and worker are separate processes (§16), so a per-process cache needs
+invalidation, and one indexed primary-key read per signup is nothing. Revisit if a setting lands on
+a hot path.
+
+Keys this PRD adds: `registration_enabled` (default `true`), `waiting_list_double_opt_in`
+(`true`), `privacy_export_ttl_hours` (`48`).
+
+### 22.4 Seams core gains in M11
+
+Each one is a registry or a registration point, so each module's removal is still deletions only —
+docs/modules.md's promise.
+
+1. **Route registration points.** Add `start/routes.ts` (public: landing, posts, pages),
+   `start/routes/auth.ts` (guest group: waitlist), `start/routes/admin.ts` (staff group: settings,
+   waitlist admin, content admin, privacy admin) to `REGISTRATION_POINTS`. Modules export
+   `registerXxxRoutes()` functions called *inside* core's groups, exactly as lists does, so they
+   inherit `staffAuth`, `adminIpAllowlist`, guest and throttle middleware.
+2. **`AuditActions` augmentation.** Turn `AUDIT_ACTIONS` into the core half of an
+   `interface AuditActions`; modules `declare module '#audit/audit_service'` and add theirs. The
+   audit-log filter screen reads the union. Removing a module removes its actions from the type, so
+   a stray `audit.record('content.published')` fails to compile.
+3. **`privacyData` registry.** `privacyData.register({ key, label, export(user), erase(user, trx),
+   retained: string })`. Core registers its own contributors (profile, social accounts, auth
+   tokens, files metadata, support messages, notifications seen-at, audit entries about the user);
+   modules register theirs in a new registration point, `start/privacy.ts` (lists adds one block
+   there; Registration Control adds its waitlist contributor). Privacy iterates the registry and
+   names no table. A test asserts every model with a `user_id`-shaped column is either covered by a
+   contributor or listed in an explicit `NOT_PERSONAL` allowlist with a reason — the same
+   "exhaustive, not spot-checked" shape as `tests/unit/jobs.spec.ts`.
+4. **Deleted-user sessions.** *Already handled* — `app/middleware/auth_middleware.ts` signs out
+   a soft-deleted user on their next request. No work needed.
+5. **Modularity test.** The new points above, plus a new assertion: **no `#modules/a` import from
+   inside `app/modules/b`.** Landing reaches registration state through `registrationGate`, Privacy
+   reaches lists through `privacyData`; neither may shortcut.
+6. **Public-id prefixes** in `app/models/public_id.ts`: `wle_` (waiting list), `cnt_` (content),
+   `prq_` (privacy request). Core file by design (docs/modules.md step 3).
+
+### 22.5 Registration Control & waiting list (M12)
+
+**`waiting_list_entries`** — `id`, `public_id`, `email` (lowercased, **unique**), `status`
+(`pending_confirmation|confirmed|converted|cancelled`), `double_opt_in_required` (bool, snapshot),
+`confirmation_token_hash`, `confirmation_expires_at`, `confirmed_at`, `converted_at`,
+timestamps. *(No `ip` column as built — nothing reads it, and it is personal data to delete later.)*
+
+PRD's `invited` state is dropped (Q7e): with no invite flow there is nothing to put an entry in it.
+
+- **Enumeration.** Submit always answers "If this email can be added to the waiting list, we will
+  send further instructions." whether the address is new, already queued, or already an account.
+  An existing-account address gets *no* email (sending "you already have an account" is itself the
+  leak — the forgot-password page is where they go). *As built,* the work runs inline rather
+  than in a job: the mail itself is already queued by `MailerService`, so the remaining timing
+  difference is one indexed lookup. Move it to a job if that ever matters.
+- **Tokens.** 32 random bytes, sha256 stored, 48 h expiry, single-use — the `auth_tokens` recipe
+  (§5.2), reused as a helper, not a new scheme. Outcomes: confirmed / already confirmed / expired
+  (with a "send again" form) / invalid, none of which echo the address.
+- **Setting changes are forward-only.** `double_opt_in_required` is snapshotted per row; flipping
+  the setting touches no existing row (tested).
+- **Conversion.** `MarkWaitlistConvertedJob`, nightly, in the module: confirmed entries whose email
+  now exists in `users` become `converted`. Keeps core's registration path ignorant of the list.
+  Admin can also mark by hand.
+- **Throttle.** `waitlistThrottle` — 5 submissions/hour per IP and 3 per address/day;
+  confirmation link 20/hour per IP.
+- **Routes.** Guest: `GET/POST /waitlist`, `GET /waitlist/confirm/:token`. Admin:
+  `/admin/settings/registration`, `/admin/waitlist` (filters per PRD; actions view, cancel, delete,
+  mark converted, resend confirmation).
+- **Audit:** `settings.changed`, `waitlist.cancelled|deleted|converted|resent` (staff actions);
+  creation/confirmation are logged, not audited — they are anonymous public events and would flood
+  the audit screen.
+- **Removal:** reset `registration_enabled` row is unnecessary (D10 reopens signup); drop the table
+  by a new migration on existing installs.
+
+### 22.6 Content CMS (M13)
+
+**`content_entries`** — `id`, `public_id`, `type` (`post|page`), `title`, `slug` (**unique across
+both types**), `excerpt`, `body` (Markdown source), `status` (`draft|published|archived`),
+`published_at`, `created_by_staff_id`, `updated_by_staff_id`, timestamps — index(`type`,
+`status`, `published_at`). Naming follows `notifications.created_by_staff_id`, not the PRD's
+`created_by_staff_user_id`.
+
+**`content_slug_redirects`** — `old_slug` (unique), `content_entry_id`, `created_at`. Written when a
+published entry's slug changes; `/posts/:old` and `/:old` 301 to the current URL (Q7h).
+
+**Lifecycle.** Publish sets `published_at` only if null (re-publishing keeps the original date);
+unpublish → `draft`, keeps `published_at`; archive → `archived`. A future `published_at` is a
+scheduled post — public queries are `status = published AND published_at <= now`, so scheduling
+costs nothing and needs no job.
+
+**Listing.** `GET /posts` — Lucid `paginate(page, 10)`, ordered `published_at desc, id desc`
+(the tie-breaker the PRD asks for). Out-of-range page → 404, not an empty page. Pagination
+component gets `aria-current="page"`.
+
+**Routing (D13).** `/posts`, `/posts/:slug`, then `/:slug` registered **last** in `start/routes.ts`
+with a `^[a-z0-9]+(?:-[a-z0-9]+)*$` matcher. Reserved slugs are computed from `router.toJSON()` at
+validation time: any slug equal to the first segment of a registered route is refused, so `login`,
+`admin`, `api`, `posts`, `privacy` (while Landing is installed) are all rejected with no hand-kept
+list. If Landing is later removed, `privacy` becomes available to the CMS — which is the right
+fallback. A boot-time check (dev and `node ace content:check`) warns about any *published* page
+whose slug has since become a route.
+
+**Rendering.** `markdown-it` with `html: false`, `linkify: true`, and `validateLink` limited to
+`http`, `https`, `mailto` and relative URLs. Rendered on read, not stored — a renderer fix then
+applies to every post. No raw-HTML field exists, so there is nothing to sanitise around. Edge
+escapes everything else by default; the rendered body is the single `{{{ }}}` in the module and
+carries a comment saying why.
+
+**SEO.** `layouts/marketing` gains optional `description` and `canonical` slots (a core layout
+change, generic — not module-aware). Posts use `excerpt` as description; pages use the first 160
+chars of rendered text. OpenGraph title/description from the same values.
+
+**Admin.** `/admin/content/posts`, `/admin/content/pages` — list (filters, columns per PRD), form
+(textarea + preview tab rendering through the same renderer), publish/unpublish/archive/delete.
+Delete is hard (drafts are cheap; published content should be archived) and asks for
+confirmation. **Authorisation:** `StaffPolicy.manageContent`, admin only (§22.9).
+
+### 22.7 Landing (M14)
+
+An extraction, not new work: today's `pages/home.edge` becomes `pages/landing/home.edge`, plus
+code-defined `privacy.edge` and `terms.edge` (Q7i) with placeholder copy clearly marked
+*replace before launch*.
+
+**The `/` handover.** Core keeps the route **name** `home` in both states, because
+`layouts/admin.edge`, `layouts/marketing` and emails link to it.
+
+- Module installed: `registerLandingRoutes()` in `start/routes.ts` registers `GET /` as `home`.
+- Module removed: core's fallback registers `GET /` as `home` → redirect to `dashboard.index` when
+  signed in, else `auth.session.create`.
+
+Core registers the fallback only if no `home` route was registered. **To verify at the start of
+M14:** whether the v7 router exposes pending routes before commit (`router.routes` /
+`toJSON()`); if not, the fallback moves to a `HomeController` that redirects unless a landing view
+has been registered — same behaviour, one more registry.
+
+**CTA.** `registrationGate.isOpen()` → "Create an account"; closed and `hasRoute('waitlist.create')`
+→ "Join the waiting list"; closed with no waitlist → sign-in only. Footer links to legal pages via
+`hasRoute`. Core's signup page links Terms the same way.
+
+**Assets.** No new Vite entry in v1 — the marketing CSS already exists in core and is generic.
+Landing-only styles, if any appear, go in `resources/css/landing.css` with its own entry so they
+delete as a file.
+
+**Removal test.** A functional test that boots with the landing registration absent (the test
+stubs the registration call) and asserts `/` redirects and `home` resolves. Plus the docs/modules.md
+style removal page.
+
+### 22.8 Privacy data requests (M15)
+
+**`privacy_requests`** — `id`, `public_id`, `user_id`, `type` (`export|deletion`), `status`
+(`requested|confirmed|approved|processing|completed|failed|rejected|expired`), `requested_at`,
+`confirmed_at`, `approved_at`, `started_at`, `completed_at`, `failure_reason`, `rejection_reason`,
+`export_key` (private disk), `export_expires_at`, `downloaded_at`, `processed_by_staff_id`,
+timestamps — index(`user_id`, `type`, `status`).
+
+**At most one active request per user per type**, enforced in the service inside a transaction
+(portability rule 5 forbids the partial unique index that would do it in SQL). A second request
+returns the existing one.
+
+#### 22.8.1 Export
+
+`requested → processing → completed → expired`. No confirmation step: asking for your own data is
+not destructive.
+
+`GeneratePrivacyExportJob` iterates `privacyData` contributors, writes `data.json` (one key per
+contributor), `README.txt` (what each section is, what was excluded and why), zips with `yazl`
+to the private disk under `privacy/<public_id>.zip`, sets `export_expires_at = now +
+privacy_export_ttl_hours`, queues `PrivacyExportReadyNotification`. Idempotent: a retry overwrites
+the same key.
+
+Download: `GET /settings/privacy/exports/:id` — re-authorise (owner of the request, not expired,
+completed) **then** redirect to a 5-minute signed URL, the §21.3 pattern. Not via the `files`
+table: an export is not workspace storage and must not count against the org's quota.
+`PurgePrivacyExportsJob` (hourly, in `start/jobs.ts`) deletes expired objects and marks `expired`.
+
+**Exclusions** (in README and asserted by test): password hashes, 2FA secrets and recovery codes,
+`auth_tokens`, social `access_token`, API key hashes (metadata only: name, prefix, created,
+last used), session data, other users' personal data (a teammate's name on a shared todo is
+exported as their public id, not their name), file contents (Q7j).
+
+#### 22.8.2 Deletion
+
+`requested → confirmed → approved → processing → completed` (or `rejected` / `failed`).
+
+1. **Request screen** explains exactly what §22.8.4 overwrites, deletes and keeps. If the user is
+   the workspace's last member, it says plainly that all lists and todos go too.
+2. **Confirm** by re-entering the password; social-only accounts (null password) get an emailed
+   single-use link instead.
+3. **Approve** by an admin. **Every** deletion needs it (D14); there is no auto-processing.
+   Reject needs a reason. The approval screen shows whether the user is the workspace's last
+   member, and warns if that workspace has an active subscription (Q7b).
+4. **`ProcessPrivacyDeletionJob`**, in one transaction where the engine allows:
+   **overwrite** the user row first, never delete it — email → `deleted.user.<id>@email.com`
+   (`<id>` is the internal integer id, which keeps it unique under the existing unique index),
+   `full_name`, `avatar_key`, `password`, 2FA secret, recovery codes and `last_login_at` nulled,
+   `deleted_at` set. Even a crash after this point has already revoked access. Then each
+   contributor's `erase()` runs. Contributors tolerate rows that are already gone. The request is
+   marked `completed` only when all succeed; otherwise it is `failed` with a sanitised reason and
+   can be retried.
+5. **Last member?** The check runs inside the job's transaction (other non-deleted users in the
+   same `organization_id`), not at request time, because members can join or leave while the
+   request waits for approval. If there are none, the lists module's contributor deletes the
+   workspace's lists and todos. If there are others, lists and todos are not touched.
+6. The confirmation email goes to the address captured **before** the overwrite.
+
+Blocker, refused at request time with a clear message: an owner of a workspace that has other
+members must transfer ownership first (the existing `owner_cannot_leave` rule). Billing is never
+touched by the job. No cancellation, no `PaymentProvider` call.
+
+Impersonating staff can see the privacy screen but **cannot** request, confirm or download — an
+explicit policy check, not just the existing non-GET block, because an admin impersonation *can*
+POST.
+
+#### 22.8.3 Admin
+
+`/admin/privacy` — list with the PRD's columns and filters, detail with the audit trail for that
+request, actions: retry export, approve/reject deletion, retry failed deletion. See §22.9 for who.
+
+#### 22.8.4 Delete / anonymise / retain — against the actual schema
+
+Rules from D14, applied to the actual schema. The rows marked *proposed* are not covered by D14
+and still need sign-off.
+
+| Data | Action | Why |
+|---|---|---|
+| `users` row | **Overwrite, never delete**: email → `deleted.user.<id>@email.com`, personal fields nulled, `deleted_at` set | D14. FKs from todos, tickets, audit logs stay valid |
+| `social_accounts`, `auth_tokens` | **Delete** | Pure credentials |
+| Avatar file | **Delete** (object + `files` row) — *proposed* | Personal, not workspace work |
+| Other files the user uploaded | **Retain**, `user_id` kept as tombstone — *proposed* | Workspace-owned (D8) |
+| `todo_lists`, `todos` — **user was the last member** | **Delete** (hard, not soft — a soft-deleted row still holds the data) | D14 |
+| `todo_lists`, `todos` — **other members remain** | **Untouched** — not even `assigned_to_user_id` | D14. The overwritten user row already removes the identity |
+| `support_tickets` / `support_messages` authored | **Retain**, author anonymised via the user row | Workspace-owned; staff history |
+| `api_keys.created_by_user_id` | **Retain** | Org-owned credential; revoking it would break the workspace's integration |
+| `invitations` sent by the user | **Delete** pending ones; keep accepted | Pending ones carry a third party's email for no reason |
+| `organizations` row | **Untouched**, even when the last member leaves | D14: billing hangs off it |
+| `subscriptions`, `payments`, `webhook_events` | **Untouched** | D14: billing data is never touched |
+| `audit_logs` (actor or subject) | **Retain**; `ip`, `user_agent` nulled — *proposed* | Security record; network identifiers are not needed to keep it |
+| `api_requests` from keys they created | **Retain** (pruned at 30 d anyway) | Org usage |
+| `privacy_requests` | **Retain** | Proof the request was honoured |
+| Waiting-list entry for the same email | **Delete** | Registration Control registers this contributor |
+
+### 22.9 Permissions
+
+`StaffPolicy` gains: `manageRegistration`, `manageWaitlist`, `manageContent`, `viewPrivacy`,
+`processPrivacyExport`, `decidePrivacyDeletion`.
+
+| Capability | Support | Admin |
+|---|---|---|
+| Change registration settings | | ✓ |
+| View / manage waiting list | ✓ | ✓ |
+| Manage posts and pages | | ✓ |
+| View privacy requests | ✓ | ✓ |
+| Retry an export | ✓ | ✓ |
+| Approve / reject / retry a deletion | | ✓ |
+
+Support gets the waitlist because it is the same "answer the customer" job as tickets; it gets no
+content or deletion rights, matching §6's line that support never changes what a customer sees or
+destroys anything.
+
+### 22.10 Tests
+
+Per PRD §8/§13, plus the cases its gaps create:
+
+- **Gate:** closed gate refuses `/signup` POST *and* a new Ally identity; existing Ally identity
+  signs in; invitation accept still works; removing the resolver reopens.
+- **Enumeration:** identical body and status for new / queued / existing-account addresses.
+- **Routing:** every registered route's first segment is refused as a slug (iterates the router,
+  so it covers routes added later); `/:slug` never answers for a reserved path; old slug 301s.
+- **XSS:** `<script>`, `javascript:` links, `onerror=` in image Markdown, HTML blocks — all inert.
+- **Pagination:** 25 posts → pages of 10/10/5, stable under equal `published_at`, page 4 is 404.
+- **Privacy inventory:** the exhaustive `user_id`-column test (§22.4.3); no secret-named key in any
+  export; user B gets 404 on user A's export id and on its signed URL after expiry.
+- **Deletion:** the user row still exists with `deleted.user.<id>@email.com` and no personal
+  fields; billing rows are byte-identical before and after; last member → lists and todos gone;
+  other members present → lists and todos byte-identical; a member joining between request and
+  approval flips the outcome to "untouched"; nothing runs without admin approval; mail to the
+  overwritten address is refused; crash injected after the user row → login fails, retry
+  completes; second run is a no-op; open session is ended; impersonating admin cannot request.
+- **Modularity:** no module→module imports; each module removable — CI job that deletes each
+  module folder and its registration lines in turn and runs `typecheck` + the core suite
+  (cheap insurance for the PRD's "removing any one module leaves the rest functional").
+- Both engines, as always (§15).
+
+### 22.11 Build order inside each milestone
+
+Matches the PRD's phases and PR breakdown, one PR per milestone, each ending green:
+
+- **M11** seams (§22.2–22.4) — one PR, no user-visible change except the deleted-session fix.
+- **M12** settings screen → gate resolver → waitlist table/service/tokens → public form →
+  confirmation mail → admin list → conversion job → docs.
+- **M13** table + redirects → slug/reserved service + tests → renderer + XSS tests → admin CRUD →
+  `/posts` → `/:slug` → SEO slots → docs.
+- **M14** move home → legal pages → CTA → fallback + removal test → docs.
+- **M15** registry contributors (core + lists) and the inventory test **first** → export job,
+  download, purge → deletion request/confirm → admin approve → deletion job → docs.
+
+The PRD's "Phase 5 hardening" is not a separate milestone here: each slice carries its own
+security tests, and the module-removal CI job (§22.10) is added in M11 so it guards M12–M15 as
+they land. Each module ships a docs page in the shape of docs/modules.md and a line in
+`CONTRIBUTING.md`.
+
+### 22.12 Deliberately not in v1
+
+From the PRD's non-goals, plus: waiting-list invite/convert flow, CMS navigation menus, RSS,
+sitemap, image uploads in posts (would need a public disk path and its own policy), scheduled
+deletion auto-processing, export of file contents, and per-module settings screens beyond
+registration.

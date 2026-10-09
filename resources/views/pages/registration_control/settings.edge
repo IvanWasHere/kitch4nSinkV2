@@ -1,0 +1,51 @@
+{{--
+  Admin → Settings → Registration (plan §22.5). Admin only.
+
+  Plain checkboxes rather than toggles: the design system has no switch
+  component, and a checkbox submits without JavaScript.
+--}}
+@component('layouts/admin', { title: 'Registration' })
+  <div class="settings-card">
+    <h2 class="section-title">Registration</h2>
+    <p class="section-desc">
+      Whether new people can create an account. Existing accounts are never affected: everyone who already has one can still sign in, reset their password and use the application, and invitations to an existing workspace still work.
+    </p>
+    @form({ route: 'admin.settings.registration.update', method: 'POST' })
+      <div class="check-row">
+        <input
+          type="checkbox"
+          name="registrationEnabled"
+          value="1"
+          id="registration-enabled"
+          {{ registrationEnabled ? 'checked' : '' }}
+        />
+        <label for="registration-enabled">
+          Public registration is open — anyone can create an account
+        </label>
+      </div>
+      <p class="field-hint">
+        Untick to close it. Signup and first-time social sign-in are refused, and the signup page says registration is closed. Ticking it again restores signup exactly as it was.
+      </p>
+
+      <div class="check-row">
+        <input
+          type="checkbox"
+          name="waitingListDoubleOptIn"
+          value="1"
+          id="waiting-list-double-opt-in"
+          {{ waitingListDoubleOptIn ? 'checked' : '' }}
+        />
+        <label for="waiting-list-double-opt-in">
+          Waiting-list sign-ups must confirm their email address
+        </label>
+      </div>
+      <p class="field-hint">
+        Applies to new sign-ups only. People already on the list keep the status they have.
+      </p>
+
+      <div class="btn-row">
+        @!button({ text: 'Save settings', type: 'submit', size: 'sm' })
+      </div>
+    @end
+  </div>
+@end

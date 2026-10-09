@@ -21,6 +21,7 @@ import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import { adminLoginThrottle, twoFactorThrottle } from '#start/limiter'
+import { registerRegistrationAdminRoutes } from '#modules/registration_control/routes'
 
 router
   .group(() => {
@@ -152,6 +153,13 @@ router
     router.get('/staff', [controllers.admin.Staff, 'index']).as('admin.staff.index')
     router.post('/staff', [controllers.admin.Staff, 'store']).as('admin.staff.store')
     router.post('/staff/:id/toggle', [controllers.admin.Staff, 'toggle']).as('admin.staff.toggle')
+
+    /**
+     * Registration Control (plan §22.5) — its settings screen. Registered
+     * from the module, inside this group, so it inherits the staff guard and
+     * the allowlist; removing the module is these lines and the import.
+     */
+    registerRegistrationAdminRoutes()
   })
   .prefix('/admin')
   .use([middleware.adminIpAllowlist(), middleware.staffAuth()])

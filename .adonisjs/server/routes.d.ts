@@ -78,10 +78,13 @@ export type ScannedRoutes = {
     'auth.two_factor.store': { paramsTuple?: []; params?: {} }
     'auth.social.redirect': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'auth.social.callback': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
+    'waitlist.create': { paramsTuple?: []; params?: {} }
+    'waitlist.store': { paramsTuple?: []; params?: {} }
     'invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'waitlist.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.session.destroy': { paramsTuple?: []; params?: {} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'auth.verify_email.resend': { paramsTuple?: []; params?: {} }
@@ -168,6 +171,13 @@ export type ScannedRoutes = {
     'admin.staff.index': { paramsTuple?: []; params?: {} }
     'admin.staff.store': { paramsTuple?: []; params?: {} }
     'admin.staff.toggle': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.settings.registration': { paramsTuple?: []; params?: {} }
+    'admin.settings.registration.update': { paramsTuple?: []; params?: {} }
+    'admin.waitlist.index': { paramsTuple?: []; params?: {} }
+    'admin.waitlist.cancel': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.waitlist.convert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.waitlist.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.waitlist.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'impersonation.destroy': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'health.live': { paramsTuple?: []; params?: {} }
@@ -229,9 +239,11 @@ export type ScannedRoutes = {
     'auth.two_factor.create': { paramsTuple?: []; params?: {} }
     'auth.social.redirect': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'auth.social.callback': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
+    'waitlist.create': { paramsTuple?: []; params?: {} }
     'invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'waitlist.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
@@ -264,6 +276,8 @@ export type ScannedRoutes = {
     'admin.notifications.index': { paramsTuple?: []; params?: {} }
     'admin.audit_logs.index': { paramsTuple?: []; params?: {} }
     'admin.staff.index': { paramsTuple?: []; params?: {} }
+    'admin.settings.registration': { paramsTuple?: []; params?: {} }
+    'admin.waitlist.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'health.live': { paramsTuple?: []; params?: {} }
     'health.ready': { paramsTuple?: []; params?: {} }
@@ -324,9 +338,11 @@ export type ScannedRoutes = {
     'auth.two_factor.create': { paramsTuple?: []; params?: {} }
     'auth.social.redirect': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'auth.social.callback': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
+    'waitlist.create': { paramsTuple?: []; params?: {} }
     'invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'waitlist.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
@@ -359,6 +375,8 @@ export type ScannedRoutes = {
     'admin.notifications.index': { paramsTuple?: []; params?: {} }
     'admin.audit_logs.index': { paramsTuple?: []; params?: {} }
     'admin.staff.index': { paramsTuple?: []; params?: {} }
+    'admin.settings.registration': { paramsTuple?: []; params?: {} }
+    'admin.waitlist.index': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'health.live': { paramsTuple?: []; params?: {} }
     'health.ready': { paramsTuple?: []; params?: {} }
@@ -389,6 +407,7 @@ export type ScannedRoutes = {
     'auth.password.store': { paramsTuple?: []; params?: {} }
     'auth.password.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.two_factor.store': { paramsTuple?: []; params?: {} }
+    'waitlist.store': { paramsTuple?: []; params?: {} }
     'invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.session.destroy': { paramsTuple?: []; params?: {} }
     'auth.verify_email.resend': { paramsTuple?: []; params?: {} }
@@ -444,6 +463,11 @@ export type ScannedRoutes = {
     'admin.notifications.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.staff.store': { paramsTuple?: []; params?: {} }
     'admin.staff.toggle': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.settings.registration.update': { paramsTuple?: []; params?: {} }
+    'admin.waitlist.cancel': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.waitlist.convert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.waitlist.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.waitlist.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'impersonation.destroy': { paramsTuple?: []; params?: {} }
   }
   PATCH: {
