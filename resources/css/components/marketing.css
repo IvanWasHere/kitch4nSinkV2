@@ -6,20 +6,50 @@
 */
 
 .marketing-header {
-  height: var(--topbar-height);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 16px 16px 0;
+  pointer-events: none;
+}
+
+/*
+ * The floating pill. The header itself is transparent and lets clicks through
+ * its gutters, so the page underneath stays usable right up to the bar.
+ */
+.marketing-bar {
+  pointer-events: auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-  gap: 16px;
+  gap: 28px;
+  padding: 8px 8px 8px 14px;
+  background: rgb(255 255 255 / 0.86);
+  backdrop-filter: saturate(1.6) blur(14px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow:
+    0 10px 30px -12px rgb(15 23 42 / 0.18),
+    0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.marketing-bar .logo {
+  margin-bottom: 0;
 }
 
 .marketing-nav {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 22px;
+}
+
+.marketing-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /*
@@ -31,17 +61,35 @@
 .marketing-nav a:not(.btn) {
   font-size: 13.5px;
   font-weight: 500;
-  color: var(--text-soft);
+  color: var(--text-strong);
   text-decoration: none;
 }
 
 .marketing-nav a:not(.btn):hover {
-  color: var(--text-strong);
+  color: var(--accent-600);
+}
+
+.marketing-actions .btn {
+  border-radius: var(--radius-pill);
+}
+
+/*
+ * The glow under the primary action — the one coloured shadow on the page.
+ */
+.marketing-actions .btn-primary {
+  box-shadow: 0 6px 18px -6px rgb(59 130 246 / 0.7);
 }
 
 .marketing-main {
   background: var(--surface);
-  min-height: calc(100vh - var(--topbar-height));
+  min-height: 100vh;
+
+  /*
+   * Room for the floating header, which is fixed and so takes none. A page
+   * that wants its own background behind the bar (the landing hero) pulls
+   * itself back up by the same amount.
+   */
+  padding-top: 84px;
 }
 
 .marketing-section {
@@ -119,12 +167,35 @@
 }
 
 .marketing-footer {
-  border-top: 1px solid var(--border);
-  padding: 28px;
+  border-top: 1px solid var(--border-soft);
+  padding: 48px 24px 40px;
   text-align: center;
   font-size: 12.5px;
   color: var(--text-muted);
   background: var(--surface);
+}
+
+.marketing-footer .logo {
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.marketing-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 24px;
+  margin-bottom: 18px;
+  font-size: 13.5px;
+}
+
+.marketing-footer a {
+  color: var(--text-soft);
+  text-decoration: none;
+}
+
+.marketing-footer a:hover {
+  color: var(--text-strong);
 }
 
 /*

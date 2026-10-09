@@ -67,6 +67,14 @@
         @!field.error()
       @end
 
+      @if(hasRoute('legal.terms'))
+        <p class="field-hint" style="margin-bottom: 12px">
+          By creating an account you agree to the
+          <a href="{{ urlFor('legal.terms') }}">terms of service</a>@if(hasRoute('legal.privacy')) and
+          <a href="{{ urlFor('legal.privacy') }}">privacy notice</a>@end.
+        </p>
+      @end
+
       @!button({ text: 'Create account', type: 'submit', block: true })
     @end
 

@@ -8,7 +8,17 @@ export default defineConfig({
        * Entrypoints of your application. Each entrypoint will
        * result in a separate bundle.
        */
-      entryPoints: ['resources/css/app.css', 'resources/js/app.js'],
+      entryPoints: [
+        'resources/css/app.css',
+        'resources/js/app.js',
+
+        /**
+         * The landing page's own styles (plan §22.7), loaded by that page
+         * only — so removing the Landing module removes this line and the
+         * file, and no other page ever downloaded them.
+         */
+        'resources/css/landing.css',
+      ],
 
       /**
        * Paths to watch and reload the browser on file change

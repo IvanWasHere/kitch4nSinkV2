@@ -1,0 +1,72 @@
+{{--
+  Privacy notice (plan §22.7) — code-defined, owned by the Landing module.
+
+  TEMPLATE COPY. It describes what this codebase actually stores and who it
+  shares it with, but it is not legal advice and it names no company. Replace
+  the bracketed parts, have it reviewed, and remove the notice at the top
+  before launch.
+--}}
+@component('layouts/marketing', {
+  title: 'Privacy notice',
+  description: `How ${appName} collects, uses and protects personal data.`,
+})
+  <article class="content-article">
+    <div class="info-box info-box-warning" style="margin-bottom: 32px">
+      Template text. Replace the bracketed details and have this reviewed before launch.
+    </div>
+
+    <header class="content-article-header">
+      <h1 class="content-article-title">Privacy notice</h1>
+      <div class="content-article-meta">Last updated [date]</div>
+    </header>
+
+    <div class="prose">
+      <p>
+        This notice explains what personal data {{ appName }} ("we") collects when you use the
+        service, why, and what you can do about it. The controller is [company name, address].
+        Contact us at [privacy contact email].
+      </p>
+
+      <h2>What we collect</h2>
+      <ul>
+        <li><strong>Account details</strong> — your name, email address, and a hash of your password (never the password itself). If you sign in with Google or GitHub, the identifier and email they give us.</li>
+        <li><strong>Workspace data</strong> — what you and your colleagues create in the product, and the files you upload.</li>
+        <li><strong>Billing records</strong> — your plan and payment history. Card details are handled by our payment provider and never reach us.</li>
+        <li><strong>Security and usage records</strong> — sign-in times, IP addresses and an audit trail of significant actions, kept to protect your account and the service.</li>
+        <li><strong>Support conversations</strong> — the tickets you open and their attachments.</li>
+      </ul>
+
+      <h2>Who we share it with</h2>
+      <p>Only the providers that run the service for us, under contract:</p>
+      <ul>
+        <li>[Payment provider] — our merchant of record, which processes payments and sales tax.</li>
+        <li>[Email provider] — delivers account and notification emails.</li>
+        <li>[Storage provider] — stores uploaded files.</li>
+        <li>[Hosting provider] — runs the application and its database.</li>
+      </ul>
+      <p>We do not sell personal data, and we do not use it for advertising.</p>
+
+      <h2>Cookies</h2>
+      <p>
+        We use a session cookie to keep you signed in and a security token to protect forms. We do
+        not use advertising or tracking cookies.
+      </p>
+
+      <h2>How long we keep it</h2>
+      <p>
+        [Describe retention periods.] Billing records are kept as long as the law requires, even
+        after an account is closed.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>
+        Depending on where you live, you may have the right to access, correct, export or delete
+        your personal data, and to object to how it is used. Contact [privacy contact email] and we
+        will respond within [period].
+      </p>
+
+      <h2>Changes</h2>
+      <p>If we change this notice in a way that matters, we will tell you in the app before it takes effect.</p>
+    </div>
+  </article>
+@end

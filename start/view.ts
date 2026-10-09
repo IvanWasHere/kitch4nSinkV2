@@ -12,6 +12,7 @@ import env from '#start/env'
 import router from '@adonisjs/core/services/router'
 
 import plans from '#billing/plan_service'
+import registrationGate from '#auth/registration_gate'
 import storage from '#storage/disk_storage'
 import { hasUnlimitedLimit, planCardLines, type LimitKey, type PlanLimits } from '#config/plans'
 import { serverStatsEnabled } from '#start/dev_toolbar'
@@ -20,6 +21,13 @@ import { serverStatsEnabled } from '#start/dev_toolbar'
  * The product name, rendered in the logo, the <title> and transactional mail.
  */
 edge.global('appName', env.get('APP_NAME', 'Acme'))
+
+/**
+ * Whether new accounts can be created right now (plan §22.2) — what the
+ * public header's call to action follows. Asks core's gate, so the answer is
+ * *open* when no feature closes it.
+ */
+edge.global('registrationIsOpen', () => registrationGate.isOpen())
 
 /**
  * Whether the development toolbar is in this process (`#start/dev_toolbar`).

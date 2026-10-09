@@ -156,7 +156,24 @@
   }
 
   .marketing-header {
-    padding: 0 16px;
+    padding: 10px 12px 0;
+  }
+
+  .marketing-bar {
+    gap: 12px;
+    padding: 6px 6px 6px 12px;
+  }
+
+  /*
+   * In-page anchors are a convenience; at phone width the bar keeps the logo
+   * and the two actions, which is what has to fit.
+   */
+  .marketing-nav > a:not(.btn) {
+    display: none;
+  }
+
+  .marketing-bar .logo-text {
+    display: none;
   }
 
   .banner,
