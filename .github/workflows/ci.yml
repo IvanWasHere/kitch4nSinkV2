@@ -50,7 +50,11 @@ jobs:
     # actually runs on both engines, so this matrix is not optional.
     services:
       postgres:
-        image: postgres:17-alpine
+        # The official image, pulled from Amazon's public mirror of Docker
+        # Hub's library rather than from Docker Hub itself: GitHub's runners
+        # share IP addresses, so anonymous Docker Hub pulls regularly hit its
+        # rate limit and fail the job before a single test runs.
+        image: public.ecr.aws/docker/library/postgres:17-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
