@@ -6,6 +6,8 @@
 
   Props:
     title       — <title> text, suffixed with the application name
+    description — optional meta description (and its OpenGraph twin)
+    canonical   — optional absolute canonical URL
     bodyClass   — optional class on <body>
 --}}
 <!DOCTYPE html>
@@ -14,6 +16,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ $props.get('title') ? `${$props.get('title')} · ${appName}` : appName }}</title>
+    @if($props.get('description'))
+      <meta name="description" content="{{ $props.get('description') }}" />
+      <meta property="og:description" content="{{ $props.get('description') }}" />
+    @end
+    @if($props.get('canonical'))
+      <link rel="canonical" href="{{ $props.get('canonical') }}" />
+      <meta property="og:url" content="{{ $props.get('canonical') }}" />
+      <meta property="og:title" content="{{ $props.get('title') ?? appName }}" />
+      <meta property="og:type" content="{{ $props.get('ogType') ?? 'website' }}" />
+    @end
     {{--
       The nonce is what the Content-Security-Policy accepts (config/shield.ts).
       It matters in development, where Vite serves its client and HMR

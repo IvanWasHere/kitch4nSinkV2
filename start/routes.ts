@@ -11,6 +11,7 @@
 import app from '@adonisjs/core/services/app'
 import router from '@adonisjs/core/services/router'
 import { controllers } from '#generated/controllers'
+import { registerContentPageRoutes, registerContentPostRoutes } from '#modules/content/routes'
 
 import '#start/routes/auth'
 import '#start/routes/web'
@@ -42,3 +43,13 @@ router.get('/openapi.json', [controllers.docs.Docs, 'openapi']).as('docs.openapi
 if (app.inDev) {
   router.on('/styleguide').render('pages/dev/styleguide').as('styleguide')
 }
+
+/**
+ * Content (plan §22.6): the blog, then pages at the root.
+ *
+ * **Keep these last.** `/:slug` answers any one-segment path, so it must be
+ * registered after everything it could otherwise swallow. Removing the module
+ * is these two calls and the import.
+ */
+registerContentPostRoutes()
+registerContentPageRoutes()

@@ -171,6 +171,16 @@
             Runtime settings (plan §22.3) — admin-only, like Staff, and each
             item appears with the feature that registers its screen.
           --}}
+          {{--
+            The public site's posts and pages (plan §22.6) — admin only, and
+            present only while a module registers the screens.
+          --}}
+          @if(staff && staff.isAdmin && hasRoute('admin.content.index'))
+            <div class="nav-section-title">Content</div>
+            @!navItem({ href: urlFor('admin.content.index', { type: 'posts' }), icon: 'edit', label: 'Posts' })
+            @!navItem({ href: urlFor('admin.content.index', { type: 'pages' }), icon: 'folder', label: 'Pages' })
+          @end
+
           @if(staff && staff.isAdmin && hasRoute('admin.settings.registration'))
             <div class="nav-section-title">Settings</div>
             @!navItem({

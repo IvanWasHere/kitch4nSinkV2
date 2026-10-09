@@ -1119,6 +1119,17 @@ module deleted as written there, the suite passed (682, the pre-M12 count) and t
 **M12 done.** Next: M13 (Content CMS) or M14 (Landing).
 
 **M13 — Content CMS** *(§22.6)* — module `content`. Adds `markdown-it`.
+*In progress.* Built: `content_entries` + `content_slug_redirects`, `markdown-it@14.3.2`
+(`html: false`, scheme allowlist http/https/mailto/relative, `rel=noopener` on external links,
+rendered on read), slug rules (generated + disambiguated, reserved from the live route table +
+`assets`, unique across types, old slugs of other entries refused), admin CRUD at
+`/admin/content/{posts,pages}` behind `StaffPolicy.editPublicSite` (admin only) with
+publish/unpublish/archive/delete/preview, all audited; public `/posts` (10/page, id tie-break,
+past-last-page 404, numbered pages with `aria-current`), `/posts/:slug`, `/:slug` registered last,
+301s for old slugs only to live entries; description/canonical/OpenGraph props on the base layout;
+generic `.prose` CSS; *Blog* link in the marketing header. `start/routes.ts` is now a
+registration point. **Left for M13:** the `content:check` command (published pages a later route
+now shadows), `dev:seed` content, and the docs page + removal drill.
 
 **M14 — Landing** *(§22.7)* — module `landing`; extracts today's `pages/home.edge`.
 *Can swap with M13: the reserved-slug check reads the route table, so order does not matter.*

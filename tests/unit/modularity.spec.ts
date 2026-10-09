@@ -36,6 +36,7 @@ const REGISTRATION_POINTS = new Set([
   'start/routes/api.ts',
   'start/routes/admin.ts',
   'start/routes/auth.ts',
+  'start/routes.ts',
 
   /**
    * Not an import — lucid resolves this path itself, from

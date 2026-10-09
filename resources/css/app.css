@@ -46,6 +46,7 @@
 @import './components/usage.css';
 @import './components/charts.css';
 @import './components/marketing.css';
+@import './components/prose.css';
 
 /* Last of the components: owns the content column's spacing (see the file). */
 @import './components/sections.css';

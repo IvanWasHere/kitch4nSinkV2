@@ -1,0 +1,56 @@
+{{--
+  The public blog (plan §22.6): published posts, ten to a page.
+--}}
+@component('layouts/marketing', {
+  title: page > 1 ? `Blog — page ${page}` : 'Blog',
+  description: 'News and writing from the team.',
+  canonical,
+})
+  <div class="content-article">
+    <header class="content-article-header">
+      <h1 class="content-article-title">Blog</h1>
+    </header>
+
+    @if(posts.length)
+      <ul class="post-list">
+        @each(item in posts)
+          <li class="post-list-item">
+            <h2 class="post-list-title">
+              <a href="{{ item.post.path }}">{{ item.post.title }}</a>
+            </h2>
+            <div class="content-article-meta">
+              <time datetime="{{ item.post.publishedAt.toISO() }}">{{ item.post.publishedAt.toFormat('d LLLL yyyy') }}</time>
+            </div>
+            @if(item.summary)
+              <p class="post-list-summary">{{ item.summary }}</p>
+            @end
+          </li>
+        @end
+      </ul>
+
+      @if(lastPage > 1)
+        <nav aria-label="Blog pages">
+          <ul class="page-numbers">
+            @if(prevUrl)
+              <li><a href="{{ prevUrl }}" rel="prev">Previous</a></li>
+            @end
+            @each(one in pages)
+              <li>
+                <a
+                  href="{{ one.url }}"
+                  aria-label="Page {{ one.number }}"
+                  {{ one.number === page ? 'aria-current=page' : '' }}
+                >{{ one.number }}</a>
+              </li>
+            @end
+            @if(nextUrl)
+              <li><a href="{{ nextUrl }}" rel="next">Next</a></li>
+            @end
+          </ul>
+        </nav>
+      @end
+    @else
+      @!emptyState({ icon: 'edit', title: 'Nothing published yet' })
+    @end
+  </div>
+@end

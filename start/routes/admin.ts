@@ -22,6 +22,7 @@ import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import { adminLoginThrottle, twoFactorThrottle } from '#start/limiter'
 import { registerRegistrationAdminRoutes } from '#modules/registration_control/routes'
+import { registerContentAdminRoutes } from '#modules/content/routes'
 
 router
   .group(() => {
@@ -160,6 +161,11 @@ router
      * the allowlist; removing the module is these lines and the import.
      */
     registerRegistrationAdminRoutes()
+
+    /**
+     * Content (plan §22.6) — posts and pages, admin only.
+     */
+    registerContentAdminRoutes()
   })
   .prefix('/admin')
   .use([middleware.adminIpAllowlist(), middleware.staffAuth()])

@@ -1,0 +1,44 @@
+{{--
+  One post or page (plan §22.6).
+
+  `html` is the module's Markdown renderer's output — raw HTML in the source
+  is escaped and unsafe link schemes are dropped there (services/renderer.ts),
+  which is why this is the one triple-brace print in the module. Everything
+  else is escaped by Edge as usual.
+--}}
+@component('layouts/marketing', {
+  title: entry.title,
+  description,
+  canonical,
+  ogType: entry.isPost ? 'article' : 'website',
+})
+  @if(preview)
+    <div class="content-preview-banner">
+      Preview — {{ entry.isLive ? 'this is live' : 'not public yet' }}. Only staff can see this page.
+    </div>
+  @end
+
+  <article class="content-article">
+    <header class="content-article-header">
+      <h1 class="content-article-title">{{ entry.title }}</h1>
+      @if(entry.isPost && entry.publishedAt)
+        <div class="content-article-meta">
+          <time datetime="{{ entry.publishedAt.toISO() }}">{{ entry.publishedAt.toFormat('d LLLL yyyy') }}</time>
+        </div>
+      @end
+      @if(entry.isPost && entry.excerpt)
+        <p class="content-article-excerpt">{{ entry.excerpt }}</p>
+      @end
+    </header>
+
+    <div class="prose">
+      {{{ html }}}
+    </div>
+
+    @if(entry.isPost && hasRoute('posts.index'))
+      <p style="margin-top: 48px">
+        @!link({ route: 'posts.index', text: '← All posts' })
+      </p>
+    @end
+  </article>
+@end

@@ -3,7 +3,12 @@
   while signed out. Its only state is "is someone signed in", which decides
   whether the header offers Sign in or Dashboard.
 --}}
-@component('layouts/base', { title: $props.get('title') })
+@component('layouts/base', {
+  title: $props.get('title'),
+  description: $props.get('description'),
+  canonical: $props.get('canonical'),
+  ogType: $props.get('ogType'),
+})
   <header class="marketing-header">
     <a href="{{ urlFor('home') }}" class="logo" style="margin-bottom: 0">
       <span class="logo-icon">
@@ -15,6 +20,9 @@
     <nav class="marketing-nav">
       <a href="{{ urlFor('home') }}#features">Features</a>
       <a href="{{ urlFor('home') }}#pricing">Pricing</a>
+      @if(hasRoute('posts.index'))
+        <a href="{{ urlFor('posts.index') }}">Blog</a>
+      @end
       @if(auth.user)
         @!link({ route: 'dashboard.index', text: 'Dashboard', class: 'btn btn-primary btn-sm' })
       @else
