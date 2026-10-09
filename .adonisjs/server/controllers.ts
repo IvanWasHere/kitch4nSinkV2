@@ -71,4 +71,9 @@ export const controllers = {
     List: () => import('#app/modules/lists/controllers/list_controller'),
     Todo: () => import('#app/modules/lists/controllers/todo_controller'),
   },
+  registrationControl: {
+    RegistrationSettings: () => import('#app/modules/registration_control/controllers/registration_settings_controller'),
+    WaitingListAdmin: () => import('#app/modules/registration_control/controllers/waiting_list_admin_controller'),
+    WaitingList: () => import('#app/modules/registration_control/controllers/waiting_list_controller'),
+  },
 }

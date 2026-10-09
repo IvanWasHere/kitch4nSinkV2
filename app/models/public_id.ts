@@ -46,6 +46,7 @@ export const PUBLIC_ID_PREFIXES = {
   todo: 'tdo',
   supportTicket: 'tkt',
   supportMessage: 'msg',
+  waitingListEntry: 'wle',
 } as const
 
 export type PublicIdResource = keyof typeof PUBLIC_ID_PREFIXES

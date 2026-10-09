@@ -343,6 +343,23 @@ export class RateLimitSchema extends BaseModel {
   declare points: number
 }
 
+export class SiteSettingSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'key', 'updatedAt', 'updatedByStaffId', 'value'] as const
+  $columns = SiteSettingSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare key: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare updatedByStaffId: number | null
+  @jsonColumn()
+  declare value: unknown | null
+}
+
 export class SocialAccountSchema extends BaseModel {
   static $columns = ['accessToken', 'createdAt', 'id', 'provider', 'providerEmail', 'providerUserId', 'updatedAt', 'userId'] as const
   $columns = SocialAccountSchema.$columns
@@ -585,6 +602,33 @@ export class UserSchema extends BaseModel {
   declare twoFactorRecoveryCodes: string[] | null
   @encryptedColumn()
   declare twoFactorSecret: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class WaitingListEntrySchema extends BaseModel {
+  static $columns = ['confirmationExpiresAt', 'confirmationTokenHash', 'confirmedAt', 'convertedAt', 'createdAt', 'doubleOptInRequired', 'email', 'id', 'publicId', 'status', 'updatedAt'] as const
+  $columns = WaitingListEntrySchema.$columns
+  @column.dateTime()
+  declare confirmationExpiresAt: DateTime | null
+  @column()
+  declare confirmationTokenHash: string | null
+  @column.dateTime()
+  declare confirmedAt: DateTime | null
+  @column.dateTime()
+  declare convertedAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @booleanColumn()
+  declare doubleOptInRequired: boolean
+  @column()
+  declare email: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare publicId: string
+  @column()
+  declare status: 'pending_confirmation' | 'confirmed' | 'converted' | 'cancelled'
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

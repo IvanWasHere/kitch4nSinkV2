@@ -1,0 +1,33 @@
+{{--
+  The public waiting list (plan §22.5). Shown in place of the signup form
+  while registration is closed.
+--}}
+@component('layouts/auth', {
+  title: 'Join the waiting list',
+  heading: 'Join the waiting list',
+  subtitle: 'We are not creating new accounts right now',
+  back: { route: 'auth.session.create', text: 'Back to sign in' },
+})
+  <div class="info-box">
+    Leave your email and we will let you know when registration opens. If you already have an account, sign in as usual.
+  </div>
+  @form({ route: 'waitlist.store', method: 'POST' })
+    @field.root({ name: 'email' })
+      @!field.label({ text: 'Email address' })
+      @!input.control({
+        type: 'email',
+        placeholder: 'you@example.com',
+        autocomplete: 'email',
+      })
+      @!field.error()
+    @end
+    @!button({ text: 'Join the waiting list', type: 'submit', block: true })
+  @end
+
+  <div class="divider">or</div>
+  @!link({
+    route: 'auth.session.create',
+    text: 'Already have an account? Sign in',
+    class: 'btn btn-outline btn-block',
+  })
+@end

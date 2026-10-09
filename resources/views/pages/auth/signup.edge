@@ -4,67 +4,80 @@
   subtitle: 'Your account and your organisation are created together',
   back: { route: 'auth.session.create', text: 'Back to sign in' },
 })
-  @form({ route: 'auth.register.store', method: 'POST' })
-    @field.root({ name: 'fullName' })
-      @!field.label({ text: 'Full name' })
-      @!input.control({ placeholder: 'Jane Cooper', autocomplete: 'name' })
-      @!field.error()
-    @end
+  {{-- Registration closed and no waiting list to offer (plan §22.2). --}}
+  @if(registrationClosed)
+    <div class="info-box info-box-warning">
+      We are not creating new accounts right now. If you already have one, sign in as usual.
+    </div>
 
-    @field.root({ name: 'organizationName' })
-      @!field.label({ text: 'Workspace name' })
-      @!input.control({ placeholder: 'Acme', autocomplete: 'organization' })
-      <span class="field-hint">Optional — we will name it after you if you leave it blank.</span>
-      @!field.error()
-    @end
+    @!link({
+      route: 'auth.session.create',
+      text: 'Sign in',
+      class: 'btn btn-primary btn-block',
+    })
+  @else
+    @form({ route: 'auth.register.store', method: 'POST' })
+      @field.root({ name: 'fullName' })
+        @!field.label({ text: 'Full name' })
+        @!input.control({ placeholder: 'Jane Cooper', autocomplete: 'name' })
+        @!field.error()
+      @end
 
-    @field.root({ name: 'email' })
-      @!field.label({ text: 'Email address' })
-      @!input.control({ type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })
-      @!field.error()
-    @end
+      @field.root({ name: 'organizationName' })
+        @!field.label({ text: 'Workspace name' })
+        @!input.control({ placeholder: 'Acme', autocomplete: 'organization' })
+        <span class="field-hint">Optional — we will name it after you if you leave it blank.</span>
+        @!field.error()
+      @end
 
-    @field.root({ name: 'password' })
-      @!field.label({ text: 'Password' })
-      <div x-data="passwordStrength">
-        <div class="input-wrap">
-          @!input.control({
-            type: 'password',
-            placeholder: 'At least 12 characters',
-            autocomplete: 'new-password',
-            'x-model': 'value',
-            'x-bind:type': 'type',
-          })
-          <button type="button" class="pw-toggle" @click="toggle" x-text="toggleLabel">Show</button>
+      @field.root({ name: 'email' })
+        @!field.label({ text: 'Email address' })
+        @!input.control({ type: 'email', placeholder: 'you@example.com', autocomplete: 'email' })
+        @!field.error()
+      @end
+
+      @field.root({ name: 'password' })
+        @!field.label({ text: 'Password' })
+        <div x-data="passwordStrength">
+          <div class="input-wrap">
+            @!input.control({
+              type: 'password',
+              placeholder: 'At least 12 characters',
+              autocomplete: 'new-password',
+              'x-model': 'value',
+              'x-bind:type': 'type',
+            })
+            <button type="button" class="pw-toggle" @click="toggle" x-text="toggleLabel">Show</button>
+          </div>
+          <div class="strength-bar">
+            <div class="strength-fill" :data-score="score" data-score="0"></div>
+          </div>
+          <div class="strength-text" x-text="label"></div>
         </div>
-        <div class="strength-bar">
-          <div class="strength-fill" :data-score="score" data-score="0"></div>
-        </div>
-        <div class="strength-text" x-text="label"></div>
-      </div>
-      @!field.error()
+        @!field.error()
+      @end
+
+      @field.root({ name: 'passwordConfirmation' })
+        @!field.label({ text: 'Confirm password' })
+        @!input.control({
+          type: 'password',
+          placeholder: 'Confirm your password',
+          autocomplete: 'new-password',
+        })
+        @!field.error()
+      @end
+
+      @!button({ text: 'Create account', type: 'submit', block: true })
     @end
 
-    @field.root({ name: 'passwordConfirmation' })
-      @!field.label({ text: 'Confirm password' })
-      @!input.control({
-        type: 'password',
-        placeholder: 'Confirm your password',
-        autocomplete: 'new-password',
-      })
-      @!field.error()
-    @end
+    @!auth.socialButtons({ providers: socialProviders, action: 'Sign up' })
 
-    @!button({ text: 'Create account', type: 'submit', block: true })
+    <div class="divider">or</div>
+
+    @!link({
+      route: 'auth.session.create',
+      text: 'Already have an account? Sign in',
+      class: 'btn btn-outline btn-block',
+    })
   @end
-
-  @!auth.socialButtons({ providers: socialProviders, action: 'Sign up' })
-
-  <div class="divider">or</div>
-
-  @!link({
-    route: 'auth.session.create',
-    text: 'Already have an account? Sign in',
-    class: 'btn btn-outline btn-block',
-  })
 @end

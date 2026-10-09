@@ -1,0 +1,36 @@
+{{--
+  Where the confirmation link lands (plan §22.5). None of the four outcomes
+  names the address — the link is the only thing the visitor has shown us.
+--}}
+@component('layouts/auth', { title: 'Waiting list', heading: 'Waiting list' })
+  @if(outcome === 'confirmed')
+    <div class="info-box info-box-success">
+      You are on the waiting list. We will email you when registration opens.
+    </div>
+  @elseif(outcome === 'already_confirmed')
+    <div class="info-box">This address is already confirmed. There is nothing more to do.</div>
+  @elseif(outcome === 'expired')
+    <div class="info-box info-box-warning">
+      That link has expired. Join again with the same address and we will send you a new one.
+    </div>
+  @else
+    <div class="info-box info-box-warning">
+      That link is not valid. Check that you copied all of it, or join again to get a new one.
+    </div>
+  @end
+  @if(outcome === 'expired' || outcome === 'invalid')
+    @if(hasRoute('waitlist.create'))
+      @!link({
+        route: 'waitlist.create',
+        text: 'Join the waiting list',
+        class: 'btn btn-primary btn-block',
+      })
+    @end
+  @else
+    @!link({
+      route: 'auth.session.create',
+      text: 'Go to sign in',
+      class: 'btn btn-outline btn-block',
+    })
+  @end
+@end

@@ -15,6 +15,10 @@ import {
   twoFactorThrottle,
   verificationResendThrottle,
 } from '#start/limiter'
+import {
+  registerWaitingListGuestRoutes,
+  registerWaitingListTokenRoutes,
+} from '#modules/registration_control/routes'
 
 /**
  * Signed-out flows.
@@ -66,6 +70,13 @@ router
     router
       .get('/auth/:provider/callback', [controllers.auth.SocialAuth, 'callback'])
       .as('auth.social.callback')
+
+    /**
+     * Registration Control's waiting list (plan §22.5) — where a closed
+     * signup sends people. From the module, so removing it is this line, the
+     * one below, and the import.
+     */
+    registerWaitingListGuestRoutes()
   })
   /**
    * The address limit wraps the whole group, GETs included (`start/limiter.ts`):
@@ -104,6 +115,8 @@ router
     router
       .get('/verify-email/:token', [controllers.auth.EmailVerification, 'verify'])
       .as('auth.verify_email.verify')
+
+    registerWaitingListTokenRoutes()
   })
   .use(authAddressThrottle)
 

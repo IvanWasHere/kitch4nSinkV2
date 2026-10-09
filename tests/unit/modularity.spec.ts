@@ -31,8 +31,11 @@ const REGISTRATION_POINTS = new Set([
   'start/api.ts',
   'start/jobs.ts',
   'start/seeders.ts',
+  'start/settings.ts',
   'start/routes/web.ts',
   'start/routes/api.ts',
+  'start/routes/admin.ts',
+  'start/routes/auth.ts',
 
   /**
    * Not an import — lucid resolves this path itself, from
@@ -121,6 +124,39 @@ test.group('Modularity', () => {
         `${path} is listed as a registration point but reaches no module`
       )
     }
+  })
+
+  /**
+   * Modules depend inward on core, never sideways on each other (plan §22.4).
+   *
+   * A module that imports another cannot be removed on its own, which is the
+   * one promise every module makes. Where two need to share something — Landing
+   * asking whether signup is open, Privacy collecting another module's data —
+   * the shared thing belongs in core, as a registry the other one fills.
+   */
+  test('no module imports another module', async ({ assert }) => {
+    const offenders: string[] = []
+    const modulesRoot = join('app', 'modules')
+
+    for (const entry of await readdir(modulesRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory()) {
+        continue
+      }
+
+      const own = new RegExp(`['"]#modules/${entry.name}/`)
+
+      for (const path of await sourceFiles(join(modulesRoot, entry.name))) {
+        const source = await readFile(path, 'utf8')
+
+        for (const line of source.split('\n')) {
+          if (MODULE_IMPORT.test(line) && !own.test(line)) {
+            offenders.push(`${path}: ${line.trim()}`)
+          }
+        }
+      }
+    }
+
+    assert.deepEqual(offenders, [], 'a module reaches into another — share it through core instead')
   })
 
   /**

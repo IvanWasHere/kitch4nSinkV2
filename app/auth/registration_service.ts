@@ -4,12 +4,18 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import User from '#models/user'
 import Organization from '#models/organization'
 import { generateOrganizationSlug } from '#auth/slug'
+import registrationGate from '#auth/registration_gate'
 
 export interface RegistrationInput {
   fullName: string | null
   email: string
   password?: string | null
   organizationName?: string | null
+
+  /**
+   * Which door they came in by — only so a refusal is logged with it.
+   */
+  via?: 'signup' | 'social'
 }
 
 /**
@@ -19,6 +25,12 @@ export interface RegistrationInput {
  * organisation, and it must never be observable: the two inserts run in a
  * single transaction, so a failure part-way leaves nothing behind rather than
  * an orphaned user with no tenant to belong to.
+ *
+ * It is also where the registration gate is enforced (plan §22.2). Signup and
+ * first-time social sign-in both arrive here, so a check here covers both and
+ * a check anywhere earlier would leave one open. Accepting an invitation does
+ * **not** come through here, deliberately: an owner adding a colleague is not
+ * public registration, and seats already limit it.
  */
 export class RegistrationService {
   /**
@@ -30,6 +42,8 @@ export class RegistrationService {
     input: RegistrationInput,
     client?: TransactionClientContract
   ): Promise<{ user: User; organization: Organization }> {
+    await registrationGate.assertOpen({ via: input.via ?? 'signup' })
+
     const email = input.email.trim().toLowerCase()
     const organizationName = (
       input.organizationName || this.defaultOrganizationName(input, email)
