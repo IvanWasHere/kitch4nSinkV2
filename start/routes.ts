@@ -12,6 +12,7 @@ import app from '@adonisjs/core/services/app'
 import router from '@adonisjs/core/services/router'
 import { controllers } from '#generated/controllers'
 import { registerContentPageRoutes, registerContentPostRoutes } from '#modules/content/routes'
+import { registerLandingRoutes } from '#modules/landing/routes'
 
 import '#start/routes/auth'
 import '#start/routes/web'
@@ -19,7 +20,20 @@ import '#start/routes/billing'
 import '#start/routes/api'
 import '#start/routes/admin'
 
-router.on('/').render('pages/home').as('home')
+/**
+ * The front door (plan §22.7). Core's own `/` only sends people inward — to
+ * the workspace, or to sign in — and is named `home` because every layout and
+ * error page links to that name.
+ *
+ * The Landing module takes this route over and puts the marketing page and the
+ * legal pages in its place. Removing the module is deleting that call and its
+ * import; this fallback is then what answers.
+ *
+ * Exported only so that it is not an unused variable once that call is gone —
+ * removal stays a deletion, with nothing to rewrite.
+ */
+export const home = router.get('/', [controllers.Home, 'index']).as('home')
+registerLandingRoutes({ replacing: home })
 
 /**
  * Liveness and readiness (plan §16). Unauthenticated by necessity — the

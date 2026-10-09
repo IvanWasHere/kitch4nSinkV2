@@ -1,0 +1,409 @@
+{{--
+  The marketing home page (plan §22.7) — owned by the Landing module.
+
+  Styles are in `resources/css/landing.css`, its own Vite entry, pushed into
+  the head from here so no other page loads them. Every colour is a token, so
+  the page is the application's blue.
+
+  The calls to action follow the registration gate: sign up while it is
+  open, the waiting list while it is closed and one exists, and just sign in
+  when neither is on offer. Read from core's gate, never from Registration
+  Control.
+--}}
+@let(primaryCta = signedIn
+  ? { href: urlFor('dashboard.index'), text: 'Go to your workspace' }
+  : registrationOpen
+    ? { href: urlFor('auth.register.create'), text: 'Start for free' }
+    : waitingList
+      ? { href: urlFor('waitlist.create'), text: 'Join the waiting list' }
+      : { href: urlFor('auth.session.create'), text: 'Sign in' })
+
+@pushOnceTo('head')
+  @vite(['resources/css/landing.css'], { nonce: cspNonce })
+@end
+
+@component('layouts/marketing', {
+  title: 'Multi-tenant SaaS starter',
+  description: 'A multi-tenant SaaS starter: organisations, plan-gated limits, subscriptions, background jobs and an organisation API.',
+})
+  @slot('nav')
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+  @end
+
+  <div class="lp">
+    {{-- Hero --}}
+    <section class="lp-hero">
+      <div class="lp-hero-grid" aria-hidden="true"></div>
+
+      <div class="lp-container lp-hero-inner">
+        <span class="lp-badge"><span class="lp-badge-dot"></span>SQLite locally · Postgres in production</span>
+
+        <h1 class="lp-display">
+          Ship a billable SaaS,
+          <span class="lp-accent">not scaffolding.</span>
+        </h1>
+
+        <p class="lp-lead">
+          Workspaces, plans with limits that hold, subscriptions, background jobs and an organisation
+          API — already built, already tested.
+        </p>
+
+        <div class="lp-actions">
+          <a href="{{ primaryCta.href }}" class="lp-btn lp-btn-primary">
+            {{ primaryCta.text }}
+            @!icon({ name: 'arrowLeft', class: 'lp-btn-arrow' })
+          </a>
+          @if(!signedIn && (registrationOpen || waitingList))
+            <a href="{{ urlFor('auth.session.create') }}" class="lp-btn lp-btn-ghost">Sign in</a>
+          @else
+            <a href="#features" class="lp-btn lp-btn-ghost">See what is inside</a>
+          @end
+        </div>
+
+        <p class="lp-meta">
+          <span>Multi-tenant</span><span>Plan-gated</span><span>Audited</span>
+        </p>
+
+        {{-- A drawing of the product, not a screenshot — it is plain markup. --}}
+        <div class="lp-preview" aria-hidden="true">
+          <div class="lp-window">
+            <div class="lp-window-bar">
+              <span class="lp-dots"><i></i><i></i><i></i></span>
+              <span class="lp-window-url">app/dashboard</span>
+              <span class="lp-window-tag">Pro plan</span>
+            </div>
+            <div class="lp-window-body">
+              <aside class="lp-mock-nav">
+                <span class="lp-mock-item is-active"></span>
+                <span class="lp-mock-item"></span>
+                <span class="lp-mock-item"></span>
+                <span class="lp-mock-item"></span>
+                <span class="lp-mock-item is-short"></span>
+              </aside>
+              <div class="lp-mock-main">
+                <div class="lp-mock-stats">
+                  <div class="lp-mock-stat"><small>Members</small><strong>8</strong></div>
+                  <div class="lp-mock-stat"><small>Open todos</small><strong>142</strong></div>
+                  <div class="lp-mock-stat"><small>API calls today</small><strong>3,481</strong></div>
+                </div>
+                <div class="lp-mock-meters">
+                  <div class="lp-mock-meter"><span>Lists</span><b>18 / 25</b><div><i style="width: 72%"></i></div></div>
+                  <div class="lp-mock-meter is-warn"><span>Seats</span><b>9 / 10</b><div><i style="width: 90%"></i></div></div>
+                  <div class="lp-mock-meter"><span>Storage</span><b>1.2 / 5 GB</b><div><i style="width: 24%"></i></div></div>
+                </div>
+                <div class="lp-mock-rows">
+                  <div><span class="lp-mock-check is-done"></span><em>Invite the design team</em><small>Sam</small></div>
+                  <div><span class="lp-mock-check"></span><em>Connect the billing webhook</em><small>Jane</small></div>
+                  <div><span class="lp-mock-check"></span><em>Rotate the staging API key</em><small>Alex</small></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {{-- Built on --}}
+    <section class="lp-strip">
+      <p class="lp-eyebrow">Built on tools you already trust</p>
+      <ul class="lp-chips">
+        <li>AdonisJS</li>
+        <li>TypeScript</li>
+        <li>Edge</li>
+        <li>Alpine.js</li>
+        <li>SQLite</li>
+        <li>Postgres</li>
+        <li>Creem</li>
+        <li>Resend</li>
+        <li>Cloudflare R2</li>
+      </ul>
+    </section>
+
+    {{-- Before / after --}}
+    <section class="lp-section">
+      <div class="lp-container">
+        <header class="lp-heading">
+          <span class="lp-pill">See the difference</span>
+          <h2 class="lp-h2">From a blank repo <span class="lp-accent">→ a product that bills</span></h2>
+          <p class="lp-sub">Everything on the left is weeks of work before your first customer. It is already done.</p>
+        </header>
+
+        <div class="lp-compare">
+          <div class="lp-compare-side">
+            <div class="lp-compare-bar">
+              <span class="lp-dots"><i></i><i></i><i></i></span>
+              <code>TODO.md</code>
+            </div>
+            <ul class="lp-todo">
+              <li>Sign-up, verification, password reset</li>
+              <li>Two-factor and recovery codes</li>
+              <li>Organisations, roles, invitations</li>
+              <li>Plans, limits and upgrade prompts</li>
+              <li>Payment webhooks, retries, idempotency</li>
+              <li>A job queue that survives a restart</li>
+              <li>API keys, scopes and rate limits</li>
+              <li>A back office and an audit trail</li>
+            </ul>
+          </div>
+          <div class="lp-compare-side is-after">
+            <div class="lp-compare-bar">
+              <span class="lp-compare-tag">
+                @!icon({ name: 'check' })
+              Done</span>
+            </div>
+            <ul class="lp-done">
+              <li>
+                @!icon({ name: 'check' })
+              <span>Sessions, OAuth, TOTP, rate-limited</span></li>
+              <li>
+                @!icon({ name: 'check' })
+              <span>Tenant isolation, tested endpoint by endpoint</span></li>
+              <li>
+                @!icon({ name: 'check' })
+              <span>Owner and member roles, seat-counted invites</span></li>
+              <li>
+                @!icon({ name: 'check' })
+              <span>Limits enforced inside the insert transaction</span></li>
+              <li>
+                @!icon({ name: 'check' })
+              <span>Signed, deduplicated, replayable webhooks</span></li>
+              <li>
+                @!icon({ name: 'check' })
+              <span>A database-backed queue — no Redis</span></li>
+              <li>
+                @!icon({ name: 'check' })
+              <span>Prefixed keys, scopes, a 402 that explains itself</span></li>
+              <li>
+                @!icon({ name: 'check' })
+              <span>Staff roles, impersonation, every action logged</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {{-- Split: pitch + numbers --}}
+    <section class="lp-section lp-split-section">
+      <div class="lp-container lp-split">
+        <div class="lp-split-copy">
+          <h2 class="lp-display lp-display-sm">Ship the product,<br />not the plumbing</h2>
+          <p class="lp-lead lp-lead-left">
+            Every third-party service sits behind an interface you own. Swap the payment provider,
+            the mailer or the file store with a config change and one new class — never a rewrite.
+          </p>
+          <div class="lp-actions lp-actions-left">
+            <a href="{{ primaryCta.href }}" class="lp-btn lp-btn-primary">{{ primaryCta.text }}</a>
+            @if(hasRoute('docs.index'))
+              <a href="{{ urlFor('docs.index') }}" class="lp-btn lp-btn-ghost">Read the API docs ↗</a>
+            @end
+          </div>
+        </div>
+
+        <div class="lp-bento">
+          <div class="lp-stat">
+            <span class="lp-stat-icon">
+              @!icon({ name: 'layers' })
+            </span>
+            <strong>2<small> databases</small></strong>
+            <span>One code path. CI runs everything on SQLite and on Postgres.</span>
+          </div>
+          <div class="lp-stat">
+            <span class="lp-stat-icon">
+              @!icon({ name: 'clock' })
+            </span>
+            <strong>0<small> Redis</small></strong>
+            <span>Jobs live in your database, so they survive restarts and show up in the admin.</span>
+          </div>
+          <div class="lp-stat lp-stat-wide">
+            <span class="lp-stat-icon">
+              @!icon({ name: 'shield' })
+            </span>
+            <div>
+              <strong>100<small>% audited</small></strong>
+              <span>Every staff action — plan overrides, impersonation, refunds — leaves a record support can read months later.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {{-- Features --}}
+    <section class="lp-section lp-muted" id="features">
+      <div class="lp-container">
+        <header class="lp-heading">
+          <span class="lp-pill">Features</span>
+          <h2 class="lp-h2">Everything you need. Nothing you don't.</h2>
+          <p class="lp-sub">The parts every SaaS rebuilds, built once and properly.</p>
+        </header>
+
+        <div class="lp-features">
+          <article class="lp-card lp-card-wide">
+            <span class="lp-icon">
+              @!icon({ name: 'users' })
+            </span>
+            <h3>Organisations, not just users</h3>
+            <p>Every row belongs to a workspace and every query filters on it. Invitations, roles and ownership transfer included.</p>
+          </article>
+          <article class="lp-card">
+            <span class="lp-card-flag">Core</span>
+            <span class="lp-icon">
+              @!icon({ name: 'trendingUp' })
+            </span>
+            <h3>Limits that hold under load</h3>
+            <p>Seats and quotas are checked inside the same transaction as the insert, so two parallel requests cannot slip past a cap.</p>
+          </article>
+          <article class="lp-card">
+            <span class="lp-icon">
+              @!icon({ name: 'creditCard' })
+            </span>
+            <h3>Billing behind an interface</h3>
+            <p>Checkout, portal, dunning and a webhook ledger that makes retries harmless.</p>
+          </article>
+          <article class="lp-card lp-card-wide">
+            <span class="lp-icon">
+              @!icon({ name: 'key' })
+            </span>
+            <h3>An organisation API</h3>
+            <p>Scoped, prefixed keys, cursor pagination, a published OpenAPI document and errors a client can act on.</p>
+          </article>
+          <article class="lp-card">
+            <span class="lp-icon">
+              @!icon({ name: 'shield' })
+            </span>
+            <h3>Two-factor and OAuth</h3>
+            <p>TOTP with recovery codes, Google and GitHub sign-in, and rate limits on every door.</p>
+          </article>
+          <article class="lp-card">
+            <span class="lp-icon">
+              @!icon({ name: 'upload' })
+            </span>
+            <h3>Files with quotas</h3>
+            <p>Uploads sniffed for their real type, counted against the plan and served by signed URL.</p>
+          </article>
+          <article class="lp-card">
+            <span class="lp-icon">
+              @!icon({ name: 'lifebuoy' })
+            </span>
+            <h3>Support and announcements</h3>
+            <p>Tickets with attachments, answered from the back office, and one-way announcements by plan.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    {{-- Pricing --}}
+    <section class="lp-section" id="pricing">
+      <div class="lp-container">
+        <header class="lp-heading">
+          <h2 class="lp-h2">Plans that grow with your <span class="lp-boxed">team</span></h2>
+          <p class="lp-sub">Simple monthly tiers. Upgrade, downgrade or cancel at any time — nothing is ever deleted on a downgrade.</p>
+        </header>
+
+        <div class="lp-plans">
+          @each(entry in plans)
+            <article class="lp-plan {{ entry.featured ? 'is-featured' : '' }}">
+              @if(entry.featured)
+                <span class="lp-card-flag">Most popular</span>
+              @end
+              <h3>{{ entry.plan.name }}</h3>
+              <p class="lp-plan-desc">
+                {{ entry.plan.priceCents === 0
+                  ? 'Everything you need to try it with a couple of people.'
+                  : planHasUnlimited(entry.plan.limits)
+                    ? 'For teams that have stopped counting.'
+                    : 'For a team that has outgrown the free caps.' }}
+              </p>
+              <p class="lp-plan-price">
+                <strong>${{ (entry.plan.priceCents / 100).toFixed(0) }}</strong><span>/month</span>
+              </p>
+              <a href="{{ primaryCta.href }}" class="lp-btn {{ entry.featured ? 'lp-btn-primary' : 'lp-btn-dark' }} lp-btn-block">
+                {{ registrationOpen && !signedIn && entry.plan.priceCents > 0 ? 'Get started' : primaryCta.text }}
+              </a>
+              <ul class="lp-plan-list">
+                @each(line in planCardLines(entry.plan.limits))
+                  <li>
+                    @!icon({ name: 'check' })
+                  <span>{{ line }}</span></li>
+                @end
+                <li class="{{ entry.plan.features.includes('api') ? '' : 'is-off' }}">
+                  @!icon({ name: entry.plan.features.includes('api') ? 'check' : 'x' })
+                  <span>API access</span>
+                </li>
+                <li class="{{ entry.plan.features.includes('prioritySupport') ? '' : 'is-off' }}">
+                  @!icon({ name: entry.plan.features.includes('prioritySupport') ? 'check' : 'x' })
+                  <span>Priority support</span>
+                </li>
+              </ul>
+            </article>
+          @end
+        </div>
+      </div>
+    </section>
+
+    {{-- FAQ — <details>, so it opens without JavaScript --}}
+    <section class="lp-section lp-muted" id="faq">
+      <div class="lp-container lp-narrow">
+        <header class="lp-heading">
+          <h2 class="lp-h2">Common questions</h2>
+          <p class="lp-sub">Honest answers to what people ask before trying it.</p>
+        </header>
+
+        <div class="lp-faq">
+          <details open>
+            <summary>Do I need Docker or Redis to run it?</summary>
+            <p>No. Clone it, install, migrate and start. It runs on SQLite locally and uses its own database for the job queue, so there is nothing else to start.</p>
+          </details>
+          <details>
+            <summary>What happens when a customer goes over their plan?</summary>
+            <p>Nothing is deleted. Existing work stays readable and editable; only creating more is blocked, with a clear message and an upgrade link — in the app and in the API.</p>
+          </details>
+          <details>
+            <summary>Can I use a different payment provider?</summary>
+            <p>Yes. Payments sit behind an interface. Creem is the provider that ships; adding another is one new class and a config change.</p>
+          </details>
+          <details>
+            <summary>Is the demo domain my product?</summary>
+            <p>No — the shared to-do lists are there to show limits, the API and the back office working end to end. They live in one folder and come out in about twenty minutes.</p>
+          </details>
+          <details>
+            <summary>How is one customer kept from seeing another's data?</summary>
+            <p>Every tenant-owned row carries its organisation, every query filters on it, and a dedicated test suite tries each endpoint as the wrong tenant.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    {{-- Closing call to action --}}
+    <section class="lp-section lp-cta">
+      <div class="lp-container lp-narrow">
+        <span class="lp-badge">
+          @!icon({ name: 'clock' })
+        From clone to running in minutes</span>
+        <h2 class="lp-display lp-display-sm">
+          Stop rebuilding the basics.
+          <span class="lp-accent">Start on your product.</span>
+        </h2>
+        <p class="lp-lead">Workspaces, billing, limits and an API on day one. Free to start.</p>
+        <div class="lp-actions">
+          <a href="{{ primaryCta.href }}" class="lp-btn lp-btn-primary lp-btn-lg">
+            {{ primaryCta.text }}
+            @!icon({ name: 'arrowLeft', class: 'lp-btn-arrow' })
+          </a>
+        </div>
+        <p class="lp-meta lp-meta-icons">
+          <span>
+            @!icon({ name: 'shield' })
+          Tenant isolation tested</span>
+          <span>
+            @!icon({ name: 'layers' })
+          SQLite and Postgres</span>
+          <span>
+            @!icon({ name: 'check' })
+          No card to start</span>
+        </p>
+      </div>
+    </section>
+  </div>
+@end

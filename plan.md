@@ -1134,7 +1134,14 @@ registration point. **Also built:** the shadowed-page warning on the admin Pages
 archived, two pages and a redirect); `docs/content.md` with removal steps verified by a drill
 (720 tests, the pre-M13 count; typecheck and lint clean). Next: M14 (Landing).
 
-**M14 — Landing** *(§22.7)* — module `landing`; extracts today's `pages/home.edge`.
+**M14 — Landing** *(§22.7)* — module `landing`; extracts today's `pages/home.edge`. — **built**.
+`/` handover verified: core registers the `home` fallback (`HomeController`, redirects to the
+dashboard or sign-in) and passes it to `registerLandingRoutes({ replacing })`, which calls
+`markAsDeleted()` on it and registers its own `/` as `home` — the router skips deleted routes at
+commit, and registering a duplicate pattern would throw. `/privacy`, `/terms` (template copy,
+visibly marked), footer links, signup terms line, CTA from the gate via a core `registrationIsOpen()`
+view global, a `nav` slot on the marketing layout (the dead *Pricing* anchor is gone). Removal drill:
+776 tests incl. the fallback branch of `tests/functional/home.spec.ts`; typecheck/lint clean.
 *Can swap with M13: the reserved-slug check reads the route table, so order does not matter.*
 
 **M15 — Privacy data requests** *(§22.8)* — module `privacy`. Adds a zip writer.
@@ -1812,10 +1819,9 @@ code-defined `privacy.edge` and `terms.edge` (Q7i) with placeholder copy clearly
 - Module removed: core's fallback registers `GET /` as `home` → redirect to `dashboard.index` when
   signed in, else `auth.session.create`.
 
-Core registers the fallback only if no `home` route was registered. **To verify at the start of
-M14:** whether the v7 router exposes pending routes before commit (`router.routes` /
-`toJSON()`); if not, the fallback moves to a `HomeController` that redirects unless a landing view
-has been registered — same behaviour, one more registry.
+*As built:* the v7 router does not expose pending routes (`routes` is protected, `toJSON()` is
+empty before commit) and throws on a duplicate pattern, so core registers the fallback first and
+passes the route object to the module, which marks it deleted and registers its own `home`.
 
 **CTA.** `registrationGate.isOpen()` → "Create an account"; closed and `hasRoute('waitlist.create')`
 → "Join the waiting list"; closed with no waitlist → sign-in only. Footer links to legal pages via

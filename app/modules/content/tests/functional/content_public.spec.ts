@@ -224,7 +224,7 @@ test.group('Content — public', (group) => {
   })
 
   test('the marketing header links to the blog', async ({ client }) => {
-    const response = await client.get('/')
+    const response = await client.get('/posts')
 
     response.assertTextIncludes('href="/posts"')
   })

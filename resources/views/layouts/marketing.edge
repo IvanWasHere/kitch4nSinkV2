@@ -1,7 +1,15 @@
 {{--
-  Public site: landing, pricing, legal, and the error pages that are reachable
-  while signed out. Its only state is "is someone signed in", which decides
-  whether the header offers Sign in or Dashboard.
+  Public site: landing, legal, blog, and the error pages that are reachable
+  while signed out.
+
+  The header offers Dashboard to somebody signed in. Otherwise it offers Sign
+  in, plus whatever the registration gate allows: Get started while signup is
+  open, the waiting list while it is closed and one exists.
+
+  Props:
+    title, description, canonical, ogType — passed to the base layout
+  Slots:
+    nav — extra header links for one page (the landing page's in-page anchors)
 --}}
 @component('layouts/base', {
   title: $props.get('title'),
@@ -10,26 +18,36 @@
   ogType: $props.get('ogType'),
 })
   <header class="marketing-header">
-    <a href="{{ urlFor('home') }}" class="logo" style="margin-bottom: 0">
-      <span class="logo-icon">
-        @!icon({ name: 'layers' })
-      </span>
-      <span class="logo-text">{{ appName }}</span>
-    </a>
+    <div class="marketing-bar">
+      <a href="{{ urlFor('home') }}" class="logo">
+        <span class="logo-icon">
+          @!icon({ name: 'layers' })
+        </span>
+        <span class="logo-text">{{ appName }}</span>
+      </a>
 
-    <nav class="marketing-nav">
-      <a href="{{ urlFor('home') }}#features">Features</a>
-      <a href="{{ urlFor('home') }}#pricing">Pricing</a>
-      @if(hasRoute('posts.index'))
-        <a href="{{ urlFor('posts.index') }}">Blog</a>
-      @end
-      @if(auth.user)
-        @!link({ route: 'dashboard.index', text: 'Dashboard', class: 'btn btn-primary btn-sm' })
-      @else
-        @!link({ route: 'auth.session.create', text: 'Sign in' })
-        @!link({ route: 'auth.register.create', text: 'Get started', class: 'btn btn-primary btn-sm' })
-      @end
-    </nav>
+      <nav class="marketing-nav" aria-label="Site">
+        @if($slots.nav)
+          {{{ await $slots.nav() }}}
+        @end
+        @if(hasRoute('posts.index'))
+          <a href="{{ urlFor('posts.index') }}">Blog</a>
+        @end
+      </nav>
+
+      <div class="marketing-actions">
+        @if(auth.user)
+          @!link({ route: 'dashboard.index', text: 'Dashboard', class: 'btn btn-primary btn-sm' })
+        @else
+          @!link({ route: 'auth.session.create', text: 'Sign in', class: 'btn btn-outline btn-sm' })
+          @if(await registrationIsOpen())
+            @!link({ route: 'auth.register.create', text: 'Get started', class: 'btn btn-primary btn-sm' })
+          @elseif(hasRoute('waitlist.create'))
+            @!link({ route: 'waitlist.create', text: 'Join the waiting list', class: 'btn btn-primary btn-sm' })
+          @end
+        @end
+      </div>
+    </div>
   </header>
 
   <main class="marketing-main">
@@ -37,6 +55,28 @@
   </main>
 
   <footer class="marketing-footer">
-    &copy; {{ new Date().getFullYear() }} {{ appName }}
+    <a href="{{ urlFor('home') }}" class="logo">
+      <span class="logo-icon">
+        @!icon({ name: 'layers' })
+      </span>
+      <span class="logo-text">{{ appName }}</span>
+    </a>
+
+    <nav class="marketing-footer-links" aria-label="Footer">
+      @if(hasRoute('posts.index'))
+        <a href="{{ urlFor('posts.index') }}">Blog</a>
+      @end
+      @if(hasRoute('legal.privacy'))
+        <a href="{{ urlFor('legal.privacy') }}">Privacy</a>
+      @end
+      @if(hasRoute('legal.terms'))
+        <a href="{{ urlFor('legal.terms') }}">Terms</a>
+      @end
+      @if(hasRoute('docs.index'))
+        <a href="{{ urlFor('docs.index') }}">API docs</a>
+      @end
+    </nav>
+
+    &copy; {{ new Date().getFullYear() }} {{ appName }}. All rights reserved.
   </footer>
 @end

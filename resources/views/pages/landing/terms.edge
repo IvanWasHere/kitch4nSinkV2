@@ -1,0 +1,71 @@
+{{--
+  Terms of service (plan §22.7) — code-defined, owned by the Landing module.
+
+  TEMPLATE COPY. A starting structure, not legal advice, and it names no
+  company. Replace the bracketed parts, have it reviewed, and remove the
+  notice at the top before launch.
+--}}
+@component('layouts/marketing', {
+  title: 'Terms of service',
+  description: `The terms that apply when you use ${appName}.`,
+})
+  <article class="content-article">
+    <div class="info-box info-box-warning" style="margin-bottom: 32px">
+      Template text. Replace the bracketed details and have this reviewed before launch.
+    </div>
+
+    <header class="content-article-header">
+      <h1 class="content-article-title">Terms of service</h1>
+      <div class="content-article-meta">Last updated [date]</div>
+    </header>
+
+    <div class="prose">
+      <p>
+        These terms are an agreement between you and [company name] ("we") about your use of
+        {{ appName }}. By creating an account you accept them. If you use {{ appName }} for an
+        organisation, you accept them on its behalf.
+      </p>
+
+      <h2>Your account</h2>
+      <p>
+        Keep your sign-in details secure and tell us at [support email] if you think someone else
+        has used them. You are responsible for what happens under your account and in your
+        workspace.
+      </p>
+
+      <h2>Your content</h2>
+      <p>
+        What you put into {{ appName }} remains yours. You give us permission to store and process
+        it only to run the service for you.
+      </p>
+
+      <h2>Acceptable use</h2>
+      <p>
+        Do not use {{ appName }} to break the law, to infringe others' rights, to send spam, or to
+        interfere with the service or other customers.
+      </p>
+
+      <h2>Plans and payment</h2>
+      <p>
+        Paid plans are billed in advance through [payment provider], our merchant of record. If a
+        payment fails or a plan lapses, your workspace keeps its data but may stop allowing new
+        items until it is back within its plan.
+      </p>
+
+      <h2>Ending the agreement</h2>
+      <p>
+        You can stop using {{ appName }} and delete your workspace at any time. We may suspend or
+        close an account that breaks these terms. [Describe notice and data-export arrangements.]
+      </p>
+
+      <h2>Liability</h2>
+      <p>[Warranty disclaimer and limitation of liability — have these drafted for your jurisdiction.]</p>
+
+      <h2>Changes</h2>
+      <p>If we change these terms in a way that matters, we will tell you in the app before they take effect.</p>
+
+      <h2>Governing law</h2>
+      <p>[Jurisdiction.]</p>
+    </div>
+  </article>
+@end
