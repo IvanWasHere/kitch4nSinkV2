@@ -281,6 +281,13 @@ Leave blank and the app runs on the Free plan; billing screens render and refuse
 Every one of these is the seeded demo data — `node ace db:seed && node ace dev:seed` — so what is
 on the page is what you get after two commands, not a mock-up.
 
+<p align="center">
+  <img src="docs/screenshots/landing.jpg" alt="The public landing page: a floating navigation bar, the headline “Ship a billable SaaS, not scaffolding.” and a drawing of the dashboard" width="860" />
+</p>
+
+The public front door — the [Landing module](docs/landing.md), removable like the others. Its call
+to action follows the registration switch: sign up, join the waiting list, or just sign in.
+
 Start with the four account types. Note what each role **cannot** see: the nav is gated, so nobody
 is offered a screen that would refuse them.
 

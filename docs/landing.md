@@ -17,6 +17,8 @@ a list of deletions.
 
 ## What it shows
 
+![The landing page: the floating header, the headline and a drawing of the dashboard](screenshots/landing.jpg)
+
 **`/`** — a hero with a drawing of the dashboard, a "before and after", the numbers, the feature
 cards, pricing read from `config/plans.ts` (so it cannot advertise a tier the product does not
 have), a FAQ that opens without JavaScript, and a closing call to action. Every call to action on
