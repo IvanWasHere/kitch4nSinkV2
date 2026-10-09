@@ -1118,8 +1118,8 @@ module's `AuditActions` augmentation. **Also built:** `mark_waiting_list_convert
 module deleted as written there, the suite passed (682, the pre-M12 count) and typecheck was clean.
 **M12 done.** Next: M13 (Content CMS) or M14 (Landing).
 
-**M13 — Content CMS** *(§22.6)* — module `content`. Adds `markdown-it`.
-*In progress.* Built: `content_entries` + `content_slug_redirects`, `markdown-it@14.3.2`
+**M13 — Content CMS** *(§22.6)* — module `content`. Adds `markdown-it`. — **built**.
+ Built: `content_entries` + `content_slug_redirects`, `markdown-it@14.3.2`
 (`html: false`, scheme allowlist http/https/mailto/relative, `rel=noopener` on external links,
 rendered on read), slug rules (generated + disambiguated, reserved from the live route table +
 `assets`, unique across types, old slugs of other entries refused), admin CRUD at
@@ -1128,8 +1128,11 @@ publish/unpublish/archive/delete/preview, all audited; public `/posts` (10/page,
 past-last-page 404, numbered pages with `aria-current`), `/posts/:slug`, `/:slug` registered last,
 301s for old slugs only to live entries; description/canonical/OpenGraph props on the base layout;
 generic `.prose` CSS; *Blog* link in the marketing header. `start/routes.ts` is now a
-registration point. **Left for M13:** the `content:check` command (published pages a later route
-now shadows), `dev:seed` content, and the docs page + removal drill.
+registration point. **Also built:** the shadowed-page warning on the admin Pages screen —
+*instead of* the planned `content:check` command, because app commands are only discovered in core
+`commands/`, which may not import a module; `dev:seed` content (12 live posts, scheduled, draft,
+archived, two pages and a redirect); `docs/content.md` with removal steps verified by a drill
+(720 tests, the pre-M13 count; typecheck and lint clean). Next: M14 (Landing).
 
 **M14 — Landing** *(§22.7)* — module `landing`; extracts today's `pages/home.edge`.
 *Can swap with M13: the reserved-slug check reads the route table, so order does not matter.*
@@ -1777,8 +1780,9 @@ with a `^[a-z0-9]+(?:-[a-z0-9]+)*$` matcher. Reserved slugs are computed from `r
 validation time: any slug equal to the first segment of a registered route is refused, so `login`,
 `admin`, `api`, `posts`, `privacy` (while Landing is installed) are all rejected with no hand-kept
 list. If Landing is later removed, `privacy` becomes available to the CMS — which is the right
-fallback. A boot-time check (dev and `node ace content:check`) warns about any *published* page
-whose slug has since become a route.
+fallback. The admin Pages screen warns about any *published* page whose slug has since become a
+route. *(Planned as a `content:check` command; a command would have to live in core `commands/`
+and import the module.)*
 
 **Rendering.** `markdown-it` with `html: false`, `linkify: true`, and `validateLink` limited to
 `http`, `https`, `mailto` and relative URLs. Rendered on read, not stored — a renderer fix then

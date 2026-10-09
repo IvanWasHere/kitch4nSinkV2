@@ -22,6 +22,21 @@
     @end
   @end
 
+  {{--
+    A published page whose slug a route has taken since it was saved. The
+    route wins, so the page is unreachable until its slug changes.
+  --}}
+  @if(shadowed.length)
+    <div class="info-box info-box-warning" role="alert" style="margin-bottom: 16px">
+      <strong>{{ shadowed.length === 1 ? 'A published page cannot be reached.' : `${shadowed.length} published pages cannot be reached.` }}</strong>
+      The application now has its own {{ shadowed.length === 1 ? 'route' : 'routes' }} at
+      @each((page, index) in shadowed)
+        <a href="{{ urlFor('admin.content.edit', { id: page.publicId }) }}">{{ page.path }}</a>{{ index < shadowed.length - 1 ? ',' : '' }}
+      @end
+      and visitors see that instead. Give the {{ shadowed.length === 1 ? 'page' : 'pages' }} a new slug.
+    </div>
+  @end
+
   <div class="pillset">
     <a class="pill {{ status === null ? 'active' : '' }}" href="{{ urlFor('admin.content.index', { type: typeParam }) }}">
       All

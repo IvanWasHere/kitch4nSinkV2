@@ -408,4 +408,45 @@ test.group('Content — back-office', (group) => {
     assert.notInclude(drafts.text(), 'Live one')
     assert.notInclude(drafts.text(), 'A page', 'pages are not on the posts screen')
   })
+
+  /**
+   * A page saved before a route took its slug keeps the slug, and the route
+   * wins (D13). The admin is where somebody can do something about it.
+   */
+  test('the pages list warns about a published page a route now shadows', async ({
+    client,
+    assert,
+  }) => {
+    const admin = await createStaff({ role: 'admin' })
+    await ContentEntry.create({
+      type: 'page',
+      title: 'Old login help',
+      slug: 'login',
+      body: 'x',
+      status: 'published',
+      publishedAt: DateTime.utc().minus({ days: 1 }),
+    })
+    await ContentEntry.create({
+      type: 'page',
+      title: 'Fine',
+      slug: 'fine',
+      body: 'x',
+      status: 'published',
+      publishedAt: DateTime.utc().minus({ days: 1 }),
+    })
+
+    const response = await client.get('/admin/content/pages').withGuard('staff').loginAs(admin)
+
+    response.assertTextIncludes('A published page cannot be reached.')
+    assert.match(response.text(), /<a href="[^"]+">\/login<\/a>/)
+    assert.notMatch(response.text(), /<a href="[^"]+">\/fine<\/a>/)
+  })
+
+  test('no warning when nothing is shadowed', async ({ client, assert }) => {
+    const admin = await createStaff({ role: 'admin' })
+
+    const response = await client.get('/admin/content/pages').withGuard('staff').loginAs(admin)
+
+    assert.notInclude(response.text(), 'cannot be reached')
+  })
 })

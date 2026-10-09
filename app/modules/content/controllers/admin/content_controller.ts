@@ -42,9 +42,10 @@ export default class ContentController {
       : null
     const page = Math.max(1, Number.parseInt(String(request.input('page', 1)), 10) || 1)
 
-    const [entries, counts] = await Promise.all([
+    const [entries, counts, shadowed] = await Promise.all([
       content.page({ type, status, page }),
       content.counts(type),
+      type === 'page' ? content.shadowedPages() : Promise.resolve([]),
     ])
 
     const query = (target: number) =>
@@ -60,6 +61,7 @@ export default class ContentController {
       prevUrl: entries.currentPage > 1 ? query(entries.currentPage - 1) : null,
       nextUrl: entries.hasMorePages ? query(entries.currentPage + 1) : null,
       summary: entries.total ? `${entries.total} in total` : '',
+      shadowed,
     })
   }
 

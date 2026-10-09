@@ -237,6 +237,23 @@ export class ContentService {
   }
 
   /**
+   * Published pages that can no longer be reached because a route registered
+   * since has taken their slug (plan §22.6). Saving refuses a reserved slug,
+   * but a page saved before the route existed keeps it — and `/:slug` is
+   * matched last, so the route wins and the page silently disappears.
+   *
+   * Pages only: a post lives under `/posts/`, which nothing else can take.
+   */
+  async shadowedPages(): Promise<ContentEntry[]> {
+    const pages = await ContentEntry.query()
+      .where('type', 'page')
+      .where('status', 'published')
+      .orderBy('slug')
+
+    return pages.filter((page) => isReservedSlug(page.slug))
+  }
+
+  /**
    * Where an old slug points now — only if the entry it points at is live.
    * A redirect to a draft would announce that the draft exists.
    */
