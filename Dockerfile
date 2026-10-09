@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # ==============================================================================
 # The image this application ships as (plan §16).
 #
@@ -15,10 +13,17 @@
 
 ARG NODE_VERSION=24-slim
 
+# The official Node image, from Amazon's public mirror of Docker Hub's library.
+# Docker Hub rate-limits anonymous pulls by IP, and CI runners share theirs,
+# so pulling from it there fails the build with a 429 often enough to matter.
+# The image is the same; override with `--build-arg NODE_IMAGE=node` to pull
+# from Docker Hub directly.
+ARG NODE_IMAGE=public.ecr.aws/docker/library/node
+
 # ------------------------------------------------------------------------------
 # Base — the runtime, and nothing on top of it.
 # ------------------------------------------------------------------------------
-FROM node:${NODE_VERSION} AS base
+FROM ${NODE_IMAGE}:${NODE_VERSION} AS base
 ENV NODE_ENV=production
 WORKDIR /app
 
