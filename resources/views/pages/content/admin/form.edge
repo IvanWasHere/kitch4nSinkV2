@@ -1,0 +1,144 @@
+{{--
+  Create or edit a post or page (plan §22.6). Admin only.
+
+  A plain textarea with Markdown: raw HTML is escaped when rendered, so
+  there is nothing here that can put a script on the public site. The status
+  buttons are separate forms beside it, so publishing is its own audited
+  step rather than a side effect of saving.
+--}}
+@let(noun = type === 'post' ? 'post' : 'page')
+@let(isPost = type === 'post')
+
+@component('layouts/admin', { title: entry ? entry.title : `New ${noun}` })
+  @pageHeader({
+    title: entry ? entry.title : `New ${noun}`,
+    description: entry ? `${entry.status === 'published' && entry.isScheduled ? 'Scheduled' : entry.status.charAt(0).toUpperCase() + entry.status.slice(1)} · ${entry.path}` : (isPost ? 'Saved as a draft unless you publish it.' : 'A page is reached only by its address.'),
+  })
+    @slot('actions')
+      @!link({ route: 'admin.content.index', routeParams: { type: typeParam }, text: `All ${noun}s`, class: 'btn btn-outline btn-sm' })
+      @if(entry)
+        @if(entry.isLive)
+          <a class="btn btn-outline btn-sm" href="{{ entry.path }}" target="_blank" rel="noopener">View</a>
+        @else
+          @!link({ route: 'admin.content.preview', routeParams: { id: entry.publicId }, text: 'Preview', class: 'btn btn-outline btn-sm', target: '_blank' })
+        @end
+      @end
+    @end
+  @end
+
+  <div class="settings-card">
+    @form(entry
+      ? { route: 'admin.content.update', routeParams: { id: entry.publicId }, method: 'POST' }
+      : { route: 'admin.content.store', routeParams: { type: typeParam }, method: 'POST' })
+      @field.root({ name: 'title' })
+        @!field.label({ text: 'Title' })
+        @!input.control({ value: entry ? entry.title : '', maxlength: 200 })
+        @!field.error()
+      @end
+
+      @field.root({ name: 'slug' })
+        @!field.label({ text: 'Slug' })
+        @!input.control({ value: entry ? entry.slug : '', placeholder: 'made from the title if left blank', maxlength: 120 })
+        <p class="field-hint">
+          Lowercase letters, numbers and hyphens. The address will be
+          <code>{{ isPost ? '/posts/' : '/' }}{{ entry ? entry.slug : 'your-slug' }}</code>.
+          @if(entry && entry.publishedAt)
+            Changing it keeps the old address working — it redirects here.
+          @end
+        </p>
+        @!field.error()
+      @end
+
+      @if(isPost)
+        @field.root({ name: 'excerpt' })
+          @!field.label({ text: 'Excerpt' })
+          @!textarea.control({ value: entry ? entry.excerpt : '', rows: 3, maxlength: 500 })
+          <p class="field-hint">Shown in the post list and used as the search-engine description.</p>
+          @!field.error()
+        @end
+      @end
+
+      @field.root({ name: 'body' })
+        @!field.label({ text: 'Content' })
+        @!textarea.control({ value: entry ? entry.body : '', rows: 22, style: 'font-family: var(--font-mono); font-size: 13.5px' })
+        <p class="field-hint">
+          Markdown: <code>## Heading</code>, <code>**bold**</code>, <code>[link](https://…)</code>,
+          lists, quotes and code. HTML is shown as text, not run.
+        </p>
+        @!field.error()
+      @end
+
+      @if(isPost)
+        @field.root({ name: 'publishedAt' })
+          @!field.label({ text: 'Publication date (UTC)' })
+          @!input.control({
+            type: 'datetime-local',
+            value: entry && entry.publishedAt ? entry.publishedAt.toUTC().toFormat("yyyy-LL-dd'T'HH:mm") : '',
+            disabled: entry && entry.isLive ? true : false,
+          })
+          <p class="field-hint">
+            @if(entry && entry.isLive)
+              Fixed now that the post is public.
+            @else
+              Optional. Blank means "when I publish it"; a future date schedules the post.
+            @end
+          </p>
+          @!field.error()
+        @end
+      @end
+
+      <div class="btn-row">
+        @if(entry)
+          @!button({ text: 'Save changes', type: 'submit', size: 'sm' })
+        @else
+          @!button({ text: 'Save draft', type: 'submit', size: 'sm', variant: 'outline' })
+          @!button({ text: `Save and publish`, type: 'submit', size: 'sm', name: 'intent', value: 'publish' })
+        @end
+      </div>
+    @end
+  </div>
+
+  @if(entry)
+    <div class="settings-card">
+      <h2 class="section-title">Status</h2>
+      <p class="section-desc">
+        Publishing keeps the first publication date for good; unpublishing and archiving take it
+        off the site without losing it.
+      </p>
+
+      <div class="btn-row">
+        @if(entry.status !== 'published')
+          @form({ route: 'admin.content.publish', routeParams: { id: entry.publicId }, method: 'POST' })
+            @!button({ text: 'Publish', type: 'submit', size: 'sm' })
+          @end
+        @else
+          @form({ route: 'admin.content.unpublish', routeParams: { id: entry.publicId }, method: 'POST' })
+            @!button({ text: 'Unpublish', type: 'submit', size: 'sm', variant: 'outline' })
+          @end
+        @end
+        @if(entry.status !== 'archived')
+          @form({ route: 'admin.content.archive', routeParams: { id: entry.publicId }, method: 'POST' })
+            @!button({ text: 'Archive', type: 'submit', size: 'sm', variant: 'outline' })
+          @end
+        @end
+      </div>
+    </div>
+
+    <div class="settings-card danger-zone">
+      <h2 class="section-title">Delete</h2>
+      <p class="section-desc">
+        Removes the {{ noun }} and every old address that redirected to it. Archive instead if you
+        might want it back.
+      </p>
+      @form({
+        route: 'admin.content.destroy',
+        routeParams: { id: entry.publicId },
+        method: 'POST',
+        'x-data': '',
+        '@submit': `if (!confirm('Delete this ${noun}? This cannot be undone.')) $event.preventDefault()`,
+      })
+        @!button({ text: `Delete ${noun}`, type: 'submit', size: 'sm', variant: 'danger' })
+      @end
+    </div>
+  @end
+@end

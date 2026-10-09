@@ -1,0 +1,231 @@
+/*
+| Long-form text rendered from Markdown — posts and pages (plan §22.6).
+|
+| Generic on purpose: `.prose` styles whatever Markdown produces and knows
+| nothing about where it came from, so it stays useful if the content
+| module is removed. Element selectors are scoped under `.prose` so they
+| never reach the application's own markup.
+*/
+
+.content-article {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px 32px 96px;
+}
+
+.content-article-header {
+  margin-bottom: 32px;
+}
+
+.content-article-title {
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--text-strong);
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+.content-article-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.content-article-excerpt {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-soft);
+  margin: 12px 0 0;
+}
+
+.content-preview-banner {
+  background: var(--orange-50);
+  border-bottom: 1px solid var(--orange-100);
+  color: var(--orange-600);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 8px 16px;
+}
+
+.post-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.post-list-item {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.post-list-item:first-child {
+  padding-top: 0;
+}
+
+.post-list-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.post-list-title a {
+  color: var(--text-strong);
+  text-decoration: none;
+}
+
+.post-list-title a:hover {
+  color: var(--accent-600);
+}
+
+.post-list-summary {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-soft);
+  margin: 8px 0 0;
+}
+
+.page-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 32px 0 0;
+  padding: 0;
+}
+
+.page-numbers a {
+  display: inline-flex;
+  min-width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-soft);
+  text-decoration: none;
+}
+
+.page-numbers a[aria-current='page'] {
+  background: var(--accent-600);
+  border-color: var(--accent-600);
+  color: var(--white);
+}
+
+.prose {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text);
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--text-strong);
+  line-height: 1.3;
+  margin: 1.8em 0 0.6em;
+}
+
+.prose h1 {
+  font-size: 28px;
+}
+
+.prose h2 {
+  font-size: 23px;
+}
+
+.prose h3 {
+  font-size: 19px;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose pre,
+.prose table {
+  margin: 0 0 1.2em;
+}
+
+.prose a {
+  color: var(--accent-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.4em;
+}
+
+.prose li + li {
+  margin-top: 0.3em;
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--border-strong);
+  padding-left: 1em;
+  color: var(--text-soft);
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-muted);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.35em;
+}
+
+.prose pre {
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.prose th,
+.prose td {
+  border-bottom: 1px solid var(--border-soft);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  .content-article {
+    padding: 40px 16px 64px;
+  }
+
+  .content-article-title {
+    font-size: 27px;
+  }
+}

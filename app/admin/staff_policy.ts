@@ -107,6 +107,15 @@ export default class StaffPolicy extends BasePolicy {
   }
 
   /**
+   * Changing what the public website says — posts and pages (plan §22.6).
+   * Admin only: it is published under the company's name to everyone at once,
+   * the same reasoning as an announcement.
+   */
+  editPublicSite(staff: StaffUser): AuthorizerResponse {
+    return !staff.isDisabled && staff.isAdmin
+  }
+
+  /**
    * Admin only, and the reason: anyone who can create a staff account can
    * grant themselves everything above.
    */

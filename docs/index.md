@@ -52,6 +52,7 @@ The navigation is gated by role, so nobody is offered a screen that would then r
 | [Notifications](notifications.md) | Announcements, audiences and unread state |
 | [Support](support.md) | Tickets, from both sides |
 | [Registration control](registration-control.md) | Closing signup at runtime, and the waiting list — a removable module |
+| [Content](content.md) | Posts and pages for the public site, in Markdown — a removable module |
 | [The back office](back-office.md) | Staff screens, impersonation, operations and the audit log |
 | [Development](development.md) | Running it, seeding it, testing it |
 | [Deployment](deployment.md) | Putting it somewhere |

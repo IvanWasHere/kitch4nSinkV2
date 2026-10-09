@@ -21,8 +21,14 @@
 
 import seeders from '#seeding/demo_seeders'
 import { listsDemoSeeder } from '#modules/lists/seeder'
+import { contentDemoSeeder } from '#modules/content/seeder'
 
 /**
  * The demo domain (D8) — delete with it.
  */
 seeders.register(listsDemoSeeder)
+
+/**
+ * Content (plan §22.6): posts in every state, and two pages.
+ */
+seeders.register(contentDemoSeeder)

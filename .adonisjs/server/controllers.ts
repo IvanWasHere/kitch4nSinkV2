@@ -63,6 +63,15 @@ export const controllers = {
   support: {
     Support: () => import('#app/controllers/support/support_controller'),
   },
+  content: {
+    admin: {
+      Content: () => import('#app/modules/content/controllers/admin/content_controller'),
+    },
+    public: {
+      Page: () => import('#app/modules/content/controllers/public/page_controller'),
+      Post: () => import('#app/modules/content/controllers/public/post_controller'),
+    },
+  },
   lists: {
     api: {
       List: () => import('#app/modules/lists/controllers/api/list_controller'),

@@ -1,0 +1,107 @@
+{{--
+  Admin → Content → Posts / Pages (plan §22.6). Admin only.
+--}}
+@let(noun = type === 'post' ? 'post' : 'page')
+@let(labels = { draft: 'Draft', published: 'Published', archived: 'Archived' })
+@let(tones = { draft: 'neutral', published: 'success', archived: 'warning' })
+
+@component('layouts/admin', { title: type === 'post' ? 'Posts' : 'Pages' })
+  @pageHeader({
+    title: type === 'post' ? 'Posts' : 'Pages',
+    description: type === 'post'
+      ? 'Listed at /posts, ten to a page, newest first.'
+      : 'Reached only by their own address — /about, /terms. Never listed, and never added to any menu.',
+  })
+    @slot('actions')
+      @!link({
+        route: 'admin.content.create',
+        routeParams: { type: typeParam },
+        text: `New ${noun}`,
+        class: 'btn btn-primary btn-sm',
+      })
+    @end
+  @end
+
+  {{--
+    A published page whose slug a route has taken since it was saved. The
+    route wins, so the page is unreachable until its slug changes.
+  --}}
+  @if(shadowed.length)
+    <div class="info-box info-box-warning" role="alert" style="margin-bottom: 16px">
+      <strong>{{ shadowed.length === 1 ? 'A published page cannot be reached.' : `${shadowed.length} published pages cannot be reached.` }}</strong>
+      The application now has its own {{ shadowed.length === 1 ? 'route' : 'routes' }} at
+      @each((page, index) in shadowed)
+        <a href="{{ urlFor('admin.content.edit', { id: page.publicId }) }}">{{ page.path }}</a>{{ index < shadowed.length - 1 ? ',' : '' }}
+      @end
+      and visitors see that instead. Give the {{ shadowed.length === 1 ? 'page' : 'pages' }} a new slug.
+    </div>
+  @end
+
+  <div class="pillset">
+    <a class="pill {{ status === null ? 'active' : '' }}" href="{{ urlFor('admin.content.index', { type: typeParam }) }}">
+      All
+      <span class="pill-count">{{ counts.all }}</span>
+    </a>
+    @each(one in statuses)
+      <a
+        class="pill {{ status === one ? 'active' : '' }}"
+        href="{{ urlFor('admin.content.index', { type: typeParam }) }}?status={{ one }}"
+      >
+        {{ labels[one] }}
+        <span class="pill-count">{{ counts[one] }}</span>
+      </a>
+    @end
+  </div>
+
+  @panel.root({ flush: true })
+    @if(entries.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Published</th>
+              <th>Created</th>
+              <th>Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(entry in entries)
+              <tr>
+                <td>
+                  <a class="order-id" href="{{ urlFor('admin.content.edit', { id: entry.publicId }) }}">{{ entry.title }}</a>
+                  <div class="field-hint">{{ entry.path }}</div>
+                </td>
+                <td>
+                  @!badge({ text: entry.isScheduled ? 'Scheduled' : labels[entry.status], tone: entry.isScheduled ? 'info' : tones[entry.status] })
+                </td>
+                <td>{{ entry.publishedAt ? entry.publishedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
+                <td>{{ entry.createdAt.toFormat('d LLL yyyy') }}</td>
+                <td>{{ entry.updatedAt ? entry.updatedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
+                <td>
+                  <div class="btn-row" style="margin-top: 0">
+                    @!link({ route: 'admin.content.edit', routeParams: { id: entry.publicId }, text: 'Edit', class: 'btn btn-outline btn-xs' })
+                    @if(entry.isLive)
+                      <a class="btn btn-outline btn-xs" href="{{ entry.path }}" target="_blank" rel="noopener">View</a>
+                    @else
+                      @!link({ route: 'admin.content.preview', routeParams: { id: entry.publicId }, text: 'Preview', class: 'btn btn-outline btn-xs', target: '_blank' })
+                    @end
+                  </div>
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+
+      @!pagination({ summary, prevUrl, nextUrl })
+    @else
+      @!emptyState({
+        icon: type === 'post' ? 'edit' : 'folder',
+        title: status ? `No ${labels[status].toLowerCase()} ${noun}s` : `No ${noun}s yet`,
+      })
+    @end
+  @end
+@end

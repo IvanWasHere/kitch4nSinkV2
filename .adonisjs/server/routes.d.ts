@@ -178,6 +178,16 @@ export type ScannedRoutes = {
     'admin.waitlist.convert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.waitlist.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.waitlist.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.index': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
+    'admin.content.create': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
+    'admin.content.store': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
+    'admin.content.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.preview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.publish': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.unpublish': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.archive': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'impersonation.destroy': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'health.live': { paramsTuple?: []; params?: {} }
@@ -185,6 +195,9 @@ export type ScannedRoutes = {
     'docs.index': { paramsTuple?: []; params?: {} }
     'docs.openapi': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
+    'posts.index': { paramsTuple?: []; params?: {} }
+    'posts.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'pages.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
   }
   GET: {
     'drive.private.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
@@ -278,12 +291,19 @@ export type ScannedRoutes = {
     'admin.staff.index': { paramsTuple?: []; params?: {} }
     'admin.settings.registration': { paramsTuple?: []; params?: {} }
     'admin.waitlist.index': { paramsTuple?: []; params?: {} }
+    'admin.content.index': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
+    'admin.content.create': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
+    'admin.content.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.preview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
     'health.live': { paramsTuple?: []; params?: {} }
     'health.ready': { paramsTuple?: []; params?: {} }
     'docs.index': { paramsTuple?: []; params?: {} }
     'docs.openapi': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
+    'posts.index': { paramsTuple?: []; params?: {} }
+    'posts.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'pages.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
   }
   HEAD: {
     'drive.private.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
@@ -377,12 +397,19 @@ export type ScannedRoutes = {
     'admin.staff.index': { paramsTuple?: []; params?: {} }
     'admin.settings.registration': { paramsTuple?: []; params?: {} }
     'admin.waitlist.index': { paramsTuple?: []; params?: {} }
+    'admin.content.index': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
+    'admin.content.create': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
+    'admin.content.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.preview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
     'health.live': { paramsTuple?: []; params?: {} }
     'health.ready': { paramsTuple?: []; params?: {} }
     'docs.index': { paramsTuple?: []; params?: {} }
     'docs.openapi': { paramsTuple?: []; params?: {} }
     'styleguide': { paramsTuple?: []; params?: {} }
+    'posts.index': { paramsTuple?: []; params?: {} }
+    'posts.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
+    'pages.show': { paramsTuple: [ParamValue]; params: {'slug': ParamValue} }
   }
   DELETE: {
     'server-stats.cache.delete': { paramsTuple: [ParamValue]; params: {'key': ParamValue} }
@@ -468,6 +495,12 @@ export type ScannedRoutes = {
     'admin.waitlist.convert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.waitlist.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.waitlist.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.store': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
+    'admin.content.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.publish': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.unpublish': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.archive': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.content.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'impersonation.destroy': { paramsTuple?: []; params?: {} }
   }
   PATCH: {
