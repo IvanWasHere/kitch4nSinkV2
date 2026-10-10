@@ -376,6 +376,59 @@ export class PaymentSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class PrivacyRequestSchema extends BaseModel {
+  static $columns = ['approvedAt', 'completedAt', 'confirmationExpiresAt', 'confirmationTokenHash', 'confirmedAt', 'createdAt', 'downloadedAt', 'exportExpiresAt', 'exportKey', 'exportSizeBytes', 'failureReason', 'id', 'notificationEmail', 'processedByStaffId', 'publicId', 'rejectionReason', 'requestedAt', 'requestedByStaffId', 'staffNote', 'startedAt', 'status', 'type', 'updatedAt', 'userId'] as const
+  $columns = PrivacyRequestSchema.$columns
+  @column.dateTime()
+  declare approvedAt: DateTime | null
+  @column.dateTime()
+  declare completedAt: DateTime | null
+  @column.dateTime()
+  declare confirmationExpiresAt: DateTime | null
+  @column()
+  declare confirmationTokenHash: string | null
+  @column.dateTime()
+  declare confirmedAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare downloadedAt: DateTime | null
+  @column.dateTime()
+  declare exportExpiresAt: DateTime | null
+  @column()
+  declare exportKey: string | null
+  @bigIntColumn()
+  declare exportSizeBytes: number | null
+  @column()
+  declare failureReason: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare notificationEmail: string | null
+  @column()
+  declare processedByStaffId: number | null
+  @column()
+  declare publicId: string
+  @column()
+  declare rejectionReason: string | null
+  @column.dateTime()
+  declare requestedAt: DateTime
+  @column()
+  declare requestedByStaffId: number | null
+  @column()
+  declare staffNote: string | null
+  @column.dateTime()
+  declare startedAt: DateTime | null
+  @column()
+  declare status: 'requested' | 'confirmed' | 'approved' | 'processing' | 'completed' | 'failed' | 'rejected' | 'expired' | 'cancelled'
+  @column()
+  declare type: 'export' | 'deletion'
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+}
+
 export class RateLimitSchema extends BaseModel {
   static $columns = ['expire', 'key', 'points'] as const
   $columns = RateLimitSchema.$columns

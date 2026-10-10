@@ -29,6 +29,14 @@ export interface FileStorage {
 
   delete(input: { disk: StorageDisk; key: string }): Promise<void>
 
+  /**
+   * Read an object back, as a stream — for something that has to repackage
+   * stored bytes, like a privacy export (plan §22.8). Never for serving a
+   * file to a browser: that is `urlFor`, so the bytes do not pass through
+   * this process.
+   */
+  stream(input: { disk: StorageDisk; key: string }): Promise<NodeJS.ReadableStream>
+
   exists(input: { disk: StorageDisk; key: string }): Promise<boolean>
 
   /**

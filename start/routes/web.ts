@@ -13,6 +13,7 @@ import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import { registerListWebRoutes } from '#modules/lists/routes'
+import { registerPrivacyWebRoutes } from '#modules/privacy/routes'
 import { supportMessageThrottle, supportTicketThrottle } from '#start/limiter'
 
 router
@@ -118,6 +119,13 @@ router
     router
       .post('/invitations/:id/resend', [controllers.organizations.Invitation, 'resend'])
       .as('invitations.resend')
+
+    /**
+     * Privacy (plan §22.8) — a person's own data export. From the module,
+     * inside this group, so it has the same verified, organisation-scoped
+     * session as every other screen.
+     */
+    registerPrivacyWebRoutes()
 
     router
       .get('/settings/security', [controllers.settings.Security, 'edit'])

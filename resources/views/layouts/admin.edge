@@ -120,6 +120,13 @@
               label: 'Support',
             })
           @end
+          @if(hasRoute('admin.privacy.index'))
+            @!navItem({
+              route: 'admin.privacy.index',
+              icon: 'shield',
+              label: 'Privacy requests',
+            })
+          @end
           @if(hasRoute('admin.subscriptions.index') ||
           hasRoute('admin.webhooks.index') ||
           hasRoute('admin.jobs.index') ||

@@ -18,6 +18,7 @@
 */
 
 import { registerRegistrationSettings } from '#modules/registration_control/settings'
+import { registerPrivacySettings } from '#modules/privacy/settings'
 
 /**
  * Registration Control (plan §22.5): whether public signup is open, and
@@ -25,3 +26,8 @@ import { registerRegistrationSettings } from '#modules/registration_control/sett
  * registration gate when told to — without this line, signup is open.
  */
 registerRegistrationSettings()
+
+/**
+ * Privacy (plan §22.8): how long a finished data export stays downloadable.
+ */
+registerPrivacySettings()

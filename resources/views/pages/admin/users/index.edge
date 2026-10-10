@@ -68,6 +68,22 @@
                         @!button({ text: 'Clear 2FA', variant: 'danger', size: 'xs', type: 'submit' })
                       @end
                     @end
+                    {{--
+                      Privacy requests started on the person's behalf (plan
+                      §22.8) — admin only, and only while a feature provides
+                      them. Deleting goes to a confirmation page first.
+                    --}}
+                    @if(staff && staff.isAdmin && !user.isDeleted)
+                      @if(hasRoute('admin.privacy.exports.store'))
+                        @form({ route: 'admin.privacy.exports.store', method: 'POST' })
+                          <input type="hidden" name="user" value="{{ user.publicId }}" />
+                          @!button({ text: 'Export data', variant: 'outline', size: 'xs', type: 'submit' })
+                        @end
+                      @end
+                      @if(hasRoute('admin.privacy.deletions.create'))
+                        <a class="btn btn-danger btn-xs" href="{{ urlFor('admin.privacy.deletions.create') }}?user={{ user.publicId }}">Delete account</a>
+                      @end
+                    @end
                   </div>
                 </td>
               </tr>

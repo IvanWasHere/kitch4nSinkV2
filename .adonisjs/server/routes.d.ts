@@ -85,6 +85,7 @@ export type ScannedRoutes = {
     'invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'waitlist.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'privacy.deletion.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.session.destroy': { paramsTuple?: []; params?: {} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'auth.verify_email.resend': { paramsTuple?: []; params?: {} }
@@ -125,6 +126,11 @@ export type ScannedRoutes = {
     'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invitations.revoke': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invitations.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'settings.privacy': { paramsTuple?: []; params?: {} }
+    'settings.privacy.exports.store': { paramsTuple?: []; params?: {} }
+    'settings.privacy.exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'settings.privacy.deletion.store': { paramsTuple?: []; params?: {} }
+    'settings.privacy.deletion.cancel': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'settings.security.password': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.start': { paramsTuple?: []; params?: {} }
@@ -188,6 +194,15 @@ export type ScannedRoutes = {
     'admin.content.unpublish': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.content.archive': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.content.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.index': { paramsTuple?: []; params?: {} }
+    'admin.privacy.exports.store': { paramsTuple?: []; params?: {} }
+    'admin.privacy.deletions.create': { paramsTuple?: []; params?: {} }
+    'admin.privacy.deletions.store': { paramsTuple?: []; params?: {} }
+    'admin.privacy.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.approve': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.reject': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'impersonation.destroy': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'legal.privacy': { paramsTuple?: []; params?: {} }
@@ -259,6 +274,7 @@ export type ScannedRoutes = {
     'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'waitlist.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'privacy.deletion.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
@@ -273,6 +289,8 @@ export type ScannedRoutes = {
     'support.attachment': { paramsTuple: [ParamValue,ParamValue]; params: {'id': ParamValue,'fileId': ParamValue} }
     'notifications.index': { paramsTuple?: []; params?: {} }
     'members.index': { paramsTuple?: []; params?: {} }
+    'settings.privacy': { paramsTuple?: []; params?: {} }
+    'settings.privacy.exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
@@ -297,6 +315,10 @@ export type ScannedRoutes = {
     'admin.content.create': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
     'admin.content.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.content.preview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.index': { paramsTuple?: []; params?: {} }
+    'admin.privacy.deletions.create': { paramsTuple?: []; params?: {} }
+    'admin.privacy.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
     'legal.privacy': { paramsTuple?: []; params?: {} }
     'legal.terms': { paramsTuple?: []; params?: {} }
@@ -367,6 +389,7 @@ export type ScannedRoutes = {
     'invitations.form': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.verify': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'waitlist.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'privacy.deletion.confirm': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'auth.verify_email.notice': { paramsTuple?: []; params?: {} }
     'dashboard.index': { paramsTuple?: []; params?: {} }
     'settings.profile': { paramsTuple?: []; params?: {} }
@@ -381,6 +404,8 @@ export type ScannedRoutes = {
     'support.attachment': { paramsTuple: [ParamValue,ParamValue]; params: {'id': ParamValue,'fileId': ParamValue} }
     'notifications.index': { paramsTuple?: []; params?: {} }
     'members.index': { paramsTuple?: []; params?: {} }
+    'settings.privacy': { paramsTuple?: []; params?: {} }
+    'settings.privacy.exports.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'admin.session.create': { paramsTuple?: []; params?: {} }
     'admin.two_factor.create': { paramsTuple?: []; params?: {} }
@@ -405,6 +430,10 @@ export type ScannedRoutes = {
     'admin.content.create': { paramsTuple: [ParamValue]; params: {'type': ParamValue} }
     'admin.content.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.content.preview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.index': { paramsTuple?: []; params?: {} }
+    'admin.privacy.deletions.create': { paramsTuple?: []; params?: {} }
+    'admin.privacy.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
     'legal.privacy': { paramsTuple?: []; params?: {} }
     'legal.terms': { paramsTuple?: []; params?: {} }
@@ -468,6 +497,9 @@ export type ScannedRoutes = {
     'members.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invitations.revoke': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invitations.resend': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'settings.privacy.exports.store': { paramsTuple?: []; params?: {} }
+    'settings.privacy.deletion.store': { paramsTuple?: []; params?: {} }
+    'settings.privacy.deletion.cancel': { paramsTuple?: []; params?: {} }
     'settings.security.password': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.start': { paramsTuple?: []; params?: {} }
     'settings.security.two_factor.confirm': { paramsTuple?: []; params?: {} }
@@ -507,6 +539,11 @@ export type ScannedRoutes = {
     'admin.content.unpublish': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.content.archive': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin.content.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.exports.store': { paramsTuple?: []; params?: {} }
+    'admin.privacy.deletions.store': { paramsTuple?: []; params?: {} }
+    'admin.privacy.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.approve': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'admin.privacy.reject': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'impersonation.destroy': { paramsTuple?: []; params?: {} }
   }
   PATCH: {

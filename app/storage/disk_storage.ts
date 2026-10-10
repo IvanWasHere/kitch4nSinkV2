@@ -38,6 +38,10 @@ export class DiskStorage implements FileStorage {
     await drive.use(input.disk).delete(input.key)
   }
 
+  async stream(input: { disk: StorageDisk; key: string }): Promise<NodeJS.ReadableStream> {
+    return drive.use(input.disk).getStream(input.key)
+  }
+
   async exists(input: { disk: StorageDisk; key: string }): Promise<boolean> {
     return drive.use(input.disk).exists(input.key)
   }

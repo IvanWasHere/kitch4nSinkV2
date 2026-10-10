@@ -1,0 +1,18 @@
+@component('emails/layout', { title: 'Your data export is ready' })
+  <p style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+    Your data export is ready
+  </p>
+  <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #4b5563;">
+    Hi{{ user.fullName ? ` ${user.fullName}` : '' }}, the copy of your data you asked for is ready.
+    Sign in and download it from your Privacy settings.
+  </p>
+  <p style="margin: 0 0 24px;">
+    <a href="{{ url }}" style="display: inline-block; background: #3b82f6; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 8px;">
+      Go to Privacy settings
+    </a>
+  </p>
+  <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #6b7280;">
+    It can be downloaded until {{ expiresAt }}, and is deleted after that. If you did not ask for
+    this, change your password and contact support.
+  </p>
+@end

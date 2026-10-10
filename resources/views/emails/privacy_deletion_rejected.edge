@@ -1,0 +1,16 @@
+@component('emails/layout', { title: 'About your account deletion request' })
+  <p style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #111827;">
+    We have not deleted your account
+  </p>
+  <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #4b5563;">
+    Hi{{ user.fullName ? ` ${user.fullName}` : '' }}, we reviewed your request to delete your
+    account and could not go ahead with it:
+  </p>
+  <p style="margin: 0 0 20px; padding: 12px 16px; font-size: 14px; line-height: 1.6; color: #111827; background: #f3f4f6; border-radius: 8px;">
+    {{ reason }}
+  </p>
+  <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #6b7280;">
+    Your account is exactly as it was. Reply to support if you have questions, or ask again once
+    the reason above no longer applies.
+  </p>
+@end

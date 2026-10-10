@@ -1,0 +1,86 @@
+{{--
+  Deleting an account on the person's behalf (plan §22.8.2). Admin only.
+
+  For a request that came in by email or ticket. The admin's reason and the
+  typed address are the approval, so the review — worked out now — comes
+  first.
+--}}
+@component('layouts/admin', { title: 'Delete account' })
+  @pageHeader({
+    title: `Delete ${person.email}`,
+    description: person.organization ? `${person.organization.name} · ${person.role}` : person.role,
+  })
+    @slot('actions')
+      @!link({ route: 'admin.users.index', text: 'Back to users', class: 'btn btn-outline btn-sm' })
+    @end
+  @end
+
+  @if(activeDeletion)
+    <div class="settings-card">
+      <div class="info-box info-box-warning">
+        There is already a deletion request for this account.
+        <a href="{{ urlFor('admin.privacy.show', { id: activeDeletion.publicId }) }}">Decide it on its page.</a>
+      </div>
+    </div>
+  @else
+    <div class="settings-card danger-zone">
+      <h2 class="section-title">What this will do</h2>
+
+      @if(review.otherMembers > 0)
+        <div class="info-box info-box-warning" style="margin-bottom: 16px">
+          <strong>This person owns their workspace, and {{ review.otherMembers }} other
+          {{ review.otherMembers === 1 ? 'person is' : 'people are' }} in it.</strong>
+          Their {{ review.otherMembers === 1 ? 'account is' : 'accounts are' }} deleted too, along
+          with everything in the workspace.
+        </div>
+      @end
+
+      <ul class="section-desc" style="padding-left: 18px">
+        <li>Their profile row is kept, but its details are overwritten with generic ones: the email address becomes <span class="mono">email{{ person.id }}@deleteduser.com</span> and the name “Deleted User”. Their password, two-factor, connected accounts and avatar are removed, so they can no longer sign in.</li>
+        @if(review.otherMembers > 0)
+          <li><strong>Every other member of the workspace is deleted the same way</strong>, and its lists, todos and files are deleted.</li>
+        @elseif(review.lastMember)
+          <li><strong>They are the last member of their workspace</strong>, so its lists, todos and files are deleted too.</li>
+        @else
+          <li>Other people are in their workspace, so its lists, todos and files stay.</li>
+        @end
+        <li>Payments, subscriptions and the audit log are kept; the audit log's IP addresses and browsers for them are cleared.</li>
+        <li>They are emailed at their current address when it is done.</li>
+      </ul>
+
+      @if(review.activeSubscription)
+        <div class="info-box info-box-warning" style="margin-bottom: 16px">
+          Their workspace has an <strong>{{ review.activeSubscription.status }}</strong> subscription
+          ({{ review.activeSubscription.planKey }}). Deletion never touches billing, so it keeps
+          charging until it is cancelled —
+          @if(person.organization)
+            <a href="{{ urlFor('admin.organizations.show', { id: person.organization.publicId }) }}">cancel it from the workspace page</a>.
+          @end
+        </div>
+      @end
+
+        @form({
+          route: 'admin.privacy.deletions.store',
+          method: 'POST',
+          'x-data': '',
+          '@submit': "if (!confirm('Delete this account now, and everything listed above with it? This cannot be undone.')) $event.preventDefault()",
+        })
+          <input type="hidden" name="user" value="{{ person.publicId }}" />
+
+          @field.root({ name: 'reason' })
+            @!field.label({ text: 'Why — the ticket or email the request came in on' })
+            @!textarea.control({ rows: 2, maxlength: 500 })
+            @!field.error()
+          @end
+
+          @field.root({ name: 'confirmEmail' })
+            @!field.label({ text: `Type ${person.email} to confirm` })
+            @!input.control({ autocomplete: 'off', spellcheck: 'false' })
+            @!field.error()
+          @end
+
+          @!button({ text: 'Delete this account', type: 'submit', size: 'sm', variant: 'danger' })
+        @end
+    </div>
+  @end
+@end

@@ -49,6 +49,7 @@
     "#support/*": "./app/support/*.js",
     "#seeding/*": "./app/seeding/*.js",
     "#settings/*": "./app/settings/*.js",
+    "#privacy/*": "./app/privacy/*.js",
     "#app/*": "./app/*.js",
     "#modules/*": "./app/modules/*.js"
   },
@@ -69,6 +70,7 @@
     "@types/markdown-it": "14.2.0",
     "@types/node": "~26.2.0",
     "@types/qrcode": "^1.5.6",
+    "@types/yazl": "3.3.1",
     "adonisjs-server-stats": "^1.18.2",
     "alpinejs": "^3.16.2",
     "eslint": "^10.9.0",
@@ -106,7 +108,8 @@
     "otplib": "^13.5.0",
     "pg": "^8.23.0",
     "qrcode": "^1.5.4",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "yazl": "3.3.1"
   },
   "hotHook": {
     "boundaries": [

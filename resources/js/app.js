@@ -42,6 +42,35 @@ Alpine.data('menu', () => ({
 }))
 
 /**
+ * A row's three-dot menu, in a table. The same <details> as `menu`, but its
+ * panel is `position: fixed` and placed here: a table scrolls inside
+ * `.table-scroll`, and a panel positioned against the row would be clipped by
+ * that box — or make it scroll — on the last rows. It opens upwards when
+ * there is no room below, and closes when anything scrolls, since a fixed
+ * panel would otherwise stay where the row no longer is.
+ */
+Alpine.data('rowMenu', () => ({
+  close() {
+    this.$root.open = false
+  },
+  place() {
+    if (!this.$root.open) {
+      return
+    }
+
+    const trigger = this.$root.querySelector('summary').getBoundingClientRect()
+    const panel = this.$refs.panel
+    const gap = 6
+    const fitsBelow = window.innerHeight - trigger.bottom >= panel.offsetHeight + gap * 2
+
+    panel.style.right = `${document.documentElement.clientWidth - trigger.right}px`
+    panel.style.top = fitsBelow
+      ? `${trigger.bottom + gap}px`
+      : `${Math.max(gap, trigger.top - panel.offsetHeight - gap)}px`
+  },
+}))
+
+/**
  * Show/hide toggle for a password input. Replaces `state.showPw`.
  */
 Alpine.data('passwordField', () => ({

@@ -1,0 +1,26 @@
+{{--
+  Where the emailed confirmation link lands (plan §22.8.2). Says only the
+  outcome — the link is the only thing the visitor has shown us.
+--}}
+@component('layouts/auth', { title: 'Account deletion', heading: 'Account deletion' })
+  @if(outcome === 'confirmed')
+    <div class="info-box info-box-success">
+      Confirmed. Your request is with our team for review, and we will email you when it has been
+      handled. You can still cancel it from your Privacy settings until then.
+    </div>
+  @elseif(outcome === 'already_confirmed')
+    <div class="info-box">
+      This request was already confirmed. There is nothing more to do.
+    </div>
+  @elseif(outcome === 'expired')
+    <div class="info-box info-box-warning">
+      That link has expired. Sign in and ask again from your Privacy settings.
+    </div>
+  @else
+    <div class="info-box info-box-warning">
+      That link is not valid. It may have been cancelled, or you may not have copied all of it.
+    </div>
+  @end
+
+  @!link({ route: 'auth.session.create', text: 'Go to sign in', class: 'btn btn-outline btn-block' })
+@end

@@ -1,0 +1,176 @@
+{{--
+  Settings → Privacy (plan §22.8). The person's own data, nobody else's.
+
+  The archive is never linked directly: *Download* goes through a route that
+  checks ownership and expiry and then mints a link that lasts minutes.
+--}}
+@let(statusLabels = {
+  requested: 'Queued',
+  processing: 'Preparing',
+  completed: 'Ready',
+  failed: 'Failed',
+  expired: 'Expired',
+})
+@let(statusTones = {
+  requested: 'info',
+  processing: 'info',
+  completed: 'success',
+  failed: 'danger',
+  expired: 'neutral',
+})
+@let(exports = requests.filter((one) => one.type === 'export'))
+
+@component('layouts/app', { title: 'Settings' })
+  @include('partials/settings_nav')
+
+  <div class="settings-card">
+    <h2 class="section-title">Download your data</h2>
+    <p class="section-desc">
+      A zip file with everything this account holds about you — your profile, your workspace
+      role, the work you created or were assigned, support conversations, activity, and the files
+      you uploaded — as JSON plus the files themselves. A README inside explains each part and
+      what is left out (other people's data, and credentials such as passwords and API keys).
+    </p>
+    <p class="section-desc">
+      It is prepared in the background and we email you when it is ready, usually within a few
+      minutes. It can then be downloaded here for {{ ttlHours }} hours before it is deleted.
+    </p>
+
+    @if(impersonating)
+      <div class="info-box info-box-warning">
+        You are viewing this account as staff. Only the person it belongs to can request or
+        download an export.
+      </div>
+    @else
+      @form({ route: 'settings.privacy.exports.store', method: 'POST' })
+        @!button({ text: 'Request my data', type: 'submit', size: 'sm' })
+      @end
+    @end
+  </div>
+
+  @if(exports.length)
+    @panel.root({ title: 'Your exports', flush: true })
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr><th>Requested</th><th>Status</th><th>Size</th><th>Available until</th><th></th></tr>
+          </thead>
+          <tbody>
+            @each(one in exports)
+              <tr>
+                <td>{{ one.requestedAt.toFormat('d LLL yyyy, HH:mm') }}</td>
+                <td>
+                  @!badge({ text: statusLabels[one.status] ?? one.status, tone: statusTones[one.status] ?? 'neutral' })
+                </td>
+                <td>{{ one.exportSizeBytes ? `${Math.max(1, Math.round(one.exportSizeBytes / 1024))} KB` : '—' }}</td>
+                <td>{{ one.isDownloadable ? one.exportExpiresAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
+                <td>
+                  @if(one.isDownloadable && !impersonating)
+                    @!link({
+                      route: 'settings.privacy.exports.download',
+                      routeParams: { id: one.publicId },
+                      text: 'Download',
+                      class: 'btn btn-outline btn-xs',
+                    })
+                  @end
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+    @end
+  @end
+
+  {{--
+    Account deletion (plan §22.8.2). What happens is said before anything is
+    asked for: the person's address and sign-in go, shared work stays unless
+    they own the workspace — then it and everybody in it goes — and billing
+    records stay.
+  --}}
+  <div class="settings-card danger-zone">
+    <h2 class="section-title">Delete my account</h2>
+
+    @if(activeDeletion)
+      @if(activeDeletion.status === 'requested')
+        <p class="section-desc">
+          We sent you an email. Follow the link in it to confirm your request — nothing happens
+          until you do.
+        </p>
+      @elseif(activeDeletion.status === 'confirmed')
+        <p class="section-desc">
+          Your request is with our team for review. We will email you when it has been handled.
+        </p>
+      @else
+        <p class="section-desc">
+          Your request has been approved and your account is being deleted.
+        </p>
+      @end
+
+      @if(!impersonating && ['requested', 'confirmed'].includes(activeDeletion.status))
+        @form({ route: 'settings.privacy.deletion.cancel', method: 'POST' })
+          @!button({ text: 'Cancel my request', type: 'submit', size: 'sm', variant: 'outline' })
+        @end
+      @end
+    @else
+      <p class="section-desc">
+        Ask us to delete your account. Our team reviews every request before anything happens.
+        When it is done:
+      </p>
+      <ul class="section-desc" style="padding-left: 18px; margin-top: 0">
+        <li>Your name and email address are replaced with generic ones, and your password, two-factor settings, connected Google or GitHub accounts and profile picture are removed, and you can no longer sign in.</li>
+        @if(ownsWorkspace)
+          <li><strong>You own this workspace, so it is deleted with you</strong>: its lists, todos and files, and the account of everybody else in it.</li>
+        @else
+          <li>Work you shared with your team — lists, todos, files, support tickets — stays with the team.</li>
+        @end
+        <li>Payment records and the security log are kept, as we are required to, but no longer carry your name or email address.</li>
+      </ul>
+
+      @if(alsoDeleted > 0 && !impersonating)
+        <div class="info-box info-box-warning" style="margin-bottom: 16px">
+          {{ alsoDeleted }} other {{ alsoDeleted === 1 ? 'person is' : 'people are' }} in this
+          workspace. Their {{ alsoDeleted === 1 ? 'account' : 'accounts' }} will be deleted too. To
+          leave without that, transfer ownership to one of them first.
+          @if(hasRoute('settings.organization'))
+            <a href="{{ urlFor('settings.organization') }}">Workspace settings</a>
+          @end
+        </div>
+      @end
+
+      @if(impersonating)
+        <div class="info-box info-box-warning">
+          You are viewing this account as staff. Only the person it belongs to can ask for it to be
+          deleted.
+        </div>
+      @else
+        @form({ route: 'settings.privacy.deletion.store', method: 'POST' })
+          @if(hasPassword)
+            @field.root({ name: 'password' })
+              @!field.label({ text: 'Your password' })
+              @!input.control({ type: 'password', autocomplete: 'current-password' })
+              @!field.error()
+            @end
+          @end
+
+          <div class="check-row">
+            <input type="checkbox" name="understood" value="1" id="deletion-understood" />
+            <label for="deletion-understood">
+              I understand my account will be deleted and this cannot be undone.
+            </label>
+          </div>
+          @field.root({ name: 'understood' })
+            @!field.error()
+          @end
+
+          @!button({
+            text: hasPassword ? 'Request account deletion' : 'Email me a confirmation link',
+            type: 'submit',
+            size: 'sm',
+            variant: 'danger',
+          })
+        @end
+      @end
+    @end
+  </div>
+@end

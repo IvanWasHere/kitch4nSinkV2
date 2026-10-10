@@ -18,6 +18,14 @@
   >
     Security
   </a>
+  @if(hasRoute('settings.privacy'))
+    <a
+      href="{{ urlFor('settings.privacy') }}"
+      class="pill {{ request.url() === urlFor('settings.privacy') ? 'active' : '' }}"
+    >
+      Privacy
+    </a>
+  @end
   @if(hasRoute('settings.organization'))
     <a
       href="{{ urlFor('settings.organization') }}"
