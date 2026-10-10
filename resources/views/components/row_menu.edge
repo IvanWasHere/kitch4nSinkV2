@@ -1,0 +1,36 @@
+{{--
+  A table row's actions, behind three dots.
+
+  A <details>, so the menu still opens with JavaScript off and every item in
+  it is still a link or a form POST. The `rowMenu` Alpine component places the
+  panel — it is fixed, so `.table-scroll` cannot clip it — and closes it on an
+  outside click, Escape, scroll or resize.
+
+  A row with nothing to do renders nothing at all, rather than three dots that
+  open an empty box: pages put their own conditions around the items and leave
+  that case to this.
+
+  Props:
+    label — what the row is, for the trigger's accessible name
+  Slots:
+    main  — `.dropdown-item` links and buttons, `.dropdown-divider` between groups
+--}}
+@let(rowMenuItems = await $slots.main())
+
+@if(rowMenuItems.trim())
+  <details
+    class="dropdown row-menu"
+    x-data="rowMenu"
+    @toggle="place"
+    @click.outside="close"
+    @keydown.escape="close"
+    @scroll.window.capture="close"
+    @resize.window="close"
+  >
+    <summary aria-haspopup="true" aria-label="Actions for {{ $props.get('label') ?? 'this row' }}">
+      @!icon({ name: 'moreHorizontal' })
+    </summary>
+
+    <div class="dropdown-menu" x-ref="panel">{{{ rowMenuItems }}}</div>
+  </details>
+@end

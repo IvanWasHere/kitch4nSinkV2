@@ -85,55 +85,41 @@
                 <td>{{ one.requestedAt.toFormat('d LLL yyyy, HH:mm') }}</td>
                 <td>{{ one.updatedAt ? one.updatedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
                 <td>{{ one.completedAt ? one.completedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
-                <td style="text-align: right">
+                <td class="col-actions">
                   {{--
                     Everything that can be done to a row, behind three dots.
                     Support gets the one link; the rest is admin only.
                   --}}
-                  <details
-                    class="dropdown row-menu"
-                    x-data="rowMenu"
-                    @toggle="place"
-                    @click.outside="close"
-                    @keydown.escape="close"
-                    @scroll.window.capture="close"
-                    @resize.window="close"
-                  >
-                    <summary aria-haspopup="true" aria-label="Actions for {{ one.publicId }}">
-                      @!icon({ name: 'moreHorizontal' })
-                    </summary>
+                  @rowMenu({ label: one.publicId })
+                    <a class="dropdown-item" href="{{ urlFor('admin.privacy.show', { id: one.publicId }) }}">
+                      @!icon({ name: 'list', width: 15, height: 15 })
+                      View request
+                    </a>
 
-                    <div class="dropdown-menu" x-ref="panel">
-                      <a class="dropdown-item" href="{{ urlFor('admin.privacy.show', { id: one.publicId }) }}">
-                        @!icon({ name: 'list', width: 15, height: 15 })
-                        View request
+                    @if(canExport && reports[one.userId])
+                      <a class="dropdown-item" href="{{ urlFor('admin.privacy.show', { id: reports[one.userId] }) }}">
+                        @!icon({ name: 'shield', width: 15, height: 15 })
+                        View report
                       </a>
-
-                      @if(canExport && reports[one.userId])
-                        <a class="dropdown-item" href="{{ urlFor('admin.privacy.show', { id: reports[one.userId] }) }}">
-                          @!icon({ name: 'shield', width: 15, height: 15 })
-                          View report
-                        </a>
-                      @elseif(canExport && one.user && !one.user.isDeleted)
-                        @form({ route: 'admin.privacy.exports.store', method: 'POST' })
-                          <input type="hidden" name="user" value="{{ one.user.publicId }}" />
-                          <button type="submit" class="dropdown-item">
-                            @!icon({ name: 'archive', width: 15, height: 15 })
-                            Generate export
-                          </button>
-                        @end
+                    @elseif(canExport && one.user && !one.user.isDeleted)
+                      @form({ route: 'admin.privacy.exports.store', method: 'POST' })
+                        <input type="hidden" name="user" value="{{ one.user.publicId }}" />
+                        <button type="submit" class="dropdown-item">
+                          @!icon({ name: 'archive', width: 15, height: 15 })
+                          Generate export
+                        </button>
                       @end
+                    @end
 
-                      {{-- A deletion waiting for an admin: to the page that says what it would do, and has the button. --}}
-                      @if(canErase && one.type === 'deletion' && one.status === 'confirmed')
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item dropdown-item-danger" href="{{ urlFor('admin.privacy.show', { id: one.publicId }) }}">
-                          @!icon({ name: 'trash', width: 15, height: 15 })
-                          Delete account
-                        </a>
-                      @end
-                    </div>
-                  </details>
+                    {{-- A deletion waiting for an admin: to the page that says what it would do, and has the button. --}}
+                    @if(canErase && one.type === 'deletion' && one.status === 'confirmed')
+                      <div class="dropdown-divider"></div>
+                      <a class="dropdown-item dropdown-item-danger" href="{{ urlFor('admin.privacy.show', { id: one.publicId }) }}">
+                        @!icon({ name: 'trash', width: 15, height: 15 })
+                        Delete account
+                      </a>
+                    @end
+                  @end
                 </td>
               </tr>
             @end

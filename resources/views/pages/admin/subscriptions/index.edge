@@ -32,7 +32,7 @@
       <div class="table-scroll">
         <table class="tx-table">
           <thead>
-            <tr><th>Workspace</th><th>Plan</th><th>Status</th><th>Period ends</th><th>Provider id</th><th></th></tr>
+            <tr><th>Workspace</th><th>Plan</th><th>Status</th><th>Period ends</th><th>Provider id</th><th><span class="sr-only">Actions</span></th></tr>
           </thead>
           <tbody>
             @each(subscription in subscriptions)
@@ -58,20 +58,26 @@
                   {{ subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toFormat('d LLL yyyy') : '—' }}
                 </td>
                 <td><span class="tx-id">{{ subscription.providerSubscriptionId }}</span></td>
-                <td>
-                  <div class="btn-row" style="margin-top: 0">
+                <td class="col-actions">
+                  @rowMenu({ label: subscription.providerSubscriptionId })
                     @form({ route: 'admin.subscriptions.sync', routeParams: { id: subscription.id }, method: 'POST' })
-                      @!button({ text: 'Sync', variant: 'outline', size: 'xs', type: 'submit' })
+                      <button type="submit" class="dropdown-item">
+                        @!icon({ name: 'refreshCw', width: 15, height: 15 })
+                        Sync with provider
+                      </button>
                     @end
                     @if(canManage && !subscription.isCanceled)
-                      @!button({
-                        text: 'Cancel',
-                        variant: 'danger',
-                        size: 'xs',
-                        '@click': `document.getElementById('cancel-${subscription.id}').showModal()`,
-                      })
+                      <div class="dropdown-divider"></div>
+                      <button
+                        type="button"
+                        class="dropdown-item dropdown-item-danger"
+                        @click="close(); document.getElementById('cancel-{{ subscription.id }}').showModal()"
+                      >
+                        @!icon({ name: 'xCircle', width: 15, height: 15 })
+                        Cancel subscription
+                      </button>
                     @end
-                  </div>
+                  @end
                 </td>
               </tr>
             @end

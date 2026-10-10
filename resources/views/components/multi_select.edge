@@ -1,0 +1,52 @@
+{{--
+  A dropdown that picks several values and submits them under one array
+  field, e.g. `planKeys[]`. Used inside a `field.root`, which owns the name.
+
+  A <details> full of checkboxes rather than a `<select multiple>`: a native
+  multiple select is a list box that needs Ctrl-click, not a dropdown, and
+  nobody discovers that. The checkboxes are real, so the form posts the same
+  thing with JavaScript off; Alpine (`multiSelect`) only keeps the closed
+  control's summary in step and closes it on an outside click or Escape.
+
+  Props:
+    options     — [{ value, name }]
+    placeholder — what the closed control says with nothing ticked
+--}}
+@let(multiOptions = $props.get('options') ?? [])
+@let(multiPlaceholder = $props.get('placeholder') ?? 'Nothing selected')
+{{-- Repopulated from the last submission, like `checkbox.group`. --}}
+@let(multiOld = [].concat(old($context.name) ?? []).map(String))
+@let(multiChosen = multiOptions.filter((option) => multiOld.includes(String(option.value))))
+
+<details
+  class="dropdown multi-select"
+  x-data="multiSelect"
+  data-placeholder="{{ multiPlaceholder }}"
+  @click.outside="close"
+  @keydown.escape="close"
+>
+  <summary
+    class="field-input"
+    id="{{ $context.id }}"
+    aria-haspopup="true"
+    data-invalid="{{ $context.hasErrors ? 'true' : 'false' }}"
+  >
+    <span class="multi-select-value" x-ref="value">{{ multiChosen.length ? multiChosen.map((option) => option.name ?? option.value).join(', ') : multiPlaceholder }}</span>
+  </summary>
+
+  <div class="dropdown-menu">
+    @each(option in multiOptions)
+      <label class="dropdown-item">
+        <input
+          type="checkbox"
+          name="{{ $context.name }}[]"
+          value="{{ option.value }}"
+          data-label="{{ option.name ?? option.value }}"
+          @change="sync"
+          {{ multiOld.includes(String(option.value)) ? 'checked' : '' }}
+        />
+        {{ option.name ?? option.value }}
+      </label>
+    @end
+  </div>
+</details>

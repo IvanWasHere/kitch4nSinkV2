@@ -110,7 +110,7 @@ a staff address is rejected at `/login` exactly as a stranger would be.
 Want a richer playground — paid plans, a team, lists and todos, API traffic, payment history?
 
 ```bash
-node ace dev:seed              # 🏭 five workspaces, a team, lists, keys, files, payments
+node ace dev:seed              # 🏭 demo workspaces, a team, lists, keys, files, payments
 ```
 
 ### 📬 Seeing the email

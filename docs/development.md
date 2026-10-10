@@ -38,7 +38,11 @@ node ace queue:work
 `node ace dev:seed` builds five workspaces across every plan and state: a team with a pending
 invitation, lists and todos in every state a todo has, API keys with two weeks of traffic behind
 them, uploaded files, published announcements, support tickets in all three states, a workspace past
-due and one that cancelled, plus a failed job and a webhook that never applied.
+due and one that cancelled, plus a failed job and a webhook that never applied. Sixty-eight further
+workspaces fill the back-office's charts: forty paying customers, each billed on its own day of the
+month, put a charge on every one of the last thirty days and most of the last ninety; each
+registered the day of its first charge, seven have since cancelled, and twenty-eight free workspaces
+signed up without paying, so registrations and cancellations have something to count as well.
 
 Every screenshot on this site comes from it. If a screen looks empty here, it will look empty for
 whoever clones the repository.

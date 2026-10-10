@@ -50,7 +50,7 @@
               <th>Joined</th>
               <th>Confirmed</th>
               <th>Updated</th>
-              <th>Actions</th>
+              <th><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -69,33 +69,46 @@
                 <td>{{ entry.createdAt.toFormat('d LLL yyyy, HH:mm') }}</td>
                 <td>{{ entry.confirmedAt ? entry.confirmedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
                 <td>{{ entry.updatedAt ? entry.updatedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
-                <td>
-                  <div class="btn-row" style="margin-top: 0">
+                <td class="col-actions">
+                  @rowMenu({ label: entry.email })
                     @if(entry.status === 'pending_confirmation' && entry.doubleOptInRequired)
                       @form({ route: 'admin.waitlist.resend', routeParams: { id: entry.publicId }, method: 'POST' })
-                        @!button({ text: 'Resend link', variant: 'outline', size: 'xs', type: 'submit' })
+                        <button type="submit" class="dropdown-item">
+                          @!icon({ name: 'mail', width: 15, height: 15 })
+                          Resend link
+                        </button>
                       @end
                     @end
                     @if(entry.status === 'pending_confirmation' || entry.status === 'confirmed')
                       @form({ route: 'admin.waitlist.convert', routeParams: { id: entry.publicId }, method: 'POST' })
-                        @!button({ text: 'Mark converted', variant: 'outline', size: 'xs', type: 'submit' })
+                        <button type="submit" class="dropdown-item">
+                          @!icon({ name: 'check', width: 15, height: 15 })
+                          Mark converted
+                        </button>
                       @end
                     @end
                     @if(entry.status !== 'cancelled')
                       @form({ route: 'admin.waitlist.cancel', routeParams: { id: entry.publicId }, method: 'POST' })
-                        @!button({ text: 'Cancel', variant: 'outline', size: 'xs', type: 'submit' })
+                        <button type="submit" class="dropdown-item">
+                          @!icon({ name: 'xCircle', width: 15, height: 15 })
+                          Cancel
+                        </button>
                       @end
                     @end
+                    <div class="dropdown-divider"></div>
+                    {{-- Inside the menu's own Alpine scope, so the form needs no `x-data` of its own. --}}
                     @form({
                       route: 'admin.waitlist.destroy',
                       routeParams: { id: entry.publicId },
                       method: 'POST',
-                      'x-data': '',
                       '@submit': "if (!confirm('Delete this entry? This cannot be undone.')) $event.preventDefault()",
                     })
-                      @!button({ text: 'Delete', variant: 'danger', size: 'xs', type: 'submit' })
+                      <button type="submit" class="dropdown-item dropdown-item-danger">
+                        @!icon({ name: 'trash', width: 15, height: 15 })
+                        Delete
+                      </button>
                     @end
-                  </div>
+                  @end
                 </td>
               </tr>
             @end

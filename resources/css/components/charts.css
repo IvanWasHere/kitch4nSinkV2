@@ -237,6 +237,82 @@
   height: 100%;
 }
 
+/*
+| A share bar with no legend under it: each section says what it is when it
+| is hovered or focused. The bar cannot clip its own tooltips, so the rounding
+| moves from the bar to its two end sections; it is taller than the plain
+| one, and each section reaches a little above and below itself, because a
+| rule eight pixels high is not something anybody can aim at.
+*/
+.share-bar-hover {
+  height: 12px;
+  margin-bottom: 4px;
+  overflow: visible;
+  background: none;
+}
+
+.share-bar-hover > span {
+  position: relative;
+  cursor: default;
+  outline: none;
+}
+
+.share-bar-hover > span:first-child {
+  border-radius: var(--radius-pill) 0 0 var(--radius-pill);
+}
+
+.share-bar-hover > span:last-child {
+  border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+}
+
+.share-bar-hover > span:only-child {
+  border-radius: var(--radius-pill);
+}
+
+.share-bar-hover > span::before {
+  content: '';
+  position: absolute;
+  inset: -8px 0;
+}
+
+.share-bar-hover > span:hover,
+.share-bar-hover > span:focus-visible {
+  filter: brightness(0.92);
+}
+
+.share-bar-hover > span:focus-visible {
+  box-shadow: var(--ring-focus);
+}
+
+.share-bar-hover .share-tip {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  height: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.share-tip strong {
+  font-weight: 600;
+}
+
+.share-bar-hover > span:hover > .share-tip,
+.share-bar-hover > span:focus > .share-tip {
+  display: flex;
+}
+
+/* The end sections keep their tooltip inside the panel rather than centring it off the edge. */
+.share-bar-hover > span:first-child > .share-tip {
+  left: 0;
+  transform: none;
+}
+
+.share-bar-hover > span:last-child > .share-tip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
 .share-row {
   display: flex;
   align-items: center;
@@ -341,6 +417,178 @@
   box-shadow: 0 1px 1.5px rgb(18 28 53 / 0.08);
 }
 
+/* Line chart ------------------------------------------------------------ */
+
+/*
+| Several series over the same buckets — volume as gross, refunded and net,
+| with registrations and cancellations over them. An inline SVG whose
+| coordinates the server worked out; this only dresses it, and switches
+| series on and off.
+|
+| A series is a colour, set once as `--series` and read by its line, its
+| hover points and its key in the legend, so the three cannot drift apart.
+| The colours are identities, not verdicts: refunded is amber rather than the
+| danger red, which stays reserved for things that are actually wrong.
+*/
+.series-gross {
+  --series: var(--purple-500);
+}
+
+.series-net {
+  --series: var(--accent-500);
+}
+
+.series-refunded {
+  --series: var(--orange-500);
+}
+
+/*
+| The two counts. They read against the right-hand scale, not the money's,
+| so their lines are dashed: a second scale on one plot is only safe when the
+| lines that belong to it cannot be taken for the others. The dash is also
+| what tells registered green from refund amber for somebody who cannot.
+*/
+.series-registered {
+  --series: var(--green-500);
+}
+
+.series-cancelled {
+  --series: var(--red-400);
+}
+
+.line-chart {
+  display: block;
+  width: 100%;
+  min-width: 520px;
+  height: auto;
+}
+
+.line-chart-rule {
+  stroke: var(--border-soft);
+  stroke-width: 1;
+}
+
+.line-chart-tick {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.line-chart-line {
+  fill: none;
+  stroke: var(--series);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.line-chart-line-count {
+  stroke-dasharray: 5 4;
+}
+
+/*
+| One column per bucket, as wide as the gap between two points, so the whole
+| plot is a hover target rather than a row of four-pixel dots.
+*/
+.line-chart-hit {
+  fill: transparent;
+}
+
+.line-chart-cross {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  opacity: 0;
+}
+
+.line-chart-dot {
+  fill: var(--series);
+  stroke: var(--surface);
+  stroke-width: 2;
+  opacity: 0;
+}
+
+.line-chart-col:hover .line-chart-cross,
+.line-chart-col:hover .line-chart-dot {
+  opacity: 1;
+}
+
+.chart-key {
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  margin-right: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--series);
+  vertical-align: middle;
+}
+
+/* A dashed line's key is dashed: the legend says which scale a line reads against. */
+.chart-key-dashed {
+  width: 16px;
+  border-radius: 0;
+  background: repeating-linear-gradient(90deg, var(--series) 0 4px, transparent 4px 6px);
+}
+
+/*
+| The legend is the switchboard. Each entry is the <label> of a checkbox that
+| sits, visually hidden, ahead of the chart; unticked, it takes its series —
+| line and hover points — out of the plot and fades its own entry. No script:
+| the state is the checkbox's, so it works with the bundle blocked and with
+| Space from the keyboard.
+|
+| The rules are spelled out per series because a selector cannot be built
+| from an attribute's value; a sixth series needs a line in each list.
+*/
+.chart-legend {
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition);
+}
+
+.chart-legend > span {
+  display: block;
+}
+
+.chart-legend:hover .chart-summary-label {
+  color: var(--text-soft);
+}
+
+#show-gross:not(:checked) ~ .bars-wrap .series-gross,
+#show-refunded:not(:checked) ~ .bars-wrap .series-refunded,
+#show-net:not(:checked) ~ .bars-wrap .series-net,
+#show-registered:not(:checked) ~ .bars-wrap .series-registered,
+#show-cancelled:not(:checked) ~ .bars-wrap .series-cancelled {
+  display: none;
+}
+
+#show-gross:not(:checked) ~ .chart-summary [for='show-gross'],
+#show-refunded:not(:checked) ~ .chart-summary [for='show-refunded'],
+#show-net:not(:checked) ~ .chart-summary [for='show-net'],
+#show-registered:not(:checked) ~ .chart-summary [for='show-registered'],
+#show-cancelled:not(:checked) ~ .chart-summary [for='show-cancelled'] {
+  opacity: 0.4;
+}
+
+#show-gross:focus-visible ~ .chart-summary [for='show-gross'],
+#show-refunded:focus-visible ~ .chart-summary [for='show-refunded'],
+#show-net:focus-visible ~ .chart-summary [for='show-net'],
+#show-registered:focus-visible ~ .chart-summary [for='show-registered'],
+#show-cancelled:focus-visible ~ .chart-summary [for='show-cancelled'] {
+  outline: 2px solid var(--accent-500);
+  outline-offset: 4px;
+}
+
+/* A scale with none of its lines showing is numbers about nothing. */
+#show-gross:not(:checked)
+  ~ #show-refunded:not(:checked)
+  ~ #show-net:not(:checked)
+  ~ .bars-wrap
+  .line-chart-axis-money,
+#show-registered:not(:checked) ~ #show-cancelled:not(:checked) ~ .bars-wrap .line-chart-axis-count {
+  display: none;
+}
+
 /* Sparkline ------------------------------------------------------------- */
 
 /*
@@ -436,30 +684,4 @@
   font-weight: 600;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
-}
-
-/*
-| The note under a balance. In the reference this is the next payout; here it
-| is the reason there is no payout to show — the settled balance lives at the
-| provider, and this application never calls it.
-*/
-.balance-note {
-  display: flex;
-  gap: 9px;
-  align-items: flex-start;
-  margin-top: 14px;
-  padding: 11px 12px;
-  background: var(--page);
-  border-radius: var(--radius);
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--text-soft);
-}
-
-.balance-note svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--text-muted);
 }

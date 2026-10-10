@@ -64,7 +64,7 @@
               <th>Published</th>
               <th>Created</th>
               <th>Updated</th>
-              <th>Actions</th>
+              <th><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -80,15 +80,24 @@
                 <td>{{ entry.publishedAt ? entry.publishedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
                 <td>{{ entry.createdAt.toFormat('d LLL yyyy') }}</td>
                 <td>{{ entry.updatedAt ? entry.updatedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
-                <td>
-                  <div class="btn-row" style="margin-top: 0">
-                    @!link({ route: 'admin.content.edit', routeParams: { id: entry.publicId }, text: 'Edit', class: 'btn btn-outline btn-xs' })
+                <td class="col-actions">
+                  @rowMenu({ label: entry.title })
+                    <a class="dropdown-item" href="{{ urlFor('admin.content.edit', { id: entry.publicId }) }}">
+                      @!icon({ name: 'edit', width: 15, height: 15 })
+                      Edit
+                    </a>
                     @if(entry.isLive)
-                      <a class="btn btn-outline btn-xs" href="{{ entry.path }}" target="_blank" rel="noopener">View</a>
+                      <a class="dropdown-item" href="{{ entry.path }}" target="_blank" rel="noopener">
+                        @!icon({ name: 'externalLink', width: 15, height: 15 })
+                        View
+                      </a>
                     @else
-                      @!link({ route: 'admin.content.preview', routeParams: { id: entry.publicId }, text: 'Preview', class: 'btn btn-outline btn-xs', target: '_blank' })
+                      <a class="dropdown-item" href="{{ urlFor('admin.content.preview', { id: entry.publicId }) }}" target="_blank">
+                        @!icon({ name: 'eye', width: 15, height: 15 })
+                        Preview
+                      </a>
                     @end
-                  </div>
+                  @end
                 </td>
               </tr>
             @end

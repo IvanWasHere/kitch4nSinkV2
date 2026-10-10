@@ -7,41 +7,39 @@
 --}}
 @component('layouts/admin', { title: 'Audit log' })
   <div class="settings-card">
-    @form({ route: 'admin.audit_logs.index', method: 'GET' })
-      <div class="field-row" style="grid-template-columns: 2fr 1fr 1fr">
-        @field.root({ name: 'organization' })
-          @!field.label({ text: 'Workspace' })
-          @!input.control({ value: filters.organization, placeholder: 'org_…' })
-        @end
+    @form({ route: 'admin.audit_logs.index', method: 'GET', class: 'filter-bar' })
+      @field.root({ name: 'organization', class: 'field-wide' })
+        @!field.label({ text: 'Workspace' })
+        @!input.control({ value: filters.organization, placeholder: 'org_…' })
+      @end
 
-        @field.root({ name: 'actor_type' })
-          @!field.label({ text: 'Actor' })
-          @!select.control({
-            options: [{ value: '', name: 'Anyone' }].concat(
-              actorTypes.map((type) => ({ value: type, name: type }))
-            ),
-            value: filters.actorType,
-          })
-        @end
+      @field.root({ name: 'actor_type' })
+        @!field.label({ text: 'Actor' })
+        @!select.control({
+          options: [{ value: '', name: 'Anyone' }].concat(
+            actorTypes.map((type) => ({ value: type, name: type }))
+          ),
+          value: filters.actorType,
+        })
+      @end
 
-        @field.root({ name: 'action' })
-          @!field.label({ text: 'Action' })
-          {{--
-            Offered from what is actually recorded rather than from the full
-            vocabulary, so the dropdown only ever contains filters that would
-            return something.
-          --}}
-          @!select.control({
-            options: [{ value: '', name: 'Anything' }].concat(
-              actions.map((action) => ({ value: action, name: action }))
-            ),
-            value: filters.action,
-          })
-        @end
-      </div>
+      @field.root({ name: 'action' })
+        @!field.label({ text: 'Action' })
+        {{--
+          Offered from what is actually recorded rather than from the full
+          vocabulary, so the dropdown only ever contains filters that would
+          return something.
+        --}}
+        @!select.control({
+          options: [{ value: '', name: 'Anything' }].concat(
+            actions.map((action) => ({ value: action, name: action }))
+          ),
+          value: filters.action,
+        })
+      @end
       <div class="btn-row">
-        @!button({ text: 'Filter', type: 'submit', size: 'sm' })
-        @!link({ route: 'admin.audit_logs.index', text: 'Clear', class: 'btn btn-outline btn-sm' })
+        @!button({ text: 'Filter', type: 'submit' })
+        @!link({ route: 'admin.audit_logs.index', text: 'Clear', class: 'btn btn-outline' })
       </div>
     @end
   </div>

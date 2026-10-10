@@ -407,6 +407,97 @@ test.group('Back-office — the dashboard', (group) => {
     assert.equal(quarter.buckets.at(-1)!.heightPercent, 100)
   })
 
+  /*
+  | The chart draws gross, refunded and net as three lines on one axis, so a
+  | refund has to show up as its own line *and* as the gap between the other
+  | two — on the day it belongs to, not smeared across the window.
+  */
+  test('charts gross, refunded and net per bucket on one scale', async ({ assert }) => {
+    const { organization } = await createWorkspace()
+    const refunded = await pay(organization.id, DateTime.utc().minus({ days: 1 }), 8000)
+
+    refunded.refundedAmountCents = 2000
+    refunded.status = 'partially_refunded'
+    await refunded.save()
+
+    const { chart } = await metrics.revenue('7d')
+
+    assert.lengthOf(chart.columns, 7)
+    assert.lengthOf(chart.gross.split(' '), 7)
+
+    const day = chart.columns.find((column) => column.grossCents > 0)!
+    assert.deepEqual([day.grossCents, day.refundedCents, day.netCents], [8000, 2000, 6000])
+
+    /* Higher on the page is a smaller y: gross above net above refunded. */
+    assert.isBelow(day.grossY, day.netY)
+    assert.isBelow(day.netY, day.refundedY)
+
+    /* A round axis that clears the largest value, starting at zero. */
+    assert.equal(chart.ticks[0].cents, 0)
+    assert.equal(chart.ticks[0].y, chart.bottom)
+    assert.equal(chart.ticks.at(-1)!.cents, 8000)
+    assert.equal(chart.columns.at(-1)!.x, chart.right)
+  })
+
+  /*
+  | Registrations and cancellations ride under the money on the same days.
+  | The same rules as the growth figures: a deleted workspace was never a
+  | registration, and only a subscription that actually ended is a
+  | cancellation.
+  */
+  test('counts registrations and cancellations on the day they happened', async ({ assert }) => {
+    const now = DateTime.utc()
+
+    const { organization } = await createWorkspace()
+    const older = await createWorkspace()
+    older.organization.createdAt = now.minus({ days: 3 })
+    await older.organization.save()
+
+    const gone = await createWorkspace()
+    gone.organization.deletedAt = now
+    await gone.organization.save()
+
+    const subscription = await subscribe(organization.id, 'pro', 'canceled')
+    subscription.canceledAt = now.minus({ days: 3 })
+    await subscription.save()
+
+    const stillPaying = await subscribe(older.organization.id, 'pro', 'active')
+    stillPaying.canceledAt = now.minus({ days: 1 })
+    await stillPaying.save()
+
+    const revenue = await metrics.revenue('7d')
+
+    assert.equal(revenue.registeredInWindow, 2, 'the deleted workspace is not counted')
+    assert.equal(revenue.cancelledInWindow, 1, 'nor a subscription that is still active')
+
+    const columns = revenue.chart.columns
+    assert.deepEqual([columns.at(-1)!.registered, columns.at(-1)!.cancelled], [1, 0])
+    assert.deepEqual([columns.at(-4)!.registered, columns.at(-4)!.cancelled], [1, 1])
+
+    /*
+     * One scale for both counts, separate from the money: equal counts sit
+     * at the same height, a day with nothing sits on the zero line, and
+     * every rule on the count scale is a whole number.
+     */
+    const pair = columns.at(-4)!
+    assert.equal(pair.registeredY, pair.cancelledY)
+    assert.isBelow(pair.registeredY, revenue.chart.bottom)
+    assert.equal(columns.at(-2)!.registeredY, revenue.chart.bottom)
+    assert.deepEqual(
+      revenue.chart.ticks.map((tick) => tick.count),
+      [0, 1, 2, 3, 4]
+    )
+    assert.lengthOf(revenue.chart.registered.split(' '), 7)
+  })
+
+  test('an empty window still has an axis, and flat lines along it', async ({ assert }) => {
+    const { chart } = await metrics.revenue('30d')
+
+    assert.lengthOf(chart.columns, 30)
+    assert.isTrue(chart.columns.every((column) => column.netY === chart.bottom))
+    assert.isAbove(chart.ticks.at(-1)!.cents, 0)
+  })
+
   test('surfaces what is broken: failed jobs and unapplied webhooks', async ({ assert }) => {
     await WebhookEvent.create({
       provider: 'creem',

@@ -4,13 +4,13 @@
 --}}
 @component('layouts/admin', { title: 'Users' })
   <div class="settings-card">
-    @form({ route: 'admin.users.index', method: 'GET' })
+    @form({ route: 'admin.users.index', method: 'GET', class: 'filter-bar' })
       @field.root({ name: 'q' })
         @!field.label({ text: 'Find a user' })
         @!input.control({ value: term, placeholder: 'email, name or usr_…' })
       @end
       <div class="btn-row">
-        @!button({ text: 'Search', type: 'submit', size: 'sm' })
+        @!button({ text: 'Search', type: 'submit' })
       </div>
     @end
   </div>
@@ -20,7 +20,7 @@
       <div class="table-scroll">
         <table class="orders-table">
           <thead>
-            <tr><th>Email</th><th>Workspace</th><th>State</th><th>Actions</th></tr>
+            <tr><th>Email</th><th>Workspace</th><th>State</th><th><span class="sr-only">Actions</span></th></tr>
           </thead>
           <tbody>
             @each(user in users)
@@ -48,11 +48,22 @@
                     @!badge({ text: 'Removed', tone: 'danger' })
                   @end
                 </td>
-                <td>
-                  <div class="btn-row" style="margin-top: 0">
+                <td class="col-actions">
+                  {{--
+                    Privacy requests started on the person's behalf (plan
+                    §22.8) — admin only, and only while a feature provides
+                    them. Deleting goes to a confirmation page first.
+                  --}}
+                  @let(canPrivacy = staff && staff.isAdmin && !user.isDeleted)
+                  @let(canDelete = canPrivacy && hasRoute('admin.privacy.deletions.create'))
+
+                  @rowMenu({ label: user.email })
                     @if(!user.hasVerifiedEmail)
                       @form({ route: 'admin.users.resend_verification', routeParams: { id: user.publicId }, method: 'POST' })
-                        @!button({ text: 'Resend', variant: 'outline', size: 'xs', type: 'submit' })
+                        <button type="submit" class="dropdown-item">
+                          @!icon({ name: 'mail', width: 15, height: 15 })
+                          Resend verification
+                        </button>
                       @end
                       {{--
                         The escape hatch for a provider silently dropping our
@@ -60,31 +71,41 @@
                         of an account they paid for.
                       --}}
                       @form({ route: 'admin.users.verify', routeParams: { id: user.publicId }, method: 'POST' })
-                        @!button({ text: 'Verify by hand', variant: 'outline', size: 'xs', type: 'submit' })
+                        <button type="submit" class="dropdown-item">
+                          @!icon({ name: 'check', width: 15, height: 15 })
+                          Verify by hand
+                        </button>
                       @end
+                    @end
+                    @if(canPrivacy && hasRoute('admin.privacy.exports.store'))
+                      @form({ route: 'admin.privacy.exports.store', method: 'POST' })
+                        <input type="hidden" name="user" value="{{ user.publicId }}" />
+                        <button type="submit" class="dropdown-item">
+                          @!icon({ name: 'archive', width: 15, height: 15 })
+                          Export data
+                        </button>
+                      @end
+                    @end
+
+                    {{-- The two that take something away, below the rule. --}}
+                    @if(user.hasTwoFactor || canDelete)
+                      <div class="dropdown-divider"></div>
                     @end
                     @if(user.hasTwoFactor)
                       @form({ route: 'admin.users.reset_two_factor', routeParams: { id: user.publicId }, method: 'POST' })
-                        @!button({ text: 'Clear 2FA', variant: 'danger', size: 'xs', type: 'submit' })
+                        <button type="submit" class="dropdown-item dropdown-item-danger">
+                          @!icon({ name: 'key', width: 15, height: 15 })
+                          Clear 2FA
+                        </button>
                       @end
                     @end
-                    {{--
-                      Privacy requests started on the person's behalf (plan
-                      §22.8) — admin only, and only while a feature provides
-                      them. Deleting goes to a confirmation page first.
-                    --}}
-                    @if(staff && staff.isAdmin && !user.isDeleted)
-                      @if(hasRoute('admin.privacy.exports.store'))
-                        @form({ route: 'admin.privacy.exports.store', method: 'POST' })
-                          <input type="hidden" name="user" value="{{ user.publicId }}" />
-                          @!button({ text: 'Export data', variant: 'outline', size: 'xs', type: 'submit' })
-                        @end
-                      @end
-                      @if(hasRoute('admin.privacy.deletions.create'))
-                        <a class="btn btn-danger btn-xs" href="{{ urlFor('admin.privacy.deletions.create') }}?user={{ user.publicId }}">Delete account</a>
-                      @end
+                    @if(canDelete)
+                      <a class="dropdown-item dropdown-item-danger" href="{{ urlFor('admin.privacy.deletions.create') }}?user={{ user.publicId }}">
+                        @!icon({ name: 'trash', width: 15, height: 15 })
+                        Delete account
+                      </a>
                     @end
-                  </div>
+                  @end
                 </td>
               </tr>
             @end
