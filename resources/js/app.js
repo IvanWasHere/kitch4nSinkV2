@@ -71,6 +71,29 @@ Alpine.data('rowMenu', () => ({
 }))
 
 /**
+ * A dropdown of checkboxes (`@multiSelect`). The checkboxes are the value and
+ * post on their own; this only writes what is ticked into the closed control,
+ * so the choice is readable without opening it again.
+ */
+Alpine.data('multiSelect', () => ({
+  init() {
+    this.sync()
+  },
+  close() {
+    this.$root.open = false
+  },
+  sync() {
+    const chosen = [...this.$root.querySelectorAll('input[type="checkbox"]:checked')].map(
+      (input) => input.dataset.label
+    )
+
+    this.$refs.value.textContent = chosen.length
+      ? chosen.join(', ')
+      : this.$root.dataset.placeholder
+  },
+}))
+
+/**
  * Show/hide toggle for a password input. Replaces `state.showPw`.
  */
 Alpine.data('passwordField', () => ({

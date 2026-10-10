@@ -25,7 +25,7 @@
               <th>Attempts</th>
               <th>Failed</th>
               <th>Last error</th>
-              <th></th>
+              <th><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -38,15 +38,22 @@
                 <td style="max-width: 320px">
                   <span class="field-hint">{{ job.lastError ?? '' }}</span>
                 </td>
-                <td>
-                  <div class="table-actions">
+                <td class="col-actions">
+                  @rowMenu({ label: `${job.name} #${job.id}` })
                     @form({ route: 'admin.jobs.retry', routeParams: { id: job.id }, method: 'POST' })
-                      @!button({ text: 'Retry', variant: 'outline', size: 'xs', type: 'submit' })
+                      <button type="submit" class="dropdown-item">
+                        @!icon({ name: 'refreshCw', width: 15, height: 15 })
+                        Retry
+                      </button>
                     @end
+                    <div class="dropdown-divider"></div>
                     @form({ route: 'admin.jobs.destroy', routeParams: { id: job.id }, method: 'POST' })
-                      @!button({ text: 'Discard', variant: 'danger', size: 'xs', type: 'submit' })
+                      <button type="submit" class="dropdown-item dropdown-item-danger">
+                        @!icon({ name: 'trash', width: 15, height: 15 })
+                        Discard
+                      </button>
                     @end
-                  </div>
+                  @end
                 </td>
               </tr>
             @end

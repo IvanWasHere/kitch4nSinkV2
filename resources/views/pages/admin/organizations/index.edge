@@ -7,13 +7,13 @@
 --}}
 @component('layouts/admin', { title: 'Organisations' })
   <div class="settings-card">
-    @form({ route: 'admin.organizations.index', method: 'GET' })
+    @form({ route: 'admin.organizations.index', method: 'GET', class: 'filter-bar' })
       @field.root({ name: 'q' })
         @!field.label({ text: 'Find a workspace' })
         @!input.control({ value: term, placeholder: 'name, slug, org_… or a member’s email' })
       @end
       <div class="btn-row">
-        @!button({ text: 'Search', type: 'submit', size: 'sm' })
+        @!button({ text: 'Search', type: 'submit' })
       </div>
     @end
   </div>

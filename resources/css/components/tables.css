@@ -129,6 +129,17 @@
   letter-spacing: 0.3px;
 }
 
+/*
+| The cell holding a row's three-dot menu (`@rowMenu`). As narrow as the
+| trigger, and against the right edge whatever the other columns do.
+*/
+.orders-table .col-actions,
+.tx-table .col-actions {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .table-actions {
   display: flex;
   gap: 8px;

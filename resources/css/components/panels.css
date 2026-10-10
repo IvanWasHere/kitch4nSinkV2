@@ -149,15 +149,6 @@
 }
 
 /*
-| Panels that size to their own content rather than stretching to match the
-| tallest. For a chart beside a rail of two cards: stretched, the chart panel
-| grows a void under its summary.
-*/
-.panel-grid-top {
-  align-items: start;
-}
-
-/*
 | Two or more panels stacked in one column of a `.panel-grid` — the
 | reference's rail beside its chart.
 */
@@ -166,6 +157,14 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+}
+
+/*
+| A rail whose last card takes up whatever height is left, so the rail ends
+| on the same line as the panel beside it instead of stopping short of it.
+*/
+.rail-fill > .panel:last-child {
+  flex: 1;
 }
 
 .panel {

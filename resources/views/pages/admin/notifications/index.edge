@@ -51,29 +51,32 @@
         </div>
 
         {{--
-          The four audiences of plan §20.3. Radios rather than a select so all
-          four are readable at once — picking the wrong audience is the
-          expensive mistake here, not picking slowly.
+          The four audiences of plan §20.3. They are alternatives — one
+          announcement has one `audience_type` — so this picks one. It starts
+          on nothing rather than on *Everyone*: picking the wrong audience is
+          the expensive mistake here, and a default would make it for them.
         --}}
         @field.root({ name: 'audienceType' })
           @!field.label({ text: 'Who sees it' })
-          @radio.group({ name: 'audienceType' })
-            @!radio.control({ value: 'all', label: 'Everyone' })
-            @!radio.control({ value: 'plan', label: 'Everyone on a specific plan' })
-            @!radio.control({ value: 'owners', label: 'Workspace owners only' })
-            @!radio.control({ value: 'users', label: 'Named people only' })
-          @end
+          @!select.control({
+            options: [
+              { value: '', name: 'Choose an audience…' },
+              { value: 'all', name: 'Everyone' },
+              { value: 'plan', name: 'Everyone on a specific plan' },
+              { value: 'owners', name: 'Workspace owners only' },
+              { value: 'users', name: 'Named people only' },
+            ],
+          })
           @!field.error()
         @end
 
         <div class="field-row" style="grid-template-columns: 1fr 1fr">
           @field.root({ name: 'planKeys' })
             @!field.label({ text: 'Plans' })
-            @checkbox.group({ name: 'planKeys' })
-              @each(key in planKeys)
-                @!checkbox.control({ value: key, label: key })
-              @end
-            @end
+            @!multiSelect({
+              options: planKeys.map((key) => ({ value: key, name: key })),
+              placeholder: 'No plans selected',
+            })
             <p class="field-hint">
               Used by “on a specific plan”, and optional for “owners only” — no plans there means
               owners on every plan.

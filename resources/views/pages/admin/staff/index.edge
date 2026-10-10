@@ -17,7 +17,7 @@
     <div class="table-scroll">
       <table class="tx-table">
         <thead>
-          <tr><th>Email</th><th>Name</th><th>Role</th><th>Two-factor</th><th>Last signed in</th><th></th></tr>
+          <tr><th>Email</th><th>Name</th><th>Role</th><th>Two-factor</th><th>Last signed in</th><th><span class="sr-only">Actions</span></th></tr>
         </thead>
         <tbody>
           @each(member in members)
@@ -42,15 +42,23 @@
               <td style="white-space: nowrap">
                 {{ member.lastLoginAt ? member.lastLoginAt.toFormat('d LLL yyyy') : 'Never' }}
               </td>
-              <td>
-                @if(member.id !== staff.id)
-                  @form({ route: 'admin.staff.toggle', routeParams: { id: member.publicId }, method: 'POST' })
-                    @!button({
-                      text: member.isDisabled ? 'Enable' : 'Disable',
-                      variant: member.isDisabled ? 'outline' : 'danger',
-                      size: 'xs',
-                      type: 'submit',
-                    })
+              <td class="col-actions">
+                {{-- Nothing on your own row: the menu renders only when it has an item. --}}
+                @rowMenu({ label: member.email })
+                  @if(member.id !== staff.id)
+                    @form({ route: 'admin.staff.toggle', routeParams: { id: member.publicId }, method: 'POST' })
+                      @if(member.isDisabled)
+                        <button type="submit" class="dropdown-item">
+                          @!icon({ name: 'check', width: 15, height: 15 })
+                          Enable account
+                        </button>
+                      @else
+                        <button type="submit" class="dropdown-item dropdown-item-danger">
+                          @!icon({ name: 'slash', width: 15, height: 15 })
+                          Disable account
+                        </button>
+                      @end
+                    @end
                   @end
                 @end
               </td>

@@ -119,40 +119,104 @@
     </p>
   @end
 
-  <div class="panel-grid panel-grid-top">
-    @panel.root({ title: `Net volume, by ${revenue.bucketsAreWeekly ? 'week' : 'day'}` })
+  <div class="panel-grid">
+    {{--
+      Five lines on one plot, over the same buckets. Gross, refunded and net
+      are money and read against the left-hand scale; registrations and
+      cancellations are counts and read against the right-hand one, dashed so
+      the two kinds are not mistaken for each other. The service has already
+      laid it out (`revenue.chart`), so this only prints an SVG — no library,
+      and nothing to hydrate.
+
+      Each entry in the legend switches its line on and off. The legend is a
+      row of labels for checkboxes and the stylesheet does the hiding, so it
+      works with the bundle blocked and from the keyboard (plan §13.3). When
+      every line on one scale is off, that scale's numbers go with them.
+
+      Hovering a bucket shows its rule and its points; the exact figures are
+      in the column's <title>, which is also what a screen reader is given.
+    --}}
+    @let(chart = revenue.chart)
+    @let(bucketNoun = revenue.bucketsAreWeekly ? 'week' : 'day')
+    @let(series = [
+      { key: 'gross', name: 'Gross', total: money(revenue.gross.cents, revenue.currency) },
+      { key: 'refunded', name: 'Refunded', total: money(revenue.refunded.cents, revenue.currency) },
+      { key: 'net', name: 'Net', total: money(revenue.net.cents, revenue.currency) },
+      { key: 'registered', name: 'Registered', total: revenue.registeredInWindow, isCount: true },
+      { key: 'cancelled', name: 'Cancelled', total: revenue.cancelledInWindow, isCount: true },
+    ])
+
+    @panel.root({ title: `Volume and sign-ups, by ${bucketNoun}` })
+      {{-- Before the chart and the legend in the markup: the stylesheet reaches both from here. --}}
+      @each(one in series)
+        <input type="checkbox" class="sr-only" id="show-{{ one.key }}" checked />
+      @end
+
       <div class="bars-wrap">
-        <div class="bars" style="min-width: {{ revenue.buckets.length * 26 }}px">
-          @each(bucket in revenue.buckets)
-            <div class="bar-col" title="{{ money(bucket.cents, revenue.currency) }} · {{ bucket.label }}">
-              <div class="bar-track">
-                <div class="bar-fill" style="height: {{ bucket.heightPercent }}%"></div>
-              </div>
-              <div class="bar-label">{{ bucket.label }}</div>
-            </div>
+        <svg
+          class="line-chart"
+          viewBox="0 0 {{ chart.width }} {{ chart.height }}"
+          role="img"
+          aria-label="Gross, refunded and net volume, with registrations and cancellations, by {{ bucketNoun }} over the last {{ revenue.days }} days"
+        >
+          @each(tick in chart.ticks)
+            <line class="line-chart-rule" x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ tick.y }}" y2="{{ tick.y }}" />
           @end
-        </div>
+
+          <g class="line-chart-axis-money">
+            @each(tick in chart.ticks)
+              <text class="line-chart-tick" x="{{ chart.left - 10 }}" y="{{ tick.y + 4 }}" text-anchor="end">{{ money(tick.cents, revenue.currency, true) }}</text>
+            @end
+          </g>
+
+          <g class="line-chart-axis-count">
+            @each(tick in chart.ticks)
+              <text class="line-chart-tick" x="{{ chart.right + 10 }}" y="{{ tick.y + 4 }}">{{ tick.count }}</text>
+            @end
+          </g>
+
+          @each(column in chart.columns)
+            @if(column.showLabel)
+              <text class="line-chart-tick" x="{{ column.x }}" y="{{ chart.bottom + 21 }}" text-anchor="middle">{{ column.label }}</text>
+            @end
+          @end
+
+          {{-- Counts underneath, then money, net last: the line the panel is about sits on top where they cross. --}}
+          <polyline class="line-chart-line line-chart-line-count series-cancelled" points="{{ chart.cancelled }}" />
+          <polyline class="line-chart-line line-chart-line-count series-registered" points="{{ chart.registered }}" />
+          <polyline class="line-chart-line series-refunded" points="{{ chart.refunded }}" />
+          <polyline class="line-chart-line series-gross" points="{{ chart.gross }}" />
+          <polyline class="line-chart-line series-net" points="{{ chart.net }}" />
+
+          @each(column in chart.columns)
+            <g class="line-chart-col">
+              <title>{{ column.label }} — Gross {{ money(column.grossCents, revenue.currency) }} · Refunded {{ money(column.refundedCents, revenue.currency) }} · Net {{ money(column.netCents, revenue.currency) }} · {{ column.registered }} registered · {{ column.cancelled }} cancelled</title>
+              <rect class="line-chart-hit" x="{{ column.hitX }}" y="{{ chart.top }}" width="{{ column.hitWidth }}" height="{{ chart.bottom - chart.top }}" />
+              <line class="line-chart-cross" x1="{{ column.x }}" x2="{{ column.x }}" y1="{{ chart.top }}" y2="{{ chart.bottom }}" />
+              <circle class="line-chart-dot series-cancelled" cx="{{ column.x }}" cy="{{ column.cancelledY }}" r="4" />
+              <circle class="line-chart-dot series-registered" cx="{{ column.x }}" cy="{{ column.registeredY }}" r="4" />
+              <circle class="line-chart-dot series-refunded" cx="{{ column.x }}" cy="{{ column.refundedY }}" r="4" />
+              <circle class="line-chart-dot series-gross" cx="{{ column.x }}" cy="{{ column.grossY }}" r="4" />
+              <circle class="line-chart-dot series-net" cx="{{ column.x }}" cy="{{ column.netY }}" r="4" />
+            </g>
+          @end
+        </svg>
       </div>
 
+      {{-- The legend, the totals and the switches are the same five things, so they are one row. --}}
       <div class="chart-summary">
-        <div>
-          <div class="chart-summary-label">Gross</div>
-          <div class="chart-summary-value">{{ money(revenue.gross.cents, revenue.currency) }}</div>
-        </div>
-        <div>
-          <div class="chart-summary-label">Refunded</div>
-          <div class="chart-summary-value">
-            {{ money(revenue.refunded.cents, revenue.currency) }}
-          </div>
-        </div>
-        <div>
-          <div class="chart-summary-label">Net</div>
-          <div class="chart-summary-value">{{ money(revenue.net.cents, revenue.currency) }}</div>
-        </div>
+        @each(one in series)
+          <label class="chart-legend" for="show-{{ one.key }}" title="Show or hide {{ one.name.toLowerCase() }} on the chart">
+            <span class="chart-summary-label">
+              <i class="chart-key{{ one.isCount ? ' chart-key-dashed' : '' }} series-{{ one.key }}"></i>{{ one.name }}
+            </span>
+            <span class="chart-summary-value">{{ one.total }}</span>
+          </label>
+        @end
       </div>
     @end
 
-    <div class="rail">
+    <div class="rail rail-fill">
       @panel.root({ title: 'Balance' })
         <div class="balance-section">Collected, all time</div>
         <div class="balance-row">
@@ -169,39 +233,31 @@
             {{ money(revenue.refundedAllTimeCents, revenue.currency) }}
           </span>
         </div>
-
-        {{--
-          The honest version of the reference's payout line. What is available
-          and what is pending are the provider's numbers, and this screen is
-          deliberately readable when the provider is not (plan §12).
-        --}}
-        <div class="balance-note">
-          @!icon({ name: 'info' })
-          <span>
-            What our rows say customers were charged — not what has settled. The available and
-            pending balances live at the payment provider;
-            <code>node ace billing:sync</code> is what compares the two.
-          </span>
-        </div>
       @end
 
       @panel.root({ title: 'Volume by plan' })
         @if(revenue.byPlan.length)
-          <div class="share-bar">
+          {{--
+            Only the bar. Each section names itself — plan, amount, share —
+            when the pointer is over it, or when it has focus, which is how a
+            keyboard or a tap gets the same thing.
+          --}}
+          <div class="share-bar share-bar-hover">
             @each((plan, planIndex) in revenue.byPlan)
-              <span class="tint-{{ (planIndex + 1) % 5 }}" style="width: {{ plan.percent }}%"></span>
+              <span
+                class="tint-{{ (planIndex + 1) % 5 }}"
+                style="width: {{ plan.percent }}%"
+                tabindex="0"
+                aria-label="{{ plan.name }}: {{ money(plan.cents, revenue.currency) }}, {{ plan.percent.toFixed(0) }}%"
+              >
+                <span class="tooltip share-tip" aria-hidden="true">
+                  <i class="swatch tint-{{ (planIndex + 1) % 5 }}"></i>
+                  <strong>{{ plan.name }}</strong>
+                  {{ money(plan.cents, revenue.currency) }} · {{ plan.percent.toFixed(0) }}%
+                </span>
+              </span>
             @end
           </div>
-
-          @each((plan, planIndex) in revenue.byPlan)
-            <div class="share-row">
-              <i class="swatch tint-{{ (planIndex + 1) % 5 }}"></i>
-              <span class="share-name">{{ plan.name }}</span>
-              <span class="share-value">
-                {{ money(plan.cents, revenue.currency) }} · {{ plan.percent.toFixed(0) }}%
-              </span>
-            </div>
-          @end
         @else
           <p class="chart-note" style="margin-top: 0">
             Nothing was charged in this window, so there is nothing to split.

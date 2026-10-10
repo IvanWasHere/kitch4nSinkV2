@@ -96,8 +96,77 @@ export interface MoneyFigure {
 
 export interface RevenueBucket {
   label: string
+
+  /** Net — gross minus refunded — which is what `heightPercent` is a share of. */
   cents: number
+  grossCents: number
+  refundedCents: number
   heightPercent: number
+
+  /** Workspaces created, and subscriptions cancelled, in this bucket. */
+  registered: number
+  cancelled: number
+}
+
+/**
+ * The volume chart, already laid out: five lines over the same buckets, as
+ * coordinates in a fixed viewBox.
+ *
+ * The geometry is worked out here for the same reason the bar heights are —
+ * the scale is the one thing a stylesheet cannot know — and it means the
+ * chart is an inline SVG the template only has to print, with no charting
+ * library and nothing to hydrate (plan §13.3).
+ */
+export interface RevenueChart {
+  width: number
+  height: number
+
+  /** The plot area inside the viewBox; the margins hold the axis labels. */
+  left: number
+  right: number
+  top: number
+  bottom: number
+
+  /**
+   * Horizontal rules, bottom to top. The first is the zero line.
+   *
+   * Each rule is read twice. Money — gross, refunded, net — reads against
+   * `cents`, on the left. Registrations and cancellations are counts, which
+   * no dollar scale can hold, so they read against `count`, on the right.
+   * The count scale is chosen so every rule lands on a whole number: nobody
+   * registers two and a half workspaces.
+   *
+   * Two scales on one plot mean a money line crossing a count line says
+   * nothing at all, which is why the template draws the two kinds
+   * differently and lets either be switched off.
+   */
+  ticks: { cents: number; count: number; y: number }[]
+
+  /** `points` for an SVG polyline, oldest bucket first. */
+  gross: string
+  refunded: string
+  net: string
+  registered: string
+  cancelled: string
+
+  /** One per bucket: where it sits and what it holds, for hover and labels. */
+  columns: {
+    label: string
+    showLabel: boolean
+    x: number
+    hitX: number
+    hitWidth: number
+    grossCents: number
+    refundedCents: number
+    netCents: number
+    grossY: number
+    refundedY: number
+    netY: number
+    registered: number
+    cancelled: number
+    registeredY: number
+    cancelledY: number
+  }[]
 }
 
 export interface RevenuePlanShare {
@@ -146,6 +215,16 @@ export interface RevenueMetrics {
 
   buckets: RevenueBucket[]
   bucketsAreWeekly: boolean
+  chart: RevenueChart
+
+  /**
+   * Workspaces created and subscriptions cancelled in the window — what
+   * those two lines on the chart add up to. Counted on the same rules as the
+   * growth figures: a deleted workspace is not a registration, and a
+   * cancellation is a subscription with a cancellation date on it.
+   */
+  registeredInWindow: number
+  cancelledInWindow: number
 
   byPlan: RevenuePlanShare[]
   collectedAllTimeCents: number
@@ -156,6 +235,104 @@ export const REVENUE_RANGES: Record<RevenueRange, number> = {
   '7d': 7,
   '30d': 30,
   '90d': 90,
+}
+
+const CHART = { width: 720, height: 240, left: 58, right: 676, top: 12, bottom: 208 }
+const CHART_RULES = 4
+
+/**
+ * The top of the y-axis: the smallest round figure that clears the largest
+ * value, chosen so the rules between it and zero are round as well. An axis
+ * that tops out at $1,387 makes every rule a number nobody can read across.
+ */
+function axisCeiling(highest: number): number {
+  if (highest <= 0) {
+    return 10000
+  }
+
+  const rough = highest / CHART_RULES
+  const magnitude = 10 ** Math.floor(Math.log10(rough))
+  const step = [1, 2, 2.5, 5, 10].find((multiple) => rough <= multiple * magnitude)! * magnitude
+
+  return Math.ceil(step) * CHART_RULES
+}
+
+/**
+ * Lay the buckets out as five lines on one plot.
+ *
+ * Gross, refunded and net share the money scale: they are the same unit and
+ * net is literally the gap between the other two, so the distance between
+ * those lines is itself the information. Registrations and cancellations
+ * share the count scale, for the same reason — the two are comparable with
+ * each other, and with nothing else on the plot.
+ */
+function lineChart(buckets: RevenueBucket[]): RevenueChart {
+  const { left, right, top, bottom } = CHART
+  const highest = buckets.reduce(
+    (most, bucket) => Math.max(most, bucket.grossCents, bucket.refundedCents, bucket.cents),
+    0
+  )
+  const ceiling = axisCeiling(highest)
+
+  const round = (value: number) => Math.round(value * 100) / 100
+  const yOf = (cents: number) => round(bottom - (Math.max(0, cents) / ceiling) * (bottom - top))
+
+  const gap = buckets.length > 1 ? (right - left) / (buckets.length - 1) : 0
+
+  /**
+   * The count scale tops out at the first multiple of the number of rules
+   * that clears the busiest bucket, so each rule is a whole count.
+   */
+  const busiest = buckets.reduce(
+    (most, bucket) => Math.max(most, bucket.registered, bucket.cancelled),
+    0
+  )
+  const countCeiling = Math.max(1, Math.ceil(busiest / CHART_RULES)) * CHART_RULES
+  const countY = (count: number) =>
+    round(bottom - (Math.max(0, count) / countCeiling) * (bottom - top))
+
+  /* Around eight labels along the bottom, however many buckets there are. */
+  const labelEvery = Math.max(1, Math.ceil(buckets.length / 8))
+
+  const columns = buckets.map((bucket, index) => {
+    const x = round(buckets.length > 1 ? left + index * gap : (left + right) / 2)
+
+    return {
+      label: bucket.label,
+      /* Counted back from the newest, so the latest bucket is always named. */
+      showLabel: (buckets.length - 1 - index) % labelEvery === 0,
+      x,
+      hitX: round(Math.max(left, x - gap / 2)),
+      hitWidth: round(buckets.length > 1 ? gap : right - left),
+      grossCents: bucket.grossCents,
+      refundedCents: bucket.refundedCents,
+      netCents: bucket.cents,
+      grossY: yOf(bucket.grossCents),
+      refundedY: yOf(bucket.refundedCents),
+      netY: yOf(bucket.cents),
+      registered: bucket.registered,
+      cancelled: bucket.cancelled,
+      registeredY: countY(bucket.registered),
+      cancelledY: countY(bucket.cancelled),
+    }
+  })
+
+  const points = (of: (column: (typeof columns)[number]) => number) =>
+    columns.map((column) => `${column.x},${of(column)}`).join(' ')
+
+  return {
+    ...CHART,
+    ticks: Array.from({ length: CHART_RULES + 1 }, (_, index) => {
+      const cents = (ceiling / CHART_RULES) * index
+      return { cents, count: (countCeiling / CHART_RULES) * index, y: yOf(cents) }
+    }),
+    gross: points((column) => column.grossY),
+    refunded: points((column) => column.refundedY),
+    net: points((column) => column.netY),
+    registered: points((column) => column.registeredY),
+    cancelled: points((column) => column.cancelledY),
+    columns,
+  }
 }
 
 export interface AdminMetrics {
@@ -373,6 +550,8 @@ export class MetricsService {
     const dailyGross: number[] = []
     const dailyNet: number[] = []
     const dailyRefunded: number[] = []
+    const dailyRegistered: number[] = []
+    const dailyCancelled: number[] = []
     const dayStarts: DateTime[] = []
 
     for (let back = days - 1; back >= 0; back--) {
@@ -380,6 +559,20 @@ export class MetricsService {
       const next = day.plus({ days: 1 })
       const rows = window.filter(
         (payment) => payment.occurredAt.toUTC() >= day && payment.occurredAt.toUTC() < next
+      )
+
+      const within = (when: DateTime | null | undefined) =>
+        Boolean(when && when.toUTC() >= day && when.toUTC() < next)
+
+      dailyRegistered.push(
+        organizations.filter(
+          (organization) => !organization.deletedAt && within(organization.createdAt)
+        ).length
+      )
+      dailyCancelled.push(
+        subscriptions.filter(
+          (subscription) => subscription.isCanceled && within(subscription.canceledAt)
+        ).length
       )
 
       dayStarts.push(day)
@@ -396,12 +589,18 @@ export class MetricsService {
     const bucketsAreWeekly = days > 31
     const bucketSize = bucketsAreWeekly ? 7 : 1
 
-    const totals: { label: string; cents: number }[] = []
+    const bucketOf = (daily: number[], index: number) =>
+      daily.slice(index, index + bucketSize).reduce((total, value) => total + value, 0)
+
+    const totals: Omit<RevenueBucket, 'heightPercent'>[] = []
     for (let index = 0; index < dailyNet.length; index += bucketSize) {
-      const slice = dailyNet.slice(index, index + bucketSize)
       totals.push({
-        label: dayStarts[index].toFormat(bucketsAreWeekly ? 'd LLL' : days > 7 ? 'd' : 'ccc'),
-        cents: slice.reduce((total, value) => total + value, 0),
+        label: dayStarts[index].toFormat(bucketsAreWeekly ? 'd LLL' : days > 7 ? 'd LLL' : 'ccc'),
+        cents: bucketOf(dailyNet, index),
+        grossCents: bucketOf(dailyGross, index),
+        refundedCents: bucketOf(dailyRefunded, index),
+        registered: bucketOf(dailyRegistered, index),
+        cancelled: bucketOf(dailyCancelled, index),
       })
     }
 
@@ -465,6 +664,9 @@ export class MetricsService {
 
       buckets,
       bucketsAreWeekly,
+      chart: lineChart(buckets),
+      registeredInWindow: dailyRegistered.reduce((total, count) => total + count, 0),
+      cancelledInWindow: dailyCancelled.reduce((total, count) => total + count, 0),
 
       byPlan,
       collectedAllTimeCents: sum(allTime, (payment) => payment.netAmountCents),

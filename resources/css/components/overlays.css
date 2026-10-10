@@ -262,6 +262,14 @@ details[open] > .dropdown-menu {
 }
 
 /*
+| A divider separates two groups. When the items above it are conditional and
+| none of them rendered, it would be a rule across the top of the menu.
+*/
+.dropdown-divider:first-child {
+  display: none;
+}
+
+/*
 | Tooltip — used on the disabled *Add list* button at a plan cap, where the
 | reason for the disabled state has to be readable (plan §7.4).
 */

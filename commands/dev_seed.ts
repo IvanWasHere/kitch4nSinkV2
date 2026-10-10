@@ -14,6 +14,9 @@ import type Organization from '#models/organization'
  *   Northwind Traders  pro but past due — the dunning banner and the
  *                      back-office's "needs attention" list
  *   Contoso Design     cancelled last month, so churn is not always zero
+ *   + sixty-eight more forty ordinary paying customers, each billed on its
+ *                      own day of the month, and twenty-eight free sign-ups,
+ *                      so the volume chart has a full quarter to draw
  *
  * plus published announcements, a stuck webhook and a failed job, because the
  * operations screens are only legible with something on them (plan §7.6, §12).
@@ -116,6 +119,12 @@ export default class DevSeed extends BaseCommand {
     await this.seedChurnedWorkspace()
 
     /**
+     * Enough paying customers, billed on enough different days, for the
+     * back-office's volume chart to be a line rather than three dots.
+     */
+    const cohort = await this.seedBillingCohort()
+
+    /**
      * Whatever the features registered in `start/seeders.ts` want to put in
      * these workspaces (plan §12). Runs here, after every workspace and
      * person exists, so a seeder can assign a row to a member and know they
@@ -169,6 +178,10 @@ export default class DevSeed extends BaseCommand {
     this.logger.log('  past due:  owner-northwind@example.com (dunning banner, needs attention)')
     this.logger.log('  cancelled: owner-contoso@example.com (churn)')
     this.logger.log('  plus 3 announcements, 3 support tickets, a stuck webhook and a failed job')
+    this.logger.log(
+      `  and ${cohort.workspaces} more workspaces billed on ${cohort.billedDays} different days of the month,`
+    )
+    this.logger.log('  so the volume chart has charges, sign-ups and cancellations across 90 days')
     this.logger.log('')
     /**
      * Only the hash of the token is stored, so this is the one moment the
@@ -209,7 +222,12 @@ export default class DevSeed extends BaseCommand {
     name: string,
     email: string,
     monthsAgo: number,
-    ownerName = 'Alex Chen'
+    ownerName = 'Alex Chen',
+    /**
+     * How many days ago this workspace's billing day last came round. Left
+     * out, it bills on the first of the month like the tour workspaces do.
+     */
+    billedDaysAgo?: number
   ): Promise<{ organization: Organization; user: User }> {
     const { DateTime } = await import('luxon')
     const { default: registration } = await import('#auth/registration_service')
@@ -233,7 +251,10 @@ export default class DevSeed extends BaseCommand {
 
     await this.backdate(organization, user, monthsAgo)
 
-    const periodStart = DateTime.utc().startOf('month')
+    const periodStart =
+      billedDaysAgo === undefined
+        ? DateTime.utc().startOf('month')
+        : DateTime.utc().startOf('day').minus({ days: billedDaysAgo })
 
     const subscription = await Subscription.create({
       organizationId: organization.id,
@@ -289,6 +310,398 @@ export default class DevSeed extends BaseCommand {
     }
 
     return { organization, user }
+  }
+
+  /**
+   * Forty ordinary paying customers, each renewing on its own day, and the
+   * free sign-ups around them.
+   *
+   * The tour workspaces all bill on the first of the month, which is right
+   * for them and useless for the volume chart (plan §12): thirty days of
+   * history with money on one of them is a spike, not a line. Monthly
+   * billing puts one charge per customer in any fortnight, so filling
+   * fourteen days in a row takes at least fourteen customers — there is no
+   * honest way to do it with fewer.
+   *
+   * They are backdated across the year like everything else, so they also
+   * give the growth chart and the plan mix something to show. Three of the
+   * latest charges were refunded, in part or in full, so *refunded* is a
+   * line with a shape and net visibly parts from gross.
+   *
+   * The strip under that chart counts registrations and cancellations per
+   * day, so each of them registered the day of its first charge, seven have
+   * cancelled at some point in the quarter, and twenty-eight free workspaces
+   * registered without paying at all.
+   *
+   * Sixteen are written out by hand and cover the last fortnight; the rest
+   * are generated to fill the other days of the month, which with everyone's
+   * earlier renewals puts money on every day of the 90-day range.
+   *
+   * Returns how many workspaces that was and how many distinct days of the
+   * month they bill on, for the summary.
+   */
+  private async seedBillingCohort(): Promise<{ workspaces: number; billedDays: number }> {
+    const { DateTime } = await import('luxon')
+    const { default: Payment } = await import('#models/payment')
+    const { default: Subscription } = await import('#models/subscription')
+    const { default: registration } = await import('#auth/registration_service')
+
+    const today = DateTime.utc().startOf('day')
+
+    const customers: {
+      name: string
+      owner: string
+      plan: 'pro' | 'business'
+      monthsAgo: number
+      billedDaysAgo: number
+      refundedShare?: number
+
+      /** Signed up the day of that first charge, rather than months ago. */
+      newCustomer?: boolean
+
+      /** Cancelled this many days ago, and back on Free since. */
+      cancelledDaysAgo?: number
+    }[] = [
+      {
+        name: 'Fabrikam Studio',
+        owner: 'Priya Raman',
+        plan: 'pro',
+        monthsAgo: 2,
+        billedDaysAgo: 0,
+        newCustomer: true,
+      },
+      {
+        name: 'Tailspin Labs',
+        owner: 'Owen Gallagher',
+        plan: 'business',
+        monthsAgo: 5,
+        billedDaysAgo: 1,
+      },
+      {
+        name: 'Wingtip Outdoor',
+        owner: 'Noor Haddad',
+        plan: 'pro',
+        monthsAgo: 9,
+        billedDaysAgo: 2,
+        newCustomer: true,
+      },
+      {
+        name: 'Adatum Logistics',
+        owner: 'Tomasz Nowak',
+        plan: 'pro',
+        monthsAgo: 3,
+        billedDaysAgo: 3,
+        refundedShare: 1,
+      },
+      {
+        name: 'Lakeshore Clinic',
+        owner: 'Grace Achieng',
+        plan: 'business',
+        monthsAgo: 11,
+        billedDaysAgo: 4,
+      },
+      { name: 'Proseware', owner: 'Diego Fuentes', plan: 'pro', monthsAgo: 1, billedDaysAgo: 5 },
+      {
+        name: 'Blue Yonder Travel',
+        owner: 'Mei Tanaka',
+        plan: 'pro',
+        monthsAgo: 6,
+        billedDaysAgo: 6,
+        newCustomer: true,
+      },
+      {
+        name: 'Woodgrove Finance',
+        owner: 'Arjun Mehta',
+        plan: 'business',
+        monthsAgo: 8,
+        billedDaysAgo: 7,
+        refundedShare: 0.25,
+      },
+      {
+        name: 'Litware Press',
+        owner: 'Sofia Lindqvist',
+        plan: 'pro',
+        monthsAgo: 4,
+        billedDaysAgo: 8,
+        newCustomer: true,
+      },
+      { name: 'Coho Vineyard', owner: 'Emeka Obi', plan: 'pro', monthsAgo: 10, billedDaysAgo: 9 },
+      {
+        name: 'Alpine Ski House',
+        owner: 'Clara Weiss',
+        plan: 'business',
+        monthsAgo: 2,
+        billedDaysAgo: 10,
+        newCustomer: true,
+        cancelledDaysAgo: 5,
+      },
+      {
+        name: 'Margie Travel',
+        owner: 'Yusuf Demir',
+        plan: 'pro',
+        monthsAgo: 7,
+        billedDaysAgo: 11,
+        refundedShare: 0.5,
+        cancelledDaysAgo: 9,
+      },
+      {
+        name: 'Trey Research',
+        owner: 'Hana Kobayashi',
+        plan: 'pro',
+        monthsAgo: 3,
+        billedDaysAgo: 12,
+        newCustomer: true,
+      },
+      {
+        name: 'Humongous Insurance',
+        owner: 'Ruth Okonkwo',
+        plan: 'business',
+        monthsAgo: 12,
+        billedDaysAgo: 13,
+      },
+      {
+        name: 'Southridge Video',
+        owner: 'Mateo Rossi',
+        plan: 'pro',
+        monthsAgo: 5,
+        billedDaysAgo: 15,
+        cancelledDaysAgo: 2,
+      },
+      {
+        name: 'Graphic Design Institute',
+        owner: 'Ingrid Solberg',
+        plan: 'pro',
+        monthsAgo: 1,
+        billedDaysAgo: 17,
+        newCustomer: true,
+      },
+    ]
+
+    /**
+     * The sixteen above cover the last fortnight by hand. These fill in the
+     * rest of the month — billing days 14 to 29 — so that with every
+     * customer's earlier renewals behind them, there is a charge on every day
+     * of the 90-day range, not only on the days somebody thought to write
+     * down.
+     *
+     * Generated, but not random: the same names on the same days every time,
+     * so a screenshot taken today matches one taken after the next re-seed.
+     */
+    const places = [
+      'Northgate',
+      'Bluebird',
+      'Cedar',
+      'Ironwood',
+      'Kestrel',
+      'Marlow',
+      'Pinecrest',
+      'Quillon',
+      'Redfern',
+      'Saffron',
+      'Tidewater',
+      'Umber',
+      'Vantage',
+      'Willowbrook',
+      'Yarrow',
+      'Zephyr',
+      'Ashdown',
+      'Brightwater',
+      'Copperfield',
+      'Dunmore',
+      'Elmhurst',
+      'Foxglove',
+      'Greywell',
+      'Hollis',
+    ]
+    const trades = ['Studio', 'Labs', 'Supply', 'Works', 'Partners', 'Collective', 'Foods', 'Media']
+    const firstNames = [
+      'Amara',
+      'Bjorn',
+      'Chidi',
+      'Dalia',
+      'Elias',
+      'Freya',
+      'Goran',
+      'Hyun',
+      'Imani',
+      'Jonas',
+      'Kavya',
+      'Liam',
+      'Mina',
+      'Nikolai',
+      'Oksana',
+      'Paolo',
+      'Qiang',
+      'Rosa',
+      'Samir',
+      'Tessa',
+      'Ulla',
+      'Viktor',
+      'Wanjiru',
+      'Xavier',
+    ]
+    const lastNames = [
+      'Adeyemi',
+      'Bianchi',
+      'Castillo',
+      'Dubois',
+      'Eriksen',
+      'Farouk',
+      'Georgiou',
+      'Horvat',
+      'Ivanova',
+      'Jensen',
+      'Khan',
+      'Laurent',
+      'Mwangi',
+      'Novak',
+      'Ortega',
+      'Petrov',
+      'Quinn',
+      'Reyes',
+      'Sato',
+      'Thapa',
+      'Unger',
+      'Varga',
+      'Wongsakul',
+      'Yilmaz',
+    ]
+    const personAt = (index: number) =>
+      `${firstNames[index % firstNames.length]} ${lastNames[(index * 7 + 3) % lastNames.length]}`
+
+    for (const [index, place] of places.entries()) {
+      customers.push({
+        name: `${place} ${trades[index % trades.length]}`,
+        owner: personAt(index),
+        plan: index % 4 === 1 ? 'business' : 'pro',
+        monthsAgo: 1 + ((index * 5) % 12),
+        billedDaysAgo: 14 + (index % 16),
+        refundedShare: index % 9 === 4 ? 0.5 : undefined,
+        /*
+         * Four of them left, further back each time — churn across the
+         * quarter. Only from days a second customer also bills on, so a
+         * cancellation never leaves a hole in the month.
+         */
+        cancelledDaysAgo: index < 8 && index % 2 === 0 ? 12 + index * 10 : undefined,
+      })
+    }
+
+    for (const customer of customers) {
+      const slug = customer.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+
+      const { organization, user } = await this.seedPaidWorkspace(
+        customer.plan,
+        customer.name,
+        `owner-${slug}@example.com`,
+        /* A new customer has exactly the one charge they signed up with. */
+        customer.newCustomer ? 1 : customer.monthsAgo,
+        customer.owner,
+        customer.billedDaysAgo
+      )
+
+      /**
+       * They registered the day of their first charge. `backdate()` puts a
+       * workspace a whole number of months before *today*, which would stack
+       * every one of these on the same day of the month — a registrations
+       * chart with one bar in it.
+       */
+      const first = await Payment.query()
+        .where('organization_id', organization.id)
+        .orderBy('occurred_at', 'asc')
+        .firstOrFail()
+
+      organization.createdAt = first.occurredAt
+      user.createdAt = first.occurredAt
+      await user.save()
+
+      if (customer.cancelledDaysAgo !== undefined) {
+        const canceledAt = today.minus({ days: customer.cancelledDaysAgo })
+
+        const subscription = await Subscription.findByOrFail('organization_id', organization.id)
+        subscription.status = 'canceled'
+        subscription.canceledAt = canceledAt
+        await subscription.save()
+
+        /* Nobody is charged after they leave. */
+        const charges = await Payment.query().where('organization_id', organization.id)
+
+        for (const charge of charges) {
+          /*
+           * Compared here rather than in SQL, like every other date in the
+           * back-office: the two databases store a timestamp differently.
+           */
+          if (charge.occurredAt > canceledAt) {
+            await charge.delete()
+          }
+        }
+
+        organization.planKey = 'free'
+      }
+
+      await organization.save()
+
+      if (customer.refundedShare) {
+        const latest = await Payment.query()
+          .where('organization_id', organization.id)
+          .orderBy('occurred_at', 'desc')
+          .firstOrFail()
+
+        latest.refundedAmountCents = Math.round(latest.amountCents * customer.refundedShare)
+        latest.status = customer.refundedShare === 1 ? 'refunded' : 'partially_refunded'
+        await latest.save()
+      }
+    }
+
+    /**
+     * And the people who signed up and have not paid for anything, because
+     * most registrations are exactly that. Without them the chart would say
+     * every sign-up converts on day one.
+     */
+    const signups: [name: string, owner: string, daysAgo: number][] = [
+      ['Harbor Bakery', 'Leila Nasser', 1],
+      ['Fourth Coffee', 'Ben Whitaker', 1],
+      ['Nod Publishers', 'Aiko Mori', 3],
+      ['Lucerne Books', 'Pedro Alves', 6],
+      ['School of Fine Art', 'Zofia Kaminska', 7],
+      ['Relecloud', 'Farid Rahimi', 11],
+    ]
+
+    /* The same again for the rest of the quarter, thinning out as it goes back. */
+    const earlier = [
+      2, 4, 5, 9, 13, 15, 18, 20, 24, 26, 29, 33, 36, 40, 44, 47, 52, 57, 63, 70, 77, 84,
+    ]
+
+    earlier.forEach((daysAgo, index) => {
+      signups.push([
+        `${places[(index + 7) % places.length]} ${trades[(index + 3) % trades.length]}`,
+        personAt(index + places.length),
+        daysAgo,
+      ])
+    })
+
+    for (const [name, owner, daysAgo] of signups) {
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      const joined = today.minus({ days: daysAgo })
+
+      const { user, organization } = await registration.register({
+        fullName: owner,
+        email: `owner-${slug}@example.com`,
+        password: 'Example12345',
+        organizationName: name,
+      })
+
+      user.emailVerifiedAt = joined
+      user.createdAt = joined
+      await user.save()
+
+      organization.createdAt = joined
+      await organization.save()
+    }
+
+    return {
+      workspaces: customers.length + signups.length,
+      billedDays: new Set(customers.map((customer) => customer.billedDaysAgo)).size,
+    }
   }
 
   /**
