@@ -51,10 +51,17 @@ test.group('Upgrading a plan', (group) => {
      * enforced across the redirect and failing silently — no error page, no
      * exception, just a button that does nothing (config/shield.ts). Blocked,
      * the browser issues no request at all and this times out.
+     *
+     * `noWaitAfter`, because the click would otherwise wait for the
+     * navigation it started to settle — and how long a host that does not
+     * exist takes to fail is the machine's business. One with a resolver for
+     * `.test` that is not running (`/etc/resolver/test`) hangs on the lookup
+     * for longer than the click's timeout, after the request this is waiting
+     * for has already been seen.
      */
     const [request] = await Promise.all([
       page.waitForRequest('https://checkout.test/**'),
-      page.click('#checkout-pro button[type="submit"]'),
+      page.click('#checkout-pro button[type="submit"]', { noWaitAfter: true }),
     ])
 
     /**

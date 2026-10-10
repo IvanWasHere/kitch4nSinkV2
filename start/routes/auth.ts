@@ -19,6 +19,7 @@ import {
   registerWaitingListGuestRoutes,
   registerWaitingListTokenRoutes,
 } from '#modules/registration_control/routes'
+import { registerPrivacyTokenRoutes } from '#modules/privacy/routes'
 
 /**
  * Signed-out flows.
@@ -117,6 +118,11 @@ router
       .as('auth.verify_email.verify')
 
     registerWaitingListTokenRoutes()
+
+    /**
+     * Privacy (plan §22.8.2) — confirming an account deletion by email.
+     */
+    registerPrivacyTokenRoutes()
   })
   .use(authAddressThrottle)
 

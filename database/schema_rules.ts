@@ -64,7 +64,7 @@ export const boolean = {
   decorators: [{ name: '@booleanColumn' }],
 }
 
-const bigIntCounter = {
+export const bigIntCounter = {
   tsType: 'number',
   imports: [{ source: '#database/columns', namedImports: ['bigIntColumn'] }],
   decorators: [{ name: '@bigIntColumn' }],

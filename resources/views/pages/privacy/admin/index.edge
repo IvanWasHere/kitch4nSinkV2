@@ -1,0 +1,152 @@
+{{--
+  Admin → Privacy requests (plan §22.8.3). Support and admin.
+
+  Every person's export and deletion requests, newest first. Staff can see
+  that a request exists and how it went; nobody here can download an export
+  the person asked for themselves.
+
+  Each row's actions are behind a three-dot menu. Everybody gets "View
+  request". An admin also gets "Generate export" on every row whose account
+  still exists — the same thing as "Export data" on the users screen: built
+  for the admin to download, and the person is not emailed. Once one has been
+  generated it becomes "View report", a link to that export's page, until the
+  archive expires. A deletion waiting for an admin gets "Delete account".
+--}}
+@let(filterLabels = {
+  all: 'All',
+  export: 'Exports',
+  deletion: 'Deletions',
+  pending: 'Pending',
+  processing: 'Processing',
+  completed: 'Completed',
+  failed: 'Failed',
+})
+@let(statusTones = {
+  requested: 'info',
+  confirmed: 'info',
+  approved: 'info',
+  processing: 'info',
+  completed: 'success',
+  failed: 'danger',
+  rejected: 'neutral',
+  expired: 'neutral',
+})
+
+@component('layouts/admin', { title: 'Privacy requests' })
+  @!pageHeader({
+    title: 'Privacy requests',
+    description: 'Data exports and account deletions people have asked for. Exports are built and delivered automatically; a failed one can be retried from its page.',
+  })
+
+  <div class="pillset">
+    @each(one in filters)
+      <a
+        class="pill {{ filter === one ? 'active' : '' }}"
+        href="{{ urlFor('admin.privacy.index') }}{{ one === 'all' ? '' : `?filter=${one}` }}"
+      >
+        {{ filterLabels[one] }}
+        <span class="pill-count">{{ counts[one] }}</span>
+      </a>
+    @end
+  </div>
+
+  @panel.root({ flush: true })
+    @if(requests.length)
+      <div class="table-scroll">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Request</th>
+              <th>Person</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Requested</th>
+              <th>Updated</th>
+              <th>Completed</th>
+              <th><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @each(one in requests)
+              <tr>
+                <td>
+                  <a class="order-id" href="{{ urlFor('admin.privacy.show', { id: one.publicId }) }}">{{ one.publicId }}</a>
+                </td>
+                <td>
+                  {{ one.user ? one.user.email : '—' }}
+                  @if(one.user && one.user.organization)
+                    <div class="field-hint">{{ one.user.organization.name }}</div>
+                  @end
+                </td>
+                <td>{{ one.type === 'export' ? 'Export' : 'Deletion' }}</td>
+                <td>
+                  @!badge({ text: one.status, tone: statusTones[one.status] ?? 'neutral' })
+                </td>
+                <td>{{ one.requestedAt.toFormat('d LLL yyyy, HH:mm') }}</td>
+                <td>{{ one.updatedAt ? one.updatedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
+                <td>{{ one.completedAt ? one.completedAt.toFormat('d LLL yyyy, HH:mm') : '—' }}</td>
+                <td style="text-align: right">
+                  {{--
+                    Everything that can be done to a row, behind three dots.
+                    Support gets the one link; the rest is admin only.
+                  --}}
+                  <details
+                    class="dropdown row-menu"
+                    x-data="rowMenu"
+                    @toggle="place"
+                    @click.outside="close"
+                    @keydown.escape="close"
+                    @scroll.window.capture="close"
+                    @resize.window="close"
+                  >
+                    <summary aria-haspopup="true" aria-label="Actions for {{ one.publicId }}">
+                      @!icon({ name: 'moreHorizontal' })
+                    </summary>
+
+                    <div class="dropdown-menu" x-ref="panel">
+                      <a class="dropdown-item" href="{{ urlFor('admin.privacy.show', { id: one.publicId }) }}">
+                        @!icon({ name: 'list', width: 15, height: 15 })
+                        View request
+                      </a>
+
+                      @if(canExport && reports[one.userId])
+                        <a class="dropdown-item" href="{{ urlFor('admin.privacy.show', { id: reports[one.userId] }) }}">
+                          @!icon({ name: 'shield', width: 15, height: 15 })
+                          View report
+                        </a>
+                      @elseif(canExport && one.user && !one.user.isDeleted)
+                        @form({ route: 'admin.privacy.exports.store', method: 'POST' })
+                          <input type="hidden" name="user" value="{{ one.user.publicId }}" />
+                          <button type="submit" class="dropdown-item">
+                            @!icon({ name: 'archive', width: 15, height: 15 })
+                            Generate export
+                          </button>
+                        @end
+                      @end
+
+                      {{-- A deletion waiting for an admin: to the page that says what it would do, and has the button. --}}
+                      @if(canErase && one.type === 'deletion' && one.status === 'confirmed')
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item dropdown-item-danger" href="{{ urlFor('admin.privacy.show', { id: one.publicId }) }}">
+                          @!icon({ name: 'trash', width: 15, height: 15 })
+                          Delete account
+                        </a>
+                      @end
+                    </div>
+                  </details>
+                </td>
+              </tr>
+            @end
+          </tbody>
+        </table>
+      </div>
+
+      @!pagination({ summary, prevUrl, nextUrl })
+    @else
+      @!emptyState({
+        icon: 'shield',
+        title: filter === 'all' ? 'Nobody has asked yet' : `No ${filterLabels[filter].toLowerCase()} requests`,
+      })
+    @end
+  @end
+@end

@@ -7,6 +7,7 @@ import type { BaseMail } from '@adonisjs/mail'
 import env from '#start/env'
 import queue from '#queue/queue_service'
 import sendMailJob, { type SendMailPayload } from '#queue/jobs/send_mail_job'
+import { isDeletedEmail } from '#privacy/deleted_identity'
 
 /**
  * The one place the application sends email from (plan §8).
@@ -37,6 +38,22 @@ export class MailerService {
       await message.buildWithContents()
 
       const compiled = message.message.toJSON() as SendMailPayload['compiled']
+
+      /**
+       * A deleted account's address is on a domain that is not ours,
+       * so nothing may ever be sent to it — a notification queued before the
+       * deletion, or a feature that forgot to check, would otherwise reach a
+       * stranger (plan §22.8.2).
+       */
+      const refused = recipientsOf(compiled.message).filter(isDeletedEmail)
+
+      if (refused.length) {
+        logger.warn(
+          { mail: message.constructor.name, refused: refused.length },
+          'refused to email a deleted account'
+        )
+        return null
+      }
 
       /**
        * `sendCompiled` sends exactly what it is given, so the from-address
@@ -99,3 +116,25 @@ export class MailerService {
 }
 
 export default new MailerService()
+
+/**
+ * Every address a compiled message is going to, whatever shape the mailer
+ * recorded it in: a string, an `{ address }`, or a list of either.
+ */
+function recipientsOf(message: Record<string, any>): string[] {
+  const addresses: string[] = []
+
+  for (const field of ['to', 'cc', 'bcc']) {
+    const value = message[field]
+    const entries = Array.isArray(value) ? value : value ? [value] : []
+
+    for (const entry of entries) {
+      const address = typeof entry === 'string' ? entry : entry?.address
+      if (typeof address === 'string') {
+        addresses.push(address)
+      }
+    }
+  }
+
+  return addresses
+}

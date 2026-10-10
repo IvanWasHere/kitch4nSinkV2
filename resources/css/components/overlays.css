@@ -209,6 +209,52 @@ details[open] > .dropdown-menu {
   color: var(--red-700);
 }
 
+/*
+| A table row's actions, behind three dots. The panel is fixed and placed by
+| the `rowMenu` Alpine component, so `.table-scroll` cannot clip it.
+*/
+.row-menu {
+  display: inline-block;
+}
+
+.row-menu > summary {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  color: var(--text-soft);
+  cursor: pointer;
+  list-style: none;
+}
+
+.row-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.row-menu > summary:hover,
+.row-menu[open] > summary {
+  background: var(--page);
+  color: var(--text-strong);
+}
+
+.row-menu > summary svg {
+  width: 16px;
+  height: 16px;
+}
+
+.row-menu > .dropdown-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  min-width: 190px;
+}
+
+.row-menu form {
+  margin: 0;
+}
+
 .dropdown-divider {
   height: 1px;
   background: var(--border-soft);

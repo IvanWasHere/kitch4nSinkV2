@@ -116,6 +116,24 @@ export default class StaffPolicy extends BasePolicy {
   }
 
   /**
+   * Generating a copy of a customer's personal data and downloading it
+   * (plan §22.8) — for a request that came in by email or ticket. Admin only:
+   * it hands staff the whole account.
+   */
+  exportPersonalData(staff: StaffUser): AuthorizerResponse {
+    return !staff.isDisabled && staff.isAdmin
+  }
+
+  /**
+   * Approving, rejecting or retrying a person's account deletion
+   * (plan §22.8.2). Admin only: it cannot be undone, and support never
+   * destroys anything (§6).
+   */
+  eraseAccounts(staff: StaffUser): AuthorizerResponse {
+    return !staff.isDisabled && staff.isAdmin
+  }
+
+  /**
    * Admin only, and the reason: anyone who can create a staff account can
    * grant themselves everything above.
    */

@@ -1144,7 +1144,34 @@ view global, a `nav` slot on the marketing layout (the dead *Pricing* anchor is 
 776 tests incl. the fallback branch of `tests/functional/home.spec.ts`; typecheck/lint clean.
 *Can swap with M13: the reserved-slug check reads the route table, so order does not matter.*
 
-**M15 — Privacy data requests** *(§22.8)* — module `privacy`. Adds a zip writer.
+**M15 — Privacy data requests** *(§22.8)* — module `privacy`. Adds a zip writer. — **built**.
+ **Export slice built:** core `#privacy/registry` + core contributors (account,
+workspace, connected accounts, auth tokens, files, invitations sent, API keys, support, activity)
+and module contributors (lists, waiting list, privacy requests) registered in a new
+`start/privacy.ts`; a coverage test that fails when any column pointing at a user is unclaimed
+(it caught `social_accounts.provider_user_id` on its first run); `privacy_requests`;
+`/settings/privacy` with *Request my data*, one active export per person (user row locked),
+`generate_privacy_export` job building `data.json` + `README.txt` + `files/` with `yazl@3.3.1`,
+stored on the private disk, emailed, 48 h (setting `privacy_export_ttl_hours`), downloaded through
+an authorising route that mints a 5-minute signed URL, hourly `purge_privacy_exports`; impersonating
+staff (admin included) can neither request nor download; `FileStorage.stream()` added to core.
+Verified on SQLite and Postgres. **Also built:** `/admin/privacy` (support + admin) — list with
+the PRD's filters and counts, a detail page with the request's audit trail, *Retry export* for a
+failed export (`StaffPolicy.replay`, audited `privacy.export.retried`); no staff download anywhere.
+**Deletion slice built:** request from `/settings/privacy` (password + checkbox confirms;
+passwordless accounts get a hashed 24 h email link), cancel until approved, owner-with-members
+blocker checked at request and at approval, admin-only approve/reject (`StaffPolicy.eraseAccounts`)
+with a live review of last-member and active-subscription, `process_privacy_deletion` running the
+user overwrite and every contributor's `erase` in one transaction with `afterCommit` for stored
+objects, goodbye email to the address held only until then, admin retry, `MailerService` refusing
+`deleted.user.*@email.com`. Each module tests its own `erase` (the modularity test caught the
+privacy tests importing lists and registration control). Removal drill passed (793 tests) after
+making `…028`/`…029` roll back cleanly past a later drop migration. 836 tests on SQLite and
+Postgres. **M15 done.** **Also built — staff-started requests** (for requests arriving by email or
+ticket), on Admin → Users, admin only: *Export data* (archive for the admin to download from the
+request page, 5-minute audited link, person not emailed, counted separately from their own) and
+*Delete account* (confirmation page with the live review, reason + typed email address = approval,
+runs at once under the same rules). Migration `…030` adds `requested_by_staff_id`, `staff_note`.
 *Last: it is the one that needs every other module's `privacyData` contribution to exist, and the
 §19 Q2 / Q7 answers to be in.*
 
@@ -1197,14 +1224,15 @@ view global, a `nav` slot on the marketing layout (the dead *Pricing* anchor is 
    defaults we build unless told otherwise.
    - **a.** ~~Which records are retained vs anonymised?~~ **Answered (D14):** the user row is
      overwritten, never deleted; billing data is never touched; lists and todos go only when the
-     user was the workspace's last member. §22.8.4 records the result. Still open inside it:
-     audit-log IP/user-agent, and whether the last member's avatar/files go too.
+     user was the workspace's last member. §22.8.4 records the result. **Also answered:** the
+     avatar is always deleted; other uploads stay unless the user was the last member (then they
+     go with the lists and todos); audit-log IP and user-agent are cleared.
    - **b.** ~~Is deleting a sole owner also workspace deletion?~~ **Partly answered:** if the user
      is the workspace's last member, their lists and todos are deleted. The `organizations` row
      and its billing stay. **Still open:** what happens to an *active subscription* on a
-     workspace with no remaining member? It keeps billing unless somebody cancels it. Suggestion:
-     the approving admin sees a warning and cancels it by hand from the existing subscription
-     screen, which leaves "billing is never touched" true for the deletion job itself.
+     workspace with no remaining member? **Answered:** the approving admin sees a warning and
+     cancels it by hand from the existing subscription screen, which leaves "billing is never
+     touched" true for the deletion job itself.
    - **c.** ~~Admin approval for every deletion?~~ **Answered: yes, every deletion.** There is no
      automatic path.
    - **d.** Double opt-in default on → **yes**.
@@ -1214,8 +1242,8 @@ view global, a `nav` slot on the marketing layout (the dead *Pricing* anchor is 
    - **g.** Editor → **textarea + Markdown**.
    - **h.** Old slugs redirect → **yes**, 301 via `content_slug_redirects`.
    - **i.** Legal pages shipped → **privacy + terms** only.
-   - **j.** Export includes file **contents** → **no, metadata only** in v1; files are workspace-
-     owned (D8) and a user's export is not the way to bulk-download a workspace.
+   - **j.** ~~Export includes file contents?~~ **Answered: yes** — the contents of every file the
+     person uploaded (not deleted), under `files/` in the archive.
    - **k.** 48 h export retention → **yes**, as a typed setting.
    - **l.** Role split → §22.9's table.
 
@@ -1915,8 +1943,9 @@ and still need sign-off.
 |---|---|---|
 | `users` row | **Overwrite, never delete**: email → `deleted.user.<id>@email.com`, personal fields nulled, `deleted_at` set | D14. FKs from todos, tickets, audit logs stay valid |
 | `social_accounts`, `auth_tokens` | **Delete** | Pure credentials |
-| Avatar file | **Delete** (object + `files` row) — *proposed* | Personal, not workspace work |
-| Other files the user uploaded | **Retain**, `user_id` kept as tombstone — *proposed* | Workspace-owned (D8) |
+| Avatar file | **Delete** (object + `files` row) | Personal, not workspace work |
+| Other files the user uploaded — **other members remain** | **Retain**, `user_id` kept as tombstone | Workspace-owned (D8) |
+| Other files the user uploaded — **user was the last member** | **Delete** (object + row) | Go with the workspace's lists and todos |
 | `todo_lists`, `todos` — **user was the last member** | **Delete** (hard, not soft — a soft-deleted row still holds the data) | D14 |
 | `todo_lists`, `todos` — **other members remain** | **Untouched** — not even `assigned_to_user_id` | D14. The overwritten user row already removes the identity |
 | `support_tickets` / `support_messages` authored | **Retain**, author anonymised via the user row | Workspace-owned; staff history |
@@ -1924,7 +1953,7 @@ and still need sign-off.
 | `invitations` sent by the user | **Delete** pending ones; keep accepted | Pending ones carry a third party's email for no reason |
 | `organizations` row | **Untouched**, even when the last member leaves | D14: billing hangs off it |
 | `subscriptions`, `payments`, `webhook_events` | **Untouched** | D14: billing data is never touched |
-| `audit_logs` (actor or subject) | **Retain**; `ip`, `user_agent` nulled — *proposed* | Security record; network identifiers are not needed to keep it |
+| `audit_logs` (actor or subject) | **Retain**; `ip`, `user_agent` nulled | Security record; network identifiers are not needed to keep it |
 | `api_requests` from keys they created | **Retain** (pruned at 30 d anyway) | Org usage |
 | `privacy_requests` | **Retain** | Proof the request was honoured |
 | Waiting-list entry for the same email | **Delete** | Registration Control registers this contributor |

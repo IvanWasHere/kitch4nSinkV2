@@ -39,6 +39,10 @@ import normalizePositionsJob from '#modules/lists/jobs/normalize_positions_job'
 
 import markWaitingListConvertedJob from '#modules/registration_control/jobs/mark_waiting_list_converted_job'
 
+import generatePrivacyExportJob from '#modules/privacy/jobs/generate_privacy_export_job'
+import purgePrivacyExportsJob from '#modules/privacy/jobs/purge_privacy_exports_job'
+import processPrivacyDeletionJob from '#modules/privacy/jobs/process_privacy_deletion_job'
+
 /**
  * Dispatched by application code, not by cron.
  */
@@ -74,4 +78,15 @@ jobs.register(normalizePositionsJob, { interval: 'daily', label: 'normalize list
 jobs.register(markWaitingListConvertedJob, {
   interval: 'daily',
   label: 'mark waiting-list entries converted',
+})
+
+/**
+ * Privacy (plan §22.8) — delete with it. The export is dispatched when
+ * somebody asks for one; the purge sweeps expired archives every hour.
+ */
+jobs.register(generatePrivacyExportJob)
+jobs.register(processPrivacyDeletionJob)
+jobs.register(purgePrivacyExportsJob, {
+  interval: 'hourly',
+  label: 'purge expired privacy exports',
 })

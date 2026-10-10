@@ -108,6 +108,7 @@ export default defineConfig({
     () => import('#start/jobs'),
     () => import('#start/seeders'),
     () => import('#start/settings'),
+    () => import('#start/privacy'),
     () => import('#start/view'),
   ],
 

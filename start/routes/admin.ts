@@ -23,6 +23,7 @@ import { controllers } from '#generated/controllers'
 import { adminLoginThrottle, twoFactorThrottle } from '#start/limiter'
 import { registerRegistrationAdminRoutes } from '#modules/registration_control/routes'
 import { registerContentAdminRoutes } from '#modules/content/routes'
+import { registerPrivacyAdminRoutes } from '#modules/privacy/routes'
 
 router
   .group(() => {
@@ -166,6 +167,11 @@ router
      * Content (plan §22.6) — posts and pages, admin only.
      */
     registerContentAdminRoutes()
+
+    /**
+     * Privacy requests (plan §22.8.3) — support and admin.
+     */
+    registerPrivacyAdminRoutes()
   })
   .prefix('/admin')
   .use([middleware.adminIpAllowlist(), middleware.staffAuth()])

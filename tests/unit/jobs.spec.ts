@@ -88,9 +88,18 @@ test.group('Job registry', () => {
     }
   })
 
-  test('nothing is scheduled on an interval no job asked for', ({ assert }) => {
+  /**
+   * Hourly work exists since the Privacy module's export purge (plan §22.8);
+   * it is held to the same rule as the daily sweep. Nothing asks for five
+   * minutes yet, so nothing may be there.
+   */
+  test('hourly work is labelled, and nothing runs every five minutes', ({ assert }) => {
+    for (const entry of jobs.due('hourly')) {
+      assert.isNotEmpty(entry.label, `${entry.handler.name} is scheduled with no label`)
+      assert.strictEqual(jobs.handlerFor(entry.handler.name), entry.handler)
+    }
+
     assert.isEmpty(jobs.due('5m'))
-    assert.isEmpty(jobs.due('hourly'))
   })
 
   /**

@@ -32,6 +32,7 @@ const REGISTRATION_POINTS = new Set([
   'start/jobs.ts',
   'start/seeders.ts',
   'start/settings.ts',
+  'start/privacy.ts',
   'start/routes/web.ts',
   'start/routes/api.ts',
   'start/routes/admin.ts',
