@@ -328,6 +328,20 @@ is offered a screen that would refuse them.
 
 </details>
 
+<details>
+<summary>🧩 <b>The removable modules</b></summary>
+
+| Screen | |
+|---|---|
+| 📰 **The blog** — posts written in the back office, Markdown in and safe HTML out | <img src="docs/screenshots/blog.jpg" alt="The public blog, newest post first" width="420" /> |
+| ✍️ **Posts** — draft, scheduled, published and archived, each change audited | <img src="docs/screenshots/staff-admin-posts.jpg" alt="Back-office list of posts in every state" width="420" /> |
+| 🚪 **The waiting list** — what signup becomes while registration is closed | <img src="docs/screenshots/waiting-list.jpg" alt="The public waiting-list form" width="420" /> |
+| ⏳ **Who is waiting** — pending, confirmed, converted and cancelled, from the back office | <img src="docs/screenshots/staff-admin-waiting-list.jpg" alt="Back-office waiting list" width="420" /> |
+| 🗂️ **Privacy** — download your data, or ask for the account to be deleted | <img src="docs/screenshots/owner-privacy.jpg" alt="Privacy settings with an export ready to download" width="420" /> |
+| 🛡️ **Privacy requests** — every export and deletion, and the review an admin does before an account goes | <img src="docs/screenshots/staff-admin-privacy.jpg" alt="Back-office list of privacy requests" width="420" /> |
+
+</details>
+
 ---
 
 ## 🧑‍💻 Stack
