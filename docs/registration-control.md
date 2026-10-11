@@ -17,6 +17,8 @@ always open. [Removing it](#removing-it) is a list of deletions.
 
 **Admin → Settings → Registration** (`/admin/settings/registration`), admin only.
 
+![Registration settings: whether signup is open, and whether the waiting list needs a confirmed email](screenshots/staff-admin-registration.jpg)
+
 | Setting | Default | What it does |
 |---|---|---|
 | Public registration is open | on | Off closes signup. On restores it exactly as it was. |
@@ -51,6 +53,8 @@ supplies the answer, through `registrationGate` (see
 `/waitlist` is only offered while registration is closed; while it is open, the page and the form
 both redirect to `/signup`.
 
+![The public waiting-list form, shown while registration is closed](screenshots/waiting-list.jpg)
+
 Every submission gets the same answer — *"If this email can be added to the waiting list, we will
 send further instructions."* — whatever happened:
 
@@ -80,6 +84,8 @@ on stays pending until they confirm.
 
 **Admin → Waiting list** (`/admin/waitlist`), support and admin.
 
+![Back-office waiting list with entries pending, confirmed, converted and cancelled](screenshots/staff-admin-waiting-list.jpg)
+
 Filters for all, pending confirmation, confirmed, converted and cancelled, each with a count; 50
 rows a page, newest first.
 
@@ -106,6 +112,11 @@ waiting list exists.
 No invitations or bulk "let these people in" flow, no ranking, no newsletter. The list records
 who asked; letting them in is opening registration. See plan §22.12.
 
+### Demo data
+
+`node ace dev:seed` adds nine entries across all four states, one of them joined without double
+opt-in. Registration itself is left open.
+
 ---
 
 ## Where it lives
@@ -123,6 +134,7 @@ app/modules/registration_control/
   validators.ts      the settings form and the join form
   routes.ts          admin, guest and token routes, registered from core's groups
   schema_rules.ts    status union and the boolean column
+  seeder.ts          its share of dev:seed
   tests/functional/  settings, waiting list, admin screen, conversion job
 ```
 
@@ -153,6 +165,7 @@ rm docs/registration-control.md
 | `start/routes/admin.ts` | `registerRegistrationAdminRoutes()` and its import |
 | `start/routes/auth.ts` | `registerWaitingListGuestRoutes()`, `registerWaitingListTokenRoutes()` and their import |
 | `start/jobs.ts` | the Registration Control block and its import |
+| `start/seeders.ts` | `seeders.register(registrationControlDemoSeeder)` and its import |
 | `config/database.ts` | `#modules/registration_control/schema_rules` in `rulesPaths`, on both connections |
 | `app/models/public_id.ts` | `waitingListEntry: 'wle'` |
 

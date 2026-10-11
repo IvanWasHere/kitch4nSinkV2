@@ -19,6 +19,8 @@ deletions.
 Support staff do not see the section: whatever is written here is published under the company's
 name, which is the same line the back office draws for announcements.
 
+![Back-office list of posts: archived, draft, scheduled and published](screenshots/staff-admin-posts.jpg)
+
 | Field | Posts | Pages | Notes |
 |---|:-:|:-:|---|
 | Title | ✓ | ✓ | |
@@ -29,6 +31,8 @@ name, which is the same line the back office draws for announcements.
 
 **New entries are drafts.** *Save and publish* does both in one click, but publishing is still its
 own step in the audit log, so "who put this live?" always has one answer.
+
+![Editing a post: title, slug, excerpt, Markdown content and a publication date fixed once public](screenshots/staff-admin-post-editor.jpg)
 
 ### States
 
@@ -91,6 +95,8 @@ the same order on every load. Page numbers mark the current one with `aria-curre
 `/posts?page=2` works; a page past the last one is a `404`, and an empty blog says *Nothing
 published yet*. A *Blog* link appears in the public site's header.
 
+![The public blog, newest post first](screenshots/blog.jpg)
+
 Every post and page gets a `<meta name="description">` (the excerpt, or the first 160 characters
 of the text), a canonical URL, and OpenGraph tags. The base layout takes `description` and
 `canonical` props for this, so any public page can use them.
@@ -112,6 +118,8 @@ the renderer reaches every post at once.
 The rendered body is the module's one unescaped print, in
 `resources/views/pages/content/public/show.edge`, with a comment saying why. Typography comes from
 the generic `.prose` class in `resources/css/components/prose.css`.
+
+![A published post: heading, bold text, a list, a quote and a link, rendered from Markdown](screenshots/blog-post.jpg)
 
 ---
 

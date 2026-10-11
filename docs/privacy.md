@@ -32,9 +32,13 @@ Generating, downloading, failing and purging are all audited (`privacy.export.*`
 Staff impersonating a customer — admins included — can see the screen but cannot request or
 download an export. A copy of somebody's whole account is not something staff get that way.
 
+![Settings, Privacy: requesting an export, a finished one ready to download, and deleting the account](screenshots/owner-privacy.jpg)
+
 ### In the back office
 
 **Admin → Privacy requests** (`/admin/privacy`), support and admin.
+
+![Back-office list of privacy requests, with a filter and a count for each state](screenshots/staff-admin-privacy.jpg)
 
 - A list of every request, newest first, with the person, their workspace, type, status and
   dates. Filters for all, exports, deletions, pending, processing, completed and failed, each with
@@ -149,6 +153,8 @@ On **Admin → Privacy requests**, a deletion waiting for an admin has a **Delet
 its row's actions menu that opens this review; the button there (**Delete account**, or **Delete account and
 workspace** for an owner with members) is the approval.
 
+![Reviewing an account deletion: what approving would do, a warning about the active subscription, and the approve and reject actions](screenshots/staff-admin-privacy-request.jpg)
+
 ### What happens to each kind of data
 
 | Data                                                       | What happens                                                                                                                                                                                                                                                                                                                                    |
@@ -218,6 +224,7 @@ app/modules/privacy/
   jobs/                         generate_privacy_export, purge_privacy_exports (hourly)
   controllers/, routes.ts, throttles.ts, mails/, settings.ts, audit_actions.ts
   privacy.ts                    its own contributor: the person's requests
+  seeder.ts                     its share of dev:seed
   tests/functional/
 ```
 
@@ -251,6 +258,7 @@ rm resources/views/emails/privacy_*.edge docs/privacy.md
 | `start/jobs.ts`           | the Privacy block and its three job imports                          |
 | `start/settings.ts`       | `registerPrivacySettings()`                                          |
 | `start/privacy.ts`        | `privacy.register(privacyRequestsContributor)`                       |
+| `start/seeders.ts`        | `seeders.register(privacyDemoSeeder)`                                |
 | `config/database.ts`      | `#modules/privacy/schema_rules` in `rulesPaths`, on both connections |
 | `app/models/public_id.ts` | `privacyRequest: 'prq'`                                              |
 
